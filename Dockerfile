@@ -34,4 +34,4 @@ COPY nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 EXPOSE 8888
 
 # Start both nginx and php-fpm
-CMD service nginx start && php-fpm
+CMD php artisan migrate --force && service nginx start && exec php-fpm

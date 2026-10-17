@@ -1,5 +1,25 @@
 # Backend Deployment to Railway
 
+## Laravel Authentication Service
+
+The Laravel service handles `/api/login` and `/api/register`. Deploy it using
+the repository's `Dockerfile`; keep the Python FastAPI service separate for
+the Python-only endpoints.
+
+1. Add a Railway MySQL service to the same project.
+2. In the Laravel service's **Variables**, add references to the MySQL
+   service's `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, and
+   `MYSQLPASSWORD` variables. For example, if the database service is named
+   `MySQL`, set `MYSQLHOST` to `${{MySQL.MYSQLHOST}}` and add equivalent
+   references for the other four variables. The Laravel configuration reads
+   these names and selects MySQL when `MYSQLHOST` is present.
+3. Set `APP_KEY` to a generated Laravel application key and `APP_DEBUG=false`.
+4. Redeploy the Laravel service. The container runs
+   `php artisan migrate --force` before starting Nginx and PHP-FPM, creating
+   the auth tables.
+5. Confirm the deployment logs show that migrations completed before testing
+   login or registration.
+
 ## Prerequisites
 - [Railway.app](https://railway.app) account
 - GitHub repository (recommended for automatic deploys)
@@ -131,4 +151,3 @@ Local Backend:       http://localhost:8000
 ```
 
 All API calls use relative paths (`/api`, `/turn`, `/generate`) so they work with any domain.
-
