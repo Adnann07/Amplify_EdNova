@@ -35,15 +35,3 @@ EXPOSE 8888
 
 # Start both nginx and php-fpm
 CMD service nginx start && php-fpm
-
-
-
-
-
-
-eleven labs
-sk_c1fd1971ab00faaf020e7822fad74ee5304318bee6355105
-
-
-YourVoic
-yv_live_2e9a61c2dae311ba779442f161448b6181919acdfbf988f3
