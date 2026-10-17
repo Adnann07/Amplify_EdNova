@@ -320,11 +320,12 @@ btnRetry.addEventListener('click', () => {
 });
 
 btnBackToRoutine.addEventListener('click', () => {
-  window.location.assign('/index.html');
+  window.location.assign('/routine.html');
 });
 
 btnGoBack.addEventListener('click', () => {
-  window.history.back();
+  if (window.history.length > 1 && document.referrer) window.history.back();
+  else window.location.assign('/index.html');
 });
 
 window.addEventListener('scroll', () => {

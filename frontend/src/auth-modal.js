@@ -58,10 +58,19 @@
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(body),
     });
-    const data = await res.json();
+    const responseBody = await res.text();
+    let data;
+    try {
+      data = responseBody ? JSON.parse(responseBody) : {};
+    } catch {
+      if (res.ok) throw new Error('The server returned an invalid response.');
+      data = {};
+    }
     if (!res.ok) {
       const msg = data.message
-        || (data.errors ? Object.values(data.errors).flat().join(' ') : 'An error occurred.');
+        || data.detail
+        || (data.errors ? Object.values(data.errors).flat().join(' ') : '')
+        || `Request failed (${res.status}).`;
       throw new Error(msg);
     }
     return data;

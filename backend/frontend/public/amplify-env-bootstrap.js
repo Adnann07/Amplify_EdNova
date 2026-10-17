@@ -1,15 +1,3 @@
-// ── Auto-inject favicon globally ──
-(function() {
-  if (!document.querySelector('link[rel="icon"]')) {
-    const link = document.createElement('link');
-    link.rel = 'icon';
-    link.type = 'image/svg+xml';
-    link.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23020B16'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%2300B7FF'>A</text></svg>";
-    document.head.appendChild(link);
-  }
-})();
-
-
 /**
  * Environment bootstrap for static HTML pages
  * Loads API config from server and makes it available to inline scripts

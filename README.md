@@ -146,7 +146,7 @@ Interactive 3D simulations of chemistry practicals, physics experiments, and bio
 **Features:**
 - 50+ pre-built chemistry practicals covering NCTB curriculum
 - Gesture recognition using MediaPipe Hands (±5mm precision, <33ms latency)
-- Voice commands in Bangla using Web Speech API
+- Voice commands in English using the Web Speech API
 - Real-time 3D rendering with Three.js and Manim
 
 ---
@@ -259,7 +259,7 @@ Student Query → Vector Search (Top-K=4)
 
 **Distraction Warning:**
 - 5-8 second threshold before triggering
-- Azure TTS warning in Bengali
+- Azure TTS warning in English
 - 30-second cooldown between warnings
 - 30 FPS detection rate
 
@@ -482,7 +482,7 @@ docker run -d -p 8888:80 amplify:latest
 
 1. **Start Learning**
    - Upload PDF lesson
-   - Ask questions in Bengali/English
+   - Ask questions in English
    - Receive AI-generated explanations with visuals
 
 2. **Enable Attention Tracking**
@@ -494,7 +494,7 @@ docker run -d -p 8888:80 amplify:latest
 3. **Access 3D Lab**
    - Select chemistry experiment
    - Use gestures to rotate/zoom molecules
-   - Voice commands in Bangla
+   - Voice commands in English
    - Complete interactive quiz
 
 ### For Teachers
@@ -537,7 +537,7 @@ Request: {file: PDF, subject: "Chemistry", topic: "Organic Reactions"}
 Response: {documentId, pages, chunks, status}
 
 POST /api/tutor/chat
-Request: {documentId, message: "Bengali/English question"}
+Request: {documentId, message: "English-language question"}
 Response: {response, references, followUp}
 ```
 
@@ -623,19 +623,19 @@ GET /api/analytics/classroom/{id}/dashboard
 
 ## NCTB Textbook Q&A Assistant
 
-Amplify also includes a dedicated Retrieval-Augmented Generation (RAG) chatbot for Class 11-12 NCTB textbook questions. The assistant grounds its answers in the selected textbook rather than relying only on the language model's general knowledge. It supports English, Bangla, and ICT materials and is available as a standalone deployed application on Hugging Face:
+Amplify also includes a dedicated Retrieval-Augmented Generation (RAG) chatbot for Class 11-12 NCTB textbook questions. The assistant grounds its answers in the selected textbook rather than relying only on the language model's general knowledge. It supports English and ICT materials and is available as a standalone deployed application on Hugging Face:
 
 **Live chatbot:** [NCTB Textbook Q&A Assistant on Hugging Face](https://huggingface.co/spaces/addyjeddy/book-chatbot-better/tree/main)
 
 ### Capabilities
 
-- **Multi-subject support:** English, Bangla (বাংলা), and ICT textbooks
+- **Multi-subject support:** English and ICT textbooks
 - **Hybrid retrieval:** Combines semantic similarity from FAISS with keyword matching to retrieve relevant textbook passages
 - **LLM inference:** Uses Groq-hosted models, including GPT-OSS 120B, with a configurable model mapping
-- **Language-aware processing:** Performs Bengali spelling correction when needed and preserves the language of the student's question
-- **Voice input:** Uses the browser Web Speech API for English and Bengali speech-to-text input
+- **English-language processing:** Grounds answers in the selected textbook
+- **Voice input:** Uses the browser Web Speech API for speech-to-text input
 - **Conversation history:** Saves conversations with timestamps and restores them across browser sessions
-- **Revision export:** Generates PDF revision material from chat history, including Noto Sans Bengali font support
+- **Revision export:** Generates PDF revision material from chat history
 - **Graceful failures:** Retries transient API errors with exponential backoff and provides a useful response when a retrieval or model service is unavailable
 
 ### RAG architecture
@@ -667,16 +667,15 @@ The retrieval process searches the FAISS index for the selected textbook and com
 
 - **Interface:** Gradio with custom responsive dark-theme CSS
 - **Embeddings:** `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`
-- **Vector database:** FAISS (`faiss-cpu`) with 384-dimensional multilingual embeddings
+- **Vector database:** FAISS (`faiss-cpu`) with 384-dimensional embeddings
 - **Language model:** Groq API using `openai/gpt-oss-120b` by default
-- **PDF generation:** FPDF with Noto Sans Bengali font support
+- **PDF generation:** FPDF with embedded font support
 - **Speech recognition:** Browser-side Web Speech API
 - **Conversation persistence:** JSON-backed history and browser session persistence
 
 Each textbook index contains document embeddings, source and chapter metadata, and a document store containing the original passage text. The expected index directories are:
 
 - `nctb_english_index_v2` - English textbook
-- `nctb_bangla_index_v2` - Bengali textbook
 - `nctb_ict_index_better` - ICT textbook
 
 ### Running the chatbot locally
@@ -700,11 +699,10 @@ GROQ_MODELS = {
 ### Typical interaction flow
 
 1. The student selects a textbook and types or speaks a question.
-2. The assistant optionally corrects Bengali spelling.
-3. Hybrid retrieval searches the selected FAISS index.
-4. Retrieved passages are assembled into a grounded system prompt.
-5. Groq generates the answer using the chosen model.
-6. The question and answer are saved to history for later review or PDF export.
+2. Hybrid retrieval searches the selected FAISS index.
+3. Retrieved passages are assembled into a grounded system prompt.
+4. Groq generates the answer using the chosen model.
+5. The question and answer are saved to history for later review or PDF export.
 
 For questions outside the selected textbook, students can rephrase the question or choose a more relevant subject. If an index cannot be loaded, check that its directory is in the application root and that the process has read permission. If responses are slow, the first request may be loading the embedding model and FAISS index into memory.
 

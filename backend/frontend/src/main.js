@@ -18,33 +18,6 @@
 // ─── Init ─────────────────────────────────────────────────────
 console.log('%c✅ Amplify loaded', 'color:#00ff88;font-weight:700;font-size:14px;');
 
-// ─── Language System ──────────────────────────────────────────
-let currentLang = localStorage.getItem('amplify_lang') || 'en';
-
-function setLang(lang) {
-    currentLang = lang;
-    localStorage.setItem('amplify_lang', lang);
-
-    // Update toggle buttons
-    document.getElementById('langEn')?.classList.toggle('active', lang === 'en');
-    document.getElementById('langBn')?.classList.toggle('active', lang === 'bn');
-
-    // Update all elements with data-en / data-bn attributes
-    document.querySelectorAll('[data-en]').forEach(el => {
-        const text = el.getAttribute('data-' + lang);
-        if (text !== null) el.textContent = text;
-    });
-
-    // Update search placeholder
-    const search = document.getElementById('oppSearch');
-    if (search) {
-        search.placeholder = lang === 'bn' ? 'সুযোগ খুঁজুন...' : 'Search opportunities...';
-    }
-
-    // Update html lang attribute
-    document.documentElement.lang = lang === 'bn' ? 'bn' : 'en';
-}
-
 // ─── Header scroll ────────────────────────────────────────────
 window.addEventListener('scroll', () => {
     const header = document.getElementById('header');
@@ -54,10 +27,9 @@ window.addEventListener('scroll', () => {
 
 // ─── Utilities ───────────────────────────────────────────────
 function showDownloadAlert() {
-    const msg = currentLang === 'bn'
-        ? 'অ্যাম্প্লিফাই ডাউনলোড করুন\n\nআপনার আগ্রহের জন্য ধন্যবাদ!\n(এটি একটি ডেমো বোতাম — আসল ডাউনলোড শীঘ্রই আসছে)'
-        : 'Download Amplify\n\nThank you for your interest!\n(Demo button — real download coming soon)';
-    alert(msg);
+    const apkUrl = 'https://github.com/Adnann07/AmplifyApp---Release/releases/download/Amplify/Amplify.apk';
+    window.open(apkUrl, '_blank', 'noopener,noreferrer');
+    return false;
 }
 
 function stopVoice() {
@@ -70,8 +42,7 @@ function stopVoice() {
 
 // ─── DOM Ready ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    // Apply saved language on load
-    setLang(currentLang);
+    document.documentElement.lang = 'en';
 
     // Animate cards into view on scroll
     const observer = new IntersectionObserver(

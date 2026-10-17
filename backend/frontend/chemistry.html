@@ -21,6 +21,8 @@ body{background:var(--bg);color:var(--txt);font-family:var(--body);line-height:1
 /* HEADER */
 .hdr{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(7,13,7,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
 .nav{max-width:1100px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;justify-content:space-between}
+.chem-nav-link{font-family:var(--mono);font-size:12px;color:var(--txt2);text-decoration:none;transition:color .2s ease}
+.chem-nav-link:hover{color:var(--acc)}
 .nav-title{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--acc);letter-spacing:3px}
 .nav-right{font-family:var(--mono);font-size:10px;color:var(--txt3);display:flex;gap:16px;letter-spacing:1px}
 
@@ -191,11 +193,11 @@ h1 span{color:var(--acc)}
 <header class="hdr">
   <div class="nav">
     <div style="display:flex;gap:16px;align-items:center;">
-      <span style="font-family:var(--mono);font-size:12px;color:var(--txt2);text-decoration:none;">← Experiments</span>
-      <span style="font-family:var(--mono);font-size:12px;color:var(--txt2);text-decoration:none;">Home</span>
-      <span style="font-family:var(--mono);font-size:12px;color:var(--txt2);text-decoration:none;">Career</span>
-      <span style="font-family:var(--mono);font-size:12px;color:var(--txt2);text-decoration:none;">Routine</span>
-      <span style="font-family:var(--mono);font-size:12px;color:var(--txt2);text-decoration:none;">Biology</span>
+      <a href="/experiments.html" class="chem-nav-link">← Experiments</a>
+      <a href="/index.html" class="chem-nav-link">Home</a>
+      <a href="/career.html" class="chem-nav-link">Career</a>
+      <a href="/routine.html" class="chem-nav-link">Routine</a>
+      <a href="/biology-lab.html" class="chem-nav-link">Biology</a>
     </div>
     <div style="display:flex;gap:16px;align-items:center;">
       <span><span class="status-dot"></span>LIVE</span>
@@ -2060,17 +2062,10 @@ function startVoiceCommand(){
     return;
   }
 
-  if (window.__voiceCommandActive) {
-    return;
-  }
-
   const btn = document.getElementById('voiceBtn');
   const lbl = document.getElementById('voiceBtnLabel');
   const mic = document.getElementById('micIcon');
 
-  if (!btn || !lbl || !mic) return;
-
-  window.__voiceCommandActive = true;
   btn.style.background = 'rgba(0,255,136,0.25)';
   btn.style.borderColor = '#00ff88';
   mic.textContent = '🔴';
@@ -2083,16 +2078,11 @@ function startVoiceCommand(){
   recog.interimResults = false;
   recog.maxAlternatives = 5;
 
-  const resetVoiceUI = () => {
-    window.__voiceCommandActive = false;
+  recog.onresult = (e)=>{
     btn.style.background = 'rgba(0,255,136,0.08)';
     btn.style.borderColor = 'rgba(0,255,136,0.25)';
     mic.textContent = '🎙️';
     lbl.textContent = 'Speak Experiment';
-  };
-
-  recog.onresult = (e)=>{
-    resetVoiceUI();
 
     const said = e.results[0][0].transcript;
     const section = matchSection(said);
@@ -2145,23 +2135,21 @@ function startVoiceCommand(){
   };
 
   recog.onerror = (e)=>{
-    resetVoiceUI();
-    console.error('[VoiceCmd] Speech recognition error:', e);
-    showToast(`⚠️ Mic error: ${e.error || 'unknown error'}`, 3000);
+    btn.style.background = 'rgba(0,255,136,0.08)';
+    btn.style.borderColor = 'rgba(0,255,136,0.25)';
+    mic.textContent = '🎙️';
+    lbl.textContent = 'Speak Experiment';
+    showToast(`⚠️ Mic error: ${e.error}`, 3000);
   };
 
   recog.onend = ()=>{
-    resetVoiceUI();
+    btn.style.background = 'rgba(0,255,136,0.08)';
+    btn.style.borderColor = 'rgba(0,255,136,0.25)';
+    mic.textContent = '🎙️';
+    lbl.textContent = 'Speak Experiment';
   };
 
-  try {
-    recog.start();
-  } catch (err) {
-    resetVoiceUI();
-    console.error('[VoiceCmd] recog.start() failed:', err);
-    const msg = err && (err.message || err.name) ? `${err.name || 'Error'}: ${err.message || ''}`.trim() : 'Unknown browser error';
-    showToast(`⚠️ Mic couldn't start: ${msg}. Check mic permission, HTTPS, or if the page is inside an iframe.`, 5000);
-  }
+  recog.start();
 }
 
 function fireWelcome(){

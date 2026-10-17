@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23020B16'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%2300B7FF'>A</text></svg>">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Amplify — শিক্ষার অগ্রগতি</title>
+<title>Amplify — Learning Progress</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
   --bg:#020B16; --bg-alt:#061726; --bg-card:#0A1F33;
@@ -16,8 +17,8 @@
   --radius:12px; --radius-sm:8px;
   --shadow:0 2px 20px rgba(0,183,255,0.08);
   --shadow-lg:0 8px 40px rgba(0,183,255,0.15);
-  --font-body:'Hind Siliguri',sans-serif;
-  --font-display:'Tiro Bangla',serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-display:'Syne',serif;
   --expert1-color:#C44DFF; --expert2-color:#00B7FF; --expert3-color:#E15CFF;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -28,11 +29,13 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .page{min-height:100vh;position:relative;z-index:1;display:flex;flex-direction:column;}
 
 /* NAV */
-.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid var(--border-soft);background:rgba(6,23,38,0.85);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;flex-shrink:0;}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:4px 32px;border-bottom:1px solid var(--border-soft);background:rgba(6,23,38,0.94);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;flex-shrink:0;min-height:38px;}
 .nav-brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:1.15rem;color:var(--text);text-decoration:none;}
 .brand-dot{width:10px;height:10px;border-radius:50%;background:var(--expert1-color);box-shadow:0 0 10px var(--expert1-color);}
 .nav-title{font-size:0.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--font-body);font-weight:600;}
 .nav-right{display:flex;align-items:center;gap:10px;}
+.nav-refresh{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--border);border-radius:8px;background:rgba(0,183,255,0.08);color:var(--accent);font-size:18px;cursor:pointer;transition:background 0.2s,transform 0.2s;}
+.nav-refresh:hover{background:rgba(0,183,255,0.18);transform:rotate(45deg);}
 .nav-back{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:none;font-family:var(--font-body);font-size:0.8rem;color:var(--text-muted);cursor:pointer;text-decoration:none;transition:border-color 0.2s,color 0.2s;}
 .nav-back:hover{border-color:var(--accent);color:var(--accent);}
 .nav-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;background:rgba(196,77,255,0.1);border:1px solid rgba(196,77,255,0.25);color:var(--expert1-color);}
@@ -43,33 +46,34 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 .source-local{background:rgba(196,77,255,0.12);border:1px solid rgba(196,77,255,0.3);color:var(--expert1-color);}
 
 /* MAIN */
-.main{flex:1;padding:28px 32px 48px;display:flex;flex-direction:column;gap:24px;max-width:1440px;width:100%;margin:0 auto;}
+.main{flex:1;padding:14px 36px 42px;display:flex;flex-direction:column;gap:18px;max-width:1440px;width:100%;margin:0 auto;}
 .section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;}
+.main > section:first-child .section-header{display:none;}
 .section-title{font-size:0.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;}
 .section-action{font-size:0.72rem;color:var(--text-muted);cursor:pointer;text-decoration:none;transition:color 0.2s;}
 .section-action:hover{color:var(--accent);}
 
 /* METRICS */
 .metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-.metric-card{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;transition:border-color 0.25s,box-shadow 0.25s;animation:fadeUp 0.5s ease both;}
+.metric-card{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:var(--radius);padding:12px 18px;position:relative;overflow:hidden;transition:border-color 0.25s,box-shadow 0.25s;animation:fadeUp 0.5s ease both;}
 .metric-card:hover{border-color:var(--border);box-shadow:var(--shadow);}
 .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
 .metric-card.c-purple::before{background:linear-gradient(90deg,var(--expert1-color),transparent);}
 .metric-card.c-blue::before{background:linear-gradient(90deg,var(--accent),transparent);}
 .metric-card.c-teal::before{background:linear-gradient(90deg,#00e5b0,transparent);}
 .metric-card.c-amber::before{background:linear-gradient(90deg,#f59e0b,transparent);}
-.metric-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:12px;}
+.metric-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:8px;}
 .metric-card.c-purple .metric-icon{background:rgba(196,77,255,0.12);}
 .metric-card.c-blue .metric-icon{background:rgba(0,183,255,0.12);}
 .metric-card.c-teal .metric-icon{background:rgba(0,229,176,0.12);}
 .metric-card.c-amber .metric-icon{background:rgba(245,158,11,0.12);}
 .metric-label{font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:4px;}
-.metric-value{font-family:var(--font-display);font-size:2rem;color:var(--text);line-height:1.1;margin-bottom:4px;}
+.metric-value{font-family:var(--font-display);font-size:1.8rem;color:var(--text);line-height:1.1;margin-bottom:3px;}
 .metric-sub{font-size:0.72rem;color:var(--text-muted);}
 .metric-card:nth-child(1){animation-delay:0s;}.metric-card:nth-child(2){animation-delay:0.07s;}.metric-card:nth-child(3){animation-delay:0.14s;}.metric-card:nth-child(4){animation-delay:0.21s;}
 
 /* BRAIN + DASHBOARD LAYOUT */
-.brain-dashboard-grid{display:grid;grid-template-columns:1fr 480px;gap:20px;align-items:start;}
+.brain-dashboard-grid{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(340px,1fr);gap:18px;align-items:start;}
 
 /* ═══ SECOND BRAIN PANEL ═══ */
 .brain-panel{
@@ -97,6 +101,8 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
   font-size:0.62rem;color:var(--accent);font-weight:700;
   letter-spacing:0.08em;text-transform:uppercase;
 }
+.brain-header-meta{display:flex;align-items:center;gap:16px;}
+.brain-interaction-hint{font-size:0.66rem;color:var(--text-muted);white-space:nowrap;}
 .neural-dot{
   width:6px;height:6px;border-radius:50%;
   background:var(--accent);
@@ -105,19 +111,20 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 }
 @keyframes neuralPulse{0%,100%{opacity:1;box-shadow:0 0 8px var(--accent);}50%{opacity:0.4;box-shadow:0 0 3px var(--accent);}}
 
-/* REPLACE WITH: */
 .brain-canvas-container{
   position:relative;
-  height:420px;
+  height:350px;
   display:flex;align-items:center;justify-content:center;
   overflow:hidden;
-  background:#000000;
+  background:#000;
 }
 #brainCanvas{
   width:100%;height:100%;
   display:block;
-  cursor:crosshair;
+  cursor:grab;
+  touch-action:none;
 }
+#brainCanvas.is-dragging{cursor:grabbing;}
 
 /* scanline overlay */
 .brain-canvas-container::before{
@@ -354,13 +361,14 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 @media(max-width:1100px){.brain-dashboard-grid{grid-template-columns:1fr;}.metrics-row{grid-template-columns:repeat(2,1fr);}.two-col,.three-col{grid-template-columns:1fr;}.main{padding:20px 16px 40px;}.nav{padding:12px 16px;}}
+@media(max-width:600px){.brain-interaction-hint{display:none;}.brain-canvas-container{height:320px;}.main{padding:14px 12px 32px;}.nav-title{display:none;}.metric-card{padding:10px 12px;}}
 </style>
 </head>
 <body>
 
 <div id="loading-overlay">
   <div class="loading-ring"></div>
-  <div class="loading-text" id="loading-text">ডেটা লোড হচ্ছে…</div>
+  <div class="loading-text" id="loading-text">Loading your data…</div>
   <div class="loading-source" id="loading-source"></div>
 </div>
 
@@ -371,17 +379,18 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 
 <div class="page">
   <nav class="nav">
-    <a href="javascript:history.back()" class="nav-brand">
+    <a href="/index.html" class="nav-brand">
       <div class="brand-dot"></div>Amplify
     </a>
-    <div class="nav-title">শিক্ষার অগ্রগতি</div>
+    <div class="nav-title">Learning Progress</div>
     <div class="nav-right">
       <div class="nav-badge">
         <div class="pulse-dot"></div>
         <span id="nav-streak">—</span>
       </div>
+      <button class="nav-refresh" type="button" onclick="loadAndRender()" title="Refresh dashboard" aria-label="Refresh dashboard">↻</button>
       <span id="data-source-badge" class="source-badge source-local" style="display:none;"></span>
-      <a href="javascript:history.back()" class="nav-back">← ফিরে যান</a>
+      <a href="/index.html" class="nav-back" data-history-back>← Back</a>
     </div>
   </nav>
 
@@ -390,8 +399,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <!-- METRICS -->
     <section>
       <div class="section-header">
-        <div class="section-title">সারসংক্ষেপ</div>
-        <span class="section-action" onclick="loadAndRender()">↺ রিফ্রেশ</span>
+        <div class="section-title">Overview</div>
       </div>
       <div class="metrics-row" id="metrics-row"></div>
     </section>
@@ -406,9 +414,11 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
             <span style="font-size:16px;">🧠</span>
             <span class="brain-panel-title-text">Second Brain — Neural Map</span>
           </div>
-          <div class="brain-neural-indicator">
-            <div class="neural-dot"></div>
-            <span id="brain-status-text">Initializing…</span>
+          <div class="brain-header-meta">
+            <div class="brain-neural-indicator">
+              <div class="neural-dot"></div>
+              <span id="brain-status-text">Initializing…</span>
+            </div>
           </div>
         </div>
 
@@ -418,7 +428,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
           <div class="corner corner-bl"></div>
           <div class="corner corner-br"></div>
 
-          <canvas id="brainCanvas"></canvas>
+          <canvas id="brainCanvas" title="Drag horizontally to rotate on the X axis" aria-label="Interactive neural map. Drag horizontally to rotate on the X axis; hover a region for details."></canvas>
 
           <!-- loading -->
           <div class="brain-loading" id="brainLoading">
@@ -431,7 +441,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
           <div class="brain-error" id="brainError">
             <div class="brain-error-icon">🧠</div>
             <div class="brain-error-title">Brain model not found</div>
-            <div class="brain-error-msg">Place <code>brain_hologram.glb</code> in your <code>/models/</code> folder. Running in demo mode with procedural visualization.</div>
+            <div class="brain-error-msg">Place <code>brain_hologram.glb</code> in <code>public/models/</code>. Running in demo mode with procedural visualization.</div>
             <div class="brain-error-path">/models/brain_hologram.glb</div>
           </div>
 
@@ -446,11 +456,11 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
         </div>
 
         <div class="brain-legend" id="brain-legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#C44DFF;box-shadow:0 0 6px #C44DFF55;"></div>মনোযোগ</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#00B7FF;box-shadow:0 0 6px #00B7FF55;"></div>বিষয় জ্ঞান</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#00e5b0;box-shadow:0 0 6px #00e5b055;"></div>দক্ষতা</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b55;"></div>পর্যালোচনা</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#f87171;box-shadow:0 0 6px #f8717155;"></div>দুর্বল</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#C44DFF;box-shadow:0 0 6px #C44DFF55;"></div>Attention</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#00B7FF;box-shadow:0 0 6px #00B7FF55;"></div>Subject knowledge</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#00e5b0;box-shadow:0 0 6px #00e5b055;"></div>Skills</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b55;"></div>Review</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f87171;box-shadow:0 0 6px #f8717155;"></div>Needs work</div>
         </div>
       </div>
 
@@ -459,7 +469,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title"><span class="panel-title-icon">🧠</span>ধারণা দখল</div>
+            <div class="panel-title"><span class="panel-title-icon">🧠</span>Concept mastery</div>
             <span class="panel-count" id="concept-count">—</span>
           </div>
           <div class="panel-body" id="concept-body">
@@ -471,7 +481,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title"><span class="panel-title-icon">📅</span>পর্যালোচনার সময়সূচি</div>
+            <div class="panel-title"><span class="panel-title-icon">📅</span>Review schedule</div>
             <span class="panel-count" id="review-count">—</span>
           </div>
           <div class="panel-body" id="review-body">
@@ -482,7 +492,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title"><span class="panel-title-icon">🎯</span>দক্ষতার স্তর</div>
+            <div class="panel-title"><span class="panel-title-icon">🎯</span>Skill levels</div>
           </div>
           <div class="panel-body" id="skill-body">
             <div class="skeleton skeleton-line"></div>
@@ -496,31 +506,31 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <div class="three-col">
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title"><span class="panel-title-icon">🕸️</span>শীর্ষ বিষয়সমূহ</div>
+          <div class="panel-title"><span class="panel-title-icon">🕸️</span>Top topics</div>
           <span class="panel-count" id="topic-count">—</span>
         </div>
         <div class="panel-body" id="topic-body"><div class="skeleton skeleton-line"></div></div>
       </div>
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title"><span class="panel-title-icon">📆</span>পড়ার কার্যকলাপ</div>
+          <div class="panel-title"><span class="panel-title-icon">📆</span>Study activity</div>
         </div>
         <div class="panel-body">
           <div class="heatmap-grid" id="heatmap-grid"></div>
           <div class="heat-legend">
-            <span>কম</span>
+            <span>Less</span>
             <div class="heat-legend-cell heat-0"></div><div class="heat-legend-cell heat-1"></div><div class="heat-legend-cell heat-2"></div><div class="heat-legend-cell heat-3"></div>
-            <span>বেশি</span>
+            <span>More</span>
           </div>
           <div style="margin-top:14px;">
-            <div class="section-title" style="margin-bottom:8px;">ধারাবাহিক দিন</div>
+            <div class="section-title" style="margin-bottom:8px;">Study streak</div>
             <div class="streak-dots" id="streak-dots"></div>
           </div>
         </div>
       </div>
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title"><span class="panel-title-icon">🔗</span>একাধিক নথিতে ধারণা</div>
+          <div class="panel-title"><span class="panel-title-icon">🔗</span>Cross-document concepts</div>
         </div>
         <div class="panel-body" id="cross-body"><div class="skeleton skeleton-line"></div></div>
       </div>
@@ -529,7 +539,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <!-- ATTENTION -->
     <div class="panel" id="attention-panel">
       <div class="panel-header">
-        <div class="panel-title"><span class="panel-title-icon">👁️</span>মনোযোগ বিশ্লেষণ</div>
+        <div class="panel-title"><span class="panel-title-icon">👁️</span>Attention analysis</div>
         <span class="panel-count" id="att-session-count">—</span>
       </div>
       <div class="panel-body" id="attention-body">
@@ -541,7 +551,7 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
     <!-- DOCUMENTS -->
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title"><span class="panel-title-icon">📚</span>পড়া নথিসমূহ</div>
+        <div class="panel-title"><span class="panel-title-icon">📚</span>Documents studied</div>
         <span class="panel-count" id="doc-count">—</span>
       </div>
       <div class="panel-body" id="doc-body"><div class="skeleton skeleton-line"></div></div>
@@ -557,6 +567,8 @@ body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse
 // CONFIG & KEYS
 // ═══════════════════════════════════════════════════════════
 const LS_DOCS_KEY = 'amplify_tutor_documents';
+const LS_QUIZ_SESSIONS_KEY = 'amplify_quiz_sessions';
+const LS_ATTENTION_SESSIONS_KEY = 'amplify_attention_sessions';
 function getNeo4jConfig() {
   const env = window.AMPLIFY_ENV || {};
   const cached = JSON.parse(localStorage.getItem('amplify_neo4j_cfg') || '{}');
@@ -570,220 +582,56 @@ async function neo4jRun(cypher,params={}){
   const d=await res.json(); if(d.errors&&d.errors.length)throw new Error(d.errors[0].message); return d;
 }
 function neo4jRows(result,idx=0){return(result.results?.[idx]?.data||[]).map(r=>r.row);}
+function loadLocalRecords(key){try{const records=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(records)?records:[];}catch{return[];}}
 
 // ═══════════════════════════════════════════════════════════
 // DATA FETCHING
 // ═══════════════════════════════════════════════════════════
-async function fetchDocuments() {
-  return [
-    {
-      docId:    'doc_cell_division_001',
-      filename: 'Cell Division – Mitosis & Meiosis.pdf',
-      date:     '2026-06-01T10:00:00Z',
-      pages:    48,
-      chunkCount: 22,
-      conceptMastery: {
-        'Mitosis Phases':       { score: 0.88, attempts: 6, hintCount: 1 },
-        'Meiosis I & II':       { score: 0.72, attempts: 5, hintCount: 2 },
-        'Chromatin Structure':  { score: 0.65, attempts: 4, hintCount: 3 },
-        'Spindle Formation':    { score: 0.55, attempts: 4, hintCount: 4 },
-        'Cytokinesis':          { score: 0.48, attempts: 3, hintCount: 3 },
-        'Cell Cycle Checkpoints':{ score: 0.40, attempts: 3, hintCount: 5 },
-        'Crossing Over':        { score: 0.35, attempts: 2, hintCount: 5 },
-        'Karyotype Analysis':   { score: 0.30, attempts: 2, hintCount: 6 },
-      },
-      graphNodes: [
-        { id: 'Mitosis',           freq: 18, pages: [3,5,7,10,12] },
-        { id: 'Meiosis',           freq: 15, pages: [14,16,18,21] },
-        { id: 'Cell Cycle',        freq: 12, pages: [2,4,6,8]     },
-        { id: 'Chromosomes',       freq: 11, pages: [5,9,15,20]   },
-        { id: 'Spindle Fibers',    freq:  9, pages: [7,11,17]     },
-        { id: 'Interphase',        freq:  8, pages: [3,4]         },
-        { id: 'Prophase',          freq:  8, pages: [5,6]         },
-        { id: 'Metaphase',         freq:  7, pages: [7,8]         },
-        { id: 'Anaphase',          freq:  7, pages: [9,10]        },
-        { id: 'Telophase',         freq:  6, pages: [11,12]       },
-        { id: 'Crossing Over',     freq:  6, pages: [18,19]       },
-        { id: 'Cytokinesis',       freq:  5, pages: [12,13,22]    },
-        { id: 'DNA Replication',   freq:  5, pages: [2,3]         },
-        { id: 'Checkpoints (G1/S/G2)', freq: 4, pages: [4,6]     },
-        { id: 'Homologous Pairs',  freq:  4, pages: [15,16]       },
-      ],
-      keywords: [],
-      chatHistory: Array.from({ length: 34 }, (_, i) => ({
-        role: i % 2 === 0 ? 'user' : 'assistant',
-      })),
-    },
-    {
-      docId:    'doc_cell_division_002',
-      filename: 'HSC Biology Chapter 5 – Cell Division Notes.pdf',
-      date:     '2026-06-04T14:30:00Z',
-      pages:    31,
-      chunkCount: 14,
-      conceptMastery: {
-        'Mitosis Phases':     { score: 0.90, attempts: 4, hintCount: 0 },
-        'Meiosis I & II':     { score: 0.68, attempts: 3, hintCount: 2 },
-        'Crossing Over':      { score: 0.38, attempts: 2, hintCount: 4 },
-        'Karyotype Analysis': { score: 0.32, attempts: 1, hintCount: 5 },
-        'Sister Chromatids':  { score: 0.75, attempts: 4, hintCount: 1 },
-        'Binary Fission':     { score: 0.82, attempts: 5, hintCount: 1 },
-      },
-      graphNodes: [
-        { id: 'Mitosis',          freq: 14, pages: [2,5,8,12] },
-        { id: 'Meiosis',          freq: 11, pages: [13,16,19] },
-        { id: 'Sister Chromatids',freq:  7, pages: [5,7,9]   },
-        { id: 'Binary Fission',   freq:  5, pages: [20,21]   },
-        { id: 'Cell Cycle',       freq:  8, pages: [1,2,3]   },
-        { id: 'Chromosomes',      freq:  9, pages: [4,6,8]   },
-        { id: 'Crossing Over',    freq:  4, pages: [15,17]   },
-      ],
-      chatHistory: Array.from({ length: 21 }, (_, i) => ({
-        role: i % 2 === 0 ? 'user' : 'assistant',
-      })),
-    },
-    {
-      docId:    'doc_cell_division_003',
-      filename: 'Model Test – Cell Division MCQ Set.pdf',
-      date:     '2026-06-07T09:00:00Z',
-      pages:    12,
-      chunkCount: 6,
-      conceptMastery: {
-        'Mitosis Phases':          { score: 0.85, attempts: 8, hintCount: 0 },
-        'Cell Cycle Checkpoints':  { score: 0.42, attempts: 4, hintCount: 4 },
-        'Spindle Formation':       { score: 0.58, attempts: 5, hintCount: 3 },
-        'Meiosis I & II':          { score: 0.70, attempts: 6, hintCount: 2 },
-      },
-      graphNodes: [
-        { id: 'Mitosis',          freq: 10, pages: [1,3,5,7]  },
-        { id: 'Cell Cycle',       freq:  8, pages: [2,4]       },
-        { id: 'Spindle Fibers',   freq:  6, pages: [5,6]       },
-        { id: 'Meiosis',          freq:  7, pages: [8,9,10]    },
-      ],
-      chatHistory: Array.from({ length: 16 }, (_, i) => ({
-        role: i % 2 === 0 ? 'user' : 'assistant',
-      })),
-    },
-  ];
+async function fetchDocuments(){if(_neo4jEnabled){const r=await neo4jRun('MATCH (d:Document) RETURN d ORDER BY d.date DESC');return neo4jRows(r).map(row=>row[0]);}return loadLocal();}
+async function fetchQuizSessions(){return loadLocalRecords(LS_QUIZ_SESSIONS_KEY).sort((a,b)=>new Date(b.date)-new Date(a.date));}
+async function fetchTopicNodes(){
+  if(_neo4jEnabled){const r=await neo4jRun('MATCH (t:Topic) RETURN t.id AS id,t.freq AS freq,t.pages AS pages,t.docId AS docId ORDER BY t.freq DESC LIMIT 30');return neo4jRows(r).map(([id,freq,pages,docId])=>({id,freq,pages:pages||[],docId}));}
+  const map=new Map();
+  const add=(id,freq=1,pages=[],docId='')=>{if(!id)return;const key=`${id}::${docId||'local'}`;if(!map.has(key))map.set(key,{id,freq:0,pages:new Set(),docId:docId||undefined});const topic=map.get(key);topic.freq+=Number(freq)||1;(pages||[]).forEach(page=>topic.pages.add(page));};
+  loadLocal().forEach(doc=>(doc.graphNodes||[]).forEach(node=>add(node.id,node.freq,node.pages,doc.docId)));
+  loadLocalRecords(LS_QUIZ_SESSIONS_KEY).forEach(session=>(session.answers||[]).forEach(answer=>add(answer.concept,1,[],session.docId)));
+  return [...map.values()].map(topic=>({...topic,pages:[...topic.pages]})).sort((a,b)=>b.freq-a.freq).slice(0,30);
 }
- 
-async function fetchConceptMastery() {
-  return [
-    // Sorted ascending by score (weakest first — matches original sort)
-    { concept: 'Karyotype Analysis',        score: 0.31, attempts: 3,  hintCount: 11, docId: 'doc_cell_division_001' },
-    { concept: 'Crossing Over',             score: 0.36, attempts: 4,  hintCount: 9,  docId: 'doc_cell_division_001' },
-    { concept: 'Cell Cycle Checkpoints',    score: 0.41, attempts: 7,  hintCount: 9,  docId: 'doc_cell_division_001' },
-    { concept: 'Cytokinesis',               score: 0.48, attempts: 3,  hintCount: 3,  docId: 'doc_cell_division_001' },
-    { concept: 'Spindle Formation',         score: 0.56, attempts: 9,  hintCount: 7,  docId: 'doc_cell_division_001' },
-    { concept: 'Chromatin Structure',       score: 0.65, attempts: 4,  hintCount: 3,  docId: 'doc_cell_division_001' },
-    { concept: 'Meiosis I & II',            score: 0.70, attempts: 14, hintCount: 6,  docId: 'doc_cell_division_001' },
-    { concept: 'Sister Chromatids',         score: 0.75, attempts: 4,  hintCount: 1,  docId: 'doc_cell_division_002' },
-    { concept: 'Binary Fission',            score: 0.82, attempts: 5,  hintCount: 1,  docId: 'doc_cell_division_002' },
-    { concept: 'Mitosis Phases',            score: 0.88, attempts: 18, hintCount: 1,  docId: 'doc_cell_division_001' },
-    { concept: 'Interphase',                score: 0.90, attempts: 7,  hintCount: 0,  docId: 'doc_cell_division_001' },
-    { concept: 'DNA Replication (S Phase)', score: 0.78, attempts: 6,  hintCount: 2,  docId: 'doc_cell_division_001' },
-  ];
-}
- 
-async function fetchTopicNodes() {
-  return [
-    { id: 'Mitosis',               freq: 42, pages: [3,5,7,10,12,2,5,8,12,1,3,5,7], docId: 'doc_cell_division_001' },
-    { id: 'Meiosis',               freq: 33, pages: [14,16,18,21,13,16,19,8,9,10],  docId: 'doc_cell_division_001' },
-    { id: 'Cell Cycle',            freq: 28, pages: [2,4,6,8,1,2,3,2,4],            docId: 'doc_cell_division_001' },
-    { id: 'Chromosomes',           freq: 20, pages: [5,9,15,20,4,6,8],              docId: 'doc_cell_division_001' },
-    { id: 'Spindle Fibers',        freq: 15, pages: [7,11,17,5,6],                  docId: 'doc_cell_division_001' },
-    { id: 'Crossing Over',         freq: 10, pages: [18,19,15,17],                  docId: 'doc_cell_division_001' },
-    { id: 'Sister Chromatids',     freq:  7, pages: [5,7,9],                        docId: 'doc_cell_division_002' },
-    { id: 'Cytokinesis',           freq:  5, pages: [12,13,22],                     docId: 'doc_cell_division_001' },
-    { id: 'DNA Replication',       freq:  5, pages: [2,3],                          docId: 'doc_cell_division_001' },
-    { id: 'Checkpoints (G1/S/G2)', freq:  4, pages: [4,6],                          docId: 'doc_cell_division_001' },
-  ];
-}
- 
-async function fetchMessages() {
-  // 71 simulated messages spread over the last 14 days
-  const msgs = [];
-  const now = Date.now();
-  const day = 86400000;
-  const schedule = [5, 4, 0, 6, 8, 0, 5, 7, 4, 0, 6, 9, 7, 5]; // msgs per day going back
-  schedule.forEach((count, i) => {
-    for (let j = 0; j < count; j++) {
-      msgs.push({
-        ts: now - i * day + j * 300000,
-        role: j % 2 === 0 ? 'user' : 'assistant',
-      });
-    }
-  });
-  return msgs;
-}
- 
-async function fetchMessages(){
+async function fetchConceptMastery(){
+  const localConcepts=aggregateConceptsFromDocs(loadLocal(),loadLocalRecords(LS_QUIZ_SESSIONS_KEY));
   if(_neo4jEnabled){
-    try{
-      const r=await neo4jRun('MATCH (m:Message) RETURN m.timestamp AS ts,m.role AS role ORDER BY m.timestamp DESC LIMIT 500');
-      const rows=neo4jRows(r).map(([ts,role])=>({ts,role}));
-      if(rows.length) return rows;
-    }catch(e){}
+    try{const r=await neo4jRun('MATCH (sc:StudentConcept) RETURN sc.concept AS concept,sc.score AS score,sc.attempts AS attempts,sc.hintCount AS hintCount,sc.docId AS docId ORDER BY sc.score ASC');const rows=neo4jRows(r);if(rows.length)return mergeConcepts(rows.map(([concept,score,attempts,hintCount,docId])=>({concept,score:score||0,attempts:attempts||0,hintCount:hintCount||0,docId})),localConcepts);}catch(e){}
   }
-  const docs=loadLocal();
-  const msgs=[];
-  docs.forEach(doc=>{
-    const ts=parseInt((doc.docId||'').split('_').pop())||new Date(doc.date||Date.now()).getTime();
-    const history=doc.chatHistory||doc.chat_history||doc.messages||[];
-    history.forEach(m=>msgs.push({ts,role:m.role||'user'}));
-  });
+  return localConcepts;
+}
+async function fetchMessages(){
+  if(_neo4jEnabled){const r=await neo4jRun('MATCH (m:Message) RETURN m.timestamp AS ts,m.role AS role ORDER BY m.timestamp DESC LIMIT 500');return neo4jRows(r).map(([ts,role])=>({ts,role}));}
+  const docs=loadLocal();const msgs=[];
+  docs.forEach(doc=>(doc.chatHistory||[]).forEach(message=>msgs.push({ts:message.ts||message.timestamp||null,role:message.role})));
   return msgs;
 }
 async function fetchAttentionSessions(){
-  if(_neo4jEnabled){try{const r=await neo4jRun('MATCH (a:AttentionSession) RETURN a.date AS date,a.focused AS focused,a.confused AS confused,a.distracted AS distracted,a.noFace AS noFace,a.durationSeconds AS duration,a.total AS total,a.docId AS docId ORDER BY a.date DESC LIMIT 10');const rows=neo4jRows(r);if(rows.length)return rows.map(([date,focused,confused,distracted,noFace,duration,total,docId])=>({date,focused:focused||0,confused:confused||0,distracted:distracted||0,noFace:noFace||0,duration:duration||0,total:total||1,docId}));}catch(e){}}
-  try{const log=window._attentionLog||(window.opener&&window.opener._attentionLog)||[];if(log.length){const focused=log.filter(e=>e.state==='focused').length,confused=log.filter(e=>e.state==='confused').length,distracted=log.filter(e=>e.state==='distracted').length,noFace=log.filter(e=>e.state==='no_face').length,duration=Math.floor((Date.now()-(window._sessionStart||Date.now()))/1000);return[{date:new Date().toISOString(),focused,confused,distracted,noFace,duration,total:log.length,live:true}];}}catch(e){}
-  try{const saved=JSON.parse(localStorage.getItem('amplify_attention_sessions')||'[]');if(Array.isArray(saved)&&saved.length)return saved.slice(0,10);}catch(e){}
-  return null;
+  if(_neo4jEnabled){try{const r=await neo4jRun('MATCH (a:AttentionSession) RETURN a.date AS date,a.focused AS focused,a.confused AS confused,a.distracted AS distracted,a.noFace AS noFace,a.durationSeconds AS duration,a.total AS total,a.docId AS docId ORDER BY a.date DESC LIMIT 100');const rows=neo4jRows(r);if(rows.length)return rows.map(([date,focused,confused,distracted,noFace,duration,total,docId])=>({date,focused:focused||0,confused:confused||0,distracted:distracted||0,noFace:noFace||0,duration:duration||0,total:total||1,docId}));}catch(e){}}
+  return loadLocalRecords(LS_ATTENTION_SESSIONS_KEY).sort((a,b)=>new Date(b.date)-new Date(a.date));
 }
 async function fetchCoOccurrenceLinks(){
   if(_neo4jEnabled){try{const r=await neo4jRun('MATCH (t:Topic) WITH t.id AS concept,collect(DISTINCT t.docId) AS docIds WHERE size(docIds)>1 RETURN concept,docIds ORDER BY size(docIds) DESC LIMIT 20');return neo4jRows(r).map(([concept,docIds])=>({a:concept,b:concept,w:docIds.length,docA:docIds[0],docB:docIds[1],allDocIds:docIds}));}catch(e){return[];}}
   return[];
 }
 function loadLocal(){try{const raw=localStorage.getItem(LS_DOCS_KEY);const parsed=raw?JSON.parse(raw):[];return Array.isArray(parsed)?parsed:[];}catch{return[];}}
-
-function aggregateConceptsFromDocs(docs){
-  const map={};
-  docs.forEach(doc=>{
-    const mastery=doc.conceptMastery||doc.concept_mastery||{};
-    Object.entries(mastery).forEach(([concept,data])=>{
-      if(!concept||typeof data!=='object')return;
-      if(!map[concept])map[concept]={concept,totalScore:0,attempts:0,hintCount:0,count:0};
-      map[concept].totalScore+=data.score||0;
-      map[concept].attempts+=data.attempts||0;
-      map[concept].hintCount+=data.hintCount||data.hint_count||0;
-      map[concept].count++;
-    });
-    if(!Object.keys(mastery).length){
-      (doc.quizResults||doc.quiz_results||[]).forEach(q=>{
-        const concept=q.concept||q.topic||q.question||'Unknown';
-        if(!map[concept])map[concept]={concept,totalScore:0,attempts:0,hintCount:0,count:0};
-        map[concept].totalScore+=q.correct?1:q.score!=null?q.score:0;
-        map[concept].attempts+=1;
-        map[concept].hintCount+=q.hintCount||q.hints||0;
-        map[concept].count++;
-      });
-    }
-  });
-  return Object.values(map)
-    .map(d=>({concept:d.concept,score:Math.min(1,d.totalScore/Math.max(1,d.count)),attempts:d.attempts,hintCount:d.hintCount}))
-    .sort((a,b)=>a.score-b.score);
-}
+function aggregateConceptsFromDocs(docs,sessions=[]){const map=new Map();const add=(concept,score,attempts=1,hintCount=0)=>{if(!concept)return;const weight=Math.max(1,Number(attempts)||0);if(!map.has(concept))map.set(concept,{concept,totalScore:0,attempts:0,hintCount:0});const entry=map.get(concept);entry.totalScore+=Math.max(0,Math.min(1,Number(score)||0))*weight;entry.attempts+=weight;entry.hintCount+=Number(hintCount)||0;};docs.forEach(doc=>Object.entries(doc.conceptMastery||{}).forEach(([concept,data])=>add(concept,data.score,data.attempts,data.hintCount)));sessions.forEach(session=>(session.answers||[]).forEach(answer=>add(answer.concept,answer.correct?1:0,1,answer.hintUsed?1:0)));return [...map.values()].map(entry=>({...entry,score:entry.totalScore/Math.max(1,entry.attempts)})).sort((a,b)=>a.score-b.score);}
+function mergeConcepts(primary,secondary){const combined=new Map();[...primary,...secondary].forEach(item=>{if(!combined.has(item.concept))combined.set(item.concept,{concept:item.concept,totalScore:0,attempts:0,hintCount:0});const entry=combined.get(item.concept);const weight=Math.max(1,Number(item.attempts)||0);entry.totalScore+=(Number(item.score)||0)*weight;entry.attempts+=Number(item.attempts)||0;entry.hintCount+=Number(item.hintCount)||0;});return [...combined.values()].map(entry=>({...entry,score:entry.totalScore/Math.max(1,entry.attempts)})).sort((a,b)=>a.score-b.score);}
 
 // ═══════════════════════════════════════════════════════════
 // SPACED REPETITION
 // ═══════════════════════════════════════════════════════════
 function computeNextReview(score,attempts,hintCount){let days;if(score>=0.85)days=14;else if(score>=0.70)days=7;else if(score>=0.50)days=3;else if(score>=0.35)days=1;else days=0;days=Math.max(0,days-(hintCount||0));const daysSinceReview=Math.min(attempts||0,days);return Date.now()+(days-daysSinceReview)*86400000;}
-function reviewDueLabel(ts){const diff=ts-Date.now();const days=Math.floor(diff/86400000);if(diff<=0)return{label:'মেয়াদ উত্তীর্ণ',cls:'due-overdue'};if(days===0)return{label:'আজ',cls:'due-today'};if(days===1)return{label:'আগামীকাল',cls:'due-tomorrow'};return{label:`${days} দিনে`,cls:'due-later'};}
+function reviewDueLabel(ts){const diff=ts-Date.now();const days=Math.floor(diff/86400000);if(diff<=0)return{label:'Overdue',cls:'due-overdue'};if(days===0)return{label:'Today',cls:'due-today'};if(days===1)return{label:'Tomorrow',cls:'due-tomorrow'};return{label:`in ${days} days`,cls:'due-later'};}
 
 // ═══════════════════════════════════════════════════════════
 // ACTIVITY / STREAK
 // ═══════════════════════════════════════════════════════════
-function buildActivityFromMessages(messages){const dayMap={};messages.forEach(({ts})=>{if(!ts)return;const d=new Date(typeof ts==='string'?ts:ts).toDateString();dayMap[d]=(dayMap[d]||0)+1;});const result=[];const today=new Date();for(let i=29;i>=0;i--){const d=new Date(today);d.setDate(today.getDate()-i);result.push({date:d,count:dayMap[d.toDateString()]||0});}return result;}
-function buildActivityFromDocs(docs){const dayMap={};docs.forEach(doc=>{if(doc.date){const d=new Date(doc.date).toDateString();dayMap[d]=(dayMap[d]||0)+1;}});const result=[];const today=new Date();for(let i=29;i>=0;i--){const d=new Date(today);d.setDate(today.getDate()-i);result.push({date:d,count:dayMap[d.toDateString()]||0});}return result;}
+function buildActivity(messages,quizSessions,attentionSessions){const dayMap={};const timestamps=[...messages.map(message=>message.ts),...quizSessions.map(session=>session.date),...attentionSessions.map(session=>session.date)];timestamps.forEach(timestamp=>{if(!timestamp)return;const date=new Date(timestamp);if(Number.isNaN(date.getTime()))return;const day=date.toDateString();dayMap[day]=(dayMap[day]||0)+1;});const result=[];const today=new Date();for(let i=29;i>=0;i--){const date=new Date(today);date.setDate(today.getDate()-i);result.push({date,count:dayMap[date.toDateString()]||0});}return result;}
 function computeStreak(activity){let streak=0;for(let i=activity.length-1;i>=0;i--){if(activity[i].count>0)streak++;else if(i<activity.length-1)break;}return streak;}
 
 // ═══════════════════════════════════════════════════════════
@@ -791,20 +639,20 @@ function computeStreak(activity){let streak=0;for(let i=activity.length-1;i>=0;i
 // ═══════════════════════════════════════════════════════════
 function buildCrossDocFromTopics(topics,docs){const docMap={};topics.forEach(t=>{if(!t.docId)return;if(!docMap[t.id])docMap[t.id]=new Set();docMap[t.id].add(t.docId);});const docNames={};docs.forEach(d=>{if(d.docId)docNames[d.docId]=d.filename||d.docId;});return Object.entries(docMap).filter(([,s])=>s.size>1).map(([concept,docIds])=>({concept,docs:[...docIds].map(id=>docNames[id]||id)})).sort((a,b)=>b.docs.length-a.docs.length).slice(0,8);}
 function buildCrossDocFromLinks(links,docs){const docNames={};docs.forEach(d=>{if(d.docId)docNames[d.docId]=d.filename||d.docId;});return links.map(({a,allDocIds,docA,docB})=>{const docIds=allDocIds||[docA,docB].filter(Boolean);return{concept:a,docs:[...new Set(docIds)].map(id=>docNames[id]||id)};}).slice(0,8);}
-function computeSkills(concepts,topicCount,msgCount){if(!concepts.length)return[];const total=concepts.length;const strong=concepts.filter(c=>c.score>=0.7).length;const weak=concepts.filter(c=>c.score<0.4).length;const hintAvg=concepts.reduce((s,c)=>s+(c.hintCount||0),0)/total;const attemptAvg=concepts.reduce((s,c)=>s+(c.attempts||0),0)/total;const avgScore=concepts.reduce((s,c)=>s+c.score,0)/total;return[{label:'ধারণা বোঝার দক্ষতা',pips:Math.round((strong/total)*5),max:5},{label:'স্বাধীন চিন্তাভাবনা',pips:hintAvg<1?4:hintAvg<2?3:2,max:5},{label:'নিয়মিত অনুশীলন',pips:Math.min(5,Math.round(attemptAvg)),max:5},{label:'দুর্বল অধ্যায় মেরামত',pips:weak===0?5:weak<=1?4:weak<=2?3:2,max:5},{label:'সামগ্রিক দক্ষতা',pips:Math.round(avgScore*5),max:5}];}
+function computeSkills(concepts,topicCount,msgCount){if(!concepts.length)return[];const total=concepts.length;const strong=concepts.filter(c=>c.score>=0.7).length;const weak=concepts.filter(c=>c.score<0.4).length;const hintAvg=concepts.reduce((s,c)=>s+(c.hintCount||0),0)/total;const attemptAvg=concepts.reduce((s,c)=>s+(c.attempts||0),0)/total;const avgScore=concepts.reduce((s,c)=>s+c.score,0)/total;return[{label:'Concept comprehension',pips:Math.round((strong/total)*5),max:5},{label:'Independent thinking',pips:hintAvg<1?4:hintAvg<2?3:2,max:5},{label:'Consistent practice',pips:Math.min(5,Math.round(attemptAvg)),max:5},{label:'Improve weaker topics',pips:weak===0?5:weak<=1?4:weak<=2?3:2,max:5},{label:'Overall skill',pips:Math.round(avgScore*5),max:5}];}
 
 // ═══════════════════════════════════════════════════════════
 // RENDER HELPERS (unchanged from original)
 // ═══════════════════════════════════════════════════════════
-function renderMetrics(avgMastery,dueToday,msgCount,streak){const data=[{icon:'🧠',label:'সামগ্রিক দখল',value:avgMastery+'%',sub:'ধারণা জুড়ে',cls:'c-purple'},{icon:'📅',label:'পর্যালোচনা বাকি',value:dueToday,sub:'আজকের জন্য',cls:'c-amber'},{icon:'💬',label:'মোট বার্তা',value:msgCount,sub:'সব নথিতে',cls:'c-blue'},{icon:'🔥',label:'ধারাবাহিক দিন',value:streak+' দিন',sub:'পড়ার ধারা',cls:'c-teal'}];document.getElementById('metrics-row').innerHTML=data.map(m=>`<div class="metric-card ${m.cls}"><div class="metric-icon">${m.icon}</div><div class="metric-label">${m.label}</div><div class="metric-value">${m.value}</div><div class="metric-sub">${m.sub}</div></div>`).join('');}
-function renderConcepts(concepts){document.getElementById('concept-count').textContent=concepts.length||'—';if(!concepts.length){document.getElementById('concept-body').innerHTML=`<div class="empty-state">এখনো কুইজ দেওয়া হয়নি।<br/>প্রথম কুইজের পরে এখানে ধারণাগুলো দেখাবে।</div>`;return;}document.getElementById('concept-body').innerHTML=concepts.slice(0,8).map((c,i)=>{const pct=Math.round((c.score||0)*100);const barCls=pct>=70?'bar-strong':pct>=40?'bar-medium':'bar-weak';const pctCls=pct>=70?'pct-strong':pct>=40?'pct-medium':'pct-weak';const weakB=pct<40?`<span class="badge badge-weak">দুর্বল</span>`:'';const nr=computeNextReview(c.score,c.attempts,c.hintCount);const dueB=pct>=40&&nr<=Date.now()+86400000?`<span class="badge badge-due">review</span>`:'';return`<div class="concept-row" style="animation-delay:${i*0.05}s"><div class="concept-name">${c.concept}${weakB}${dueB}</div><div class="bar-track"><div class="bar-fill ${barCls}" style="width:0" data-w="${pct}%"></div></div><div class="bar-pct ${pctCls}">${pct}%</div></div>`;}).join('');setTimeout(()=>{document.querySelectorAll('.bar-fill[data-w]').forEach(el=>{el.style.transition='width 1.2s cubic-bezier(0.16,1,0.3,1)';el.style.width=el.dataset.w;});},120);}
-function renderReview(concepts){const due=concepts.map(c=>({...c,nextReview:computeNextReview(c.score,c.attempts,c.hintCount)})).filter(c=>c.nextReview<=Date.now()+2*86400000).slice(0,4);document.getElementById('review-count').textContent=due.length||'—';if(!due.length){document.getElementById('review-body').innerHTML=`<div class="empty-state">🎉 আজকের জন্য কোনো পর্যালোচনা নেই!</div>`;return;}document.getElementById('review-body').innerHTML=due.map((c,i)=>{const{label,cls}=reviewDueLabel(c.nextReview);const pct=Math.round((c.score||0)*100);return`<div class="review-row" style="animation-delay:${i*0.06}s"><div class="review-left"><div class="review-concept">${c.concept}</div><div class="review-sub"><span>${pct}% দখল</span><span class="review-sub-dot"></span><span>${c.hintCount||0} ইঙ্গিত</span></div></div><span class="due-tag ${cls}">${label}</span></div>`;}).join('')+`<button class="review-start-btn" onclick="startReview()">▶ আজকের পর্যালোচনা শুরু করুন</button>`;}
-function renderTopics(topics){document.getElementById('topic-count').textContent=topics.length||'—';if(!topics.length){document.getElementById('topic-body').innerHTML=`<div class="empty-state">গ্রাফ ডেটা পাওয়া যায়নি।</div>`;return;}const maxFreq=Math.max(...topics.map(t=>t.freq||1),1);document.getElementById('topic-body').innerHTML=topics.slice(0,10).map((t,i)=>{const pct=Math.round(((t.freq||1)/maxFreq)*100);const pages=Array.isArray(t.pages)?[...new Set(t.pages)].slice(0,3):[];const pagesLabel=pages.length?`পৃষ্ঠা ${pages.join(', ')}`:'';return`<div class="topic-row" style="animation-delay:${i*0.05}s"><div class="topic-name">${t.id}</div>${pagesLabel?`<span class="topic-pages">${pagesLabel}</span>`:''}<div class="topic-freq-bar"><div class="topic-freq-fill" style="width:${pct}%"></div></div><div class="topic-freq-num">${t.freq||1}</div></div>`;}).join('');}
-function renderHeatmap(activity){document.getElementById('heatmap-grid').innerHTML=activity.map(day=>{const lvl=day.count===0?0:day.count===1?1:day.count<=3?2:3;const lbl=day.date.toLocaleDateString('bn-BD',{day:'numeric',month:'short'});return`<div class="heat-cell heat-${lvl}"><div class="tooltip">${lbl}: ${day.count}টি</div></div>`;}).join('');const last7=activity.slice(-7);document.getElementById('streak-dots').innerHTML=last7.map(d=>`<div class="streak-dot ${d.count>0?'streak-on':'streak-off'}"></div>`).join('');}
-function renderCrossDoc(cross){if(!cross.length){document.getElementById('cross-body').innerHTML=`<div class="empty-state">একাধিক নথি পড়লে এখানে ধারণার মিল দেখাবে।</div>`;return;}document.getElementById('cross-body').innerHTML=cross.map((c,i)=>`<div class="cross-row" style="animation-delay:${i*0.05}s"><div class="cross-concept">${c.concept}</div><div class="cross-docs">${c.docs.slice(0,2).map(d=>`<span class="cross-doc-chip">${d}</span>`).join('')}${c.docs.length>2?`<span class="badge badge-cross">+${c.docs.length-2}</span>`:''}</div></div>`).join('');}
-function renderSkills(skills){if(!skills.length){document.getElementById('skill-body').innerHTML=`<div class="empty-state">দক্ষতার ডেটা তৈরি হচ্ছে…</div>`;return;}document.getElementById('skill-body').innerHTML=skills.map(s=>{const pips=Array.from({length:s.max},(_,i)=>{const filled=i<s.pips;const cls=filled?(s.pips>=4?'filled strong':s.pips>=3?'filled medium':'filled'):'';return`<div class="skill-pip ${cls}"></div>`;}).join('');return`<div class="skill-row"><div class="skill-label">${s.label}</div><div class="skill-level">${pips}</div></div>`;}).join('');}
-function renderAttention(sessions){const body=document.getElementById('attention-body');const countEl=document.getElementById('att-session-count');if(sessions===null){body.innerHTML=`<div class="att-disabled">👁️ মনোযোগ ট্র্যাকার এই সেশনে চালু করা হয়নি।<br/><span style="font-size:0.72rem;opacity:0.6;">মূল অ্যাপে ক্যামেরা বোতামটি চালু করলে এখানে তথ্য দেখাবে।</span></div>`;countEl.textContent='—';return;}if(!sessions.length){body.innerHTML=`<div class="att-disabled">এখনো কোনো মনোযোগ ডেটা সংরক্ষিত নেই।</div>`;countEl.textContent='0';return;}countEl.textContent=sessions.length+'টি সেশন';const latest=sessions[0];const total=Math.max(latest.total||1,1);const focPct=Math.round((latest.focused/total)*100),conPct=Math.round((latest.confused/total)*100),disPct=Math.round((latest.distracted/total)*100),nfPct=Math.round((latest.noFace/total)*100);const mins=Math.floor((latest.duration||0)/60),secs=(latest.duration||0)%60;const durationLabel=mins>0?`${mins}মি ${secs}সে`:`${secs}সে`;const liveTag=latest.live?' <span style="font-size:0.65rem;color:#00e5b0;font-weight:700;">● লাইভ</span>':'';const focusScore=focPct>=70?'att-focus-high':focPct>=45?'att-focus-mid':'att-focus-low';const focusLabel=focPct>=70?'উচ্চ মনোযোগ':focPct>=45?'মাঝারি':'কম মনোযোগ';body.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><div style="font-size:0.75rem;color:var(--text-muted);">সর্বশেষ সেশন${liveTag}</div><span class="att-focus-pill ${focusScore}">${focusLabel}</span></div><div class="attention-grid"><div class="att-card"><div class="att-emoji">🎯</div><div class="att-val" style="color:#4ade80">${focPct}%</div><div class="att-label">মনোযোগী</div></div><div class="att-card"><div class="att-emoji">🤔</div><div class="att-val" style="color:#fbbf24">${conPct}%</div><div class="att-label">বিভ্রান্ত</div></div><div class="att-card"><div class="att-emoji">👀</div><div class="att-val" style="color:#f87171">${disPct}%</div><div class="att-label">অমনোযোগী</div></div><div class="att-card"><div class="att-emoji">⏱️</div><div class="att-val" style="color:var(--accent)">${durationLabel}</div><div class="att-label">সময়কাল</div></div></div><div class="att-bar-wrap"><div class="att-bar-label"><span>🎯 মনোযোগী</span><span>${latest.focused} ফ্রেম</span></div><div class="att-bar-track"><div class="att-bar-fill att-focused" style="width:0" data-w="${focPct}%"></div></div></div><div class="att-bar-wrap"><div class="att-bar-label"><span>🤔 বিভ্রান্ত</span><span>${latest.confused} ফ্রেম</span></div><div class="att-bar-track"><div class="att-bar-fill att-confused" style="width:0" data-w="${conPct}%"></div></div></div><div class="att-bar-wrap"><div class="att-bar-label"><span>👀 অমনোযোগী</span><span>${latest.distracted} ফ্রেম</span></div><div class="att-bar-track"><div class="att-bar-fill att-distracted" style="width:0" data-w="${disPct}%"></div></div></div>`;setTimeout(()=>{document.querySelectorAll('.att-bar-fill[data-w]').forEach(el=>{el.style.width=el.dataset.w;});},150);}
-function renderDocs(docs,concepts){document.getElementById('doc-count').textContent=docs.length||'—';if(!docs.length){document.getElementById('doc-body').innerHTML=`<div class="empty-state">এখনো কোনো নথি সংরক্ষিত নেই।</div>`;return;}document.getElementById('doc-body').innerHTML=docs.slice(0,10).map((doc,idx)=>{let score=null;if(doc.conceptMastery){const vals=Object.values(doc.conceptMastery).map(m=>m.score||0);if(vals.length)score=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*100);}else{const docConcepts=concepts.filter(c=>c.docId===doc.docId);if(docConcepts.length)score=Math.round(docConcepts.reduce((s,c)=>s+c.score,0)/docConcepts.length*100);}const scoreColor=score===null?'#A7B3C2':score>=70?'#00e5b0':score>=45?'#fcd34d':'#f87171';const circ=2*Math.PI*16;const dash=score!==null?circ-(score/100)*circ:circ;const dateStr=doc.date?new Date(doc.date).toLocaleDateString('bn-BD',{day:'numeric',month:'short'}):'';const chunks=doc.chunkCount||doc.chunk_count||0;const pages=doc.pages||0;return`<div class="doc-row" onclick="openDoc('${doc.docId}')" style="animation-delay:${idx*0.06}s"><div class="doc-icon">📄</div><div class="doc-info"><div class="doc-name">${doc.filename||'অজানা নথি'}</div><div class="doc-meta"><span>${chunks} অংশ</span><span>·</span><span>${pages} পৃষ্ঠা</span>${dateStr?`<span>·</span><span>${dateStr}</span>`:''}</div></div><div class="doc-score-ring"><svg width="42" height="42" viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="16"/><circle class="ring-val" cx="21" cy="21" r="16" stroke="${scoreColor}" stroke-dasharray="${circ}" stroke-dashoffset="${dash}"/></svg><div class="ring-label" style="color:${scoreColor};">${score!==null?score+'%':'—'}</div></div></div>`;}).join('');}
+function renderMetrics(avgMastery,quizSessions,attentionSessions,streak){const attentionTotal=attentionSessions.reduce((sum,session)=>sum+(session.total||0),0);const focusedTotal=attentionSessions.reduce((sum,session)=>sum+(session.focused||0),0);const focusPercent=attentionTotal?Math.round(focusedTotal/attentionTotal*100):null;const questionCount=quizSessions.reduce((sum,session)=>sum+(session.total||0),0);const masteryValue=quizSessions.length||avgMastery>0?avgMastery+'%':'—';const data=[{icon:'🧠',label:'Overall mastery',value:masteryValue,sub:'From completed quiz answers',cls:'c-purple'},{icon:'📝',label:'Quizzes taken',value:quizSessions.length,sub:`${questionCount} questions answered`,cls:'c-amber'},{icon:'👁️',label:'Attention focus',value:focusPercent===null?'—':focusPercent+'%',sub:attentionSessions.length?`${attentionSessions.length} tracked sessions`:'No tracker sessions yet',cls:'c-blue'},{icon:'🔥',label:'Study streak',value:streak+' days',sub:'From dated study activity',cls:'c-teal'}];document.getElementById('metrics-row').innerHTML=data.map(m=>`<div class="metric-card ${m.cls}"><div class="metric-icon">${m.icon}</div><div class="metric-label">${m.label}</div><div class="metric-value">${m.value}</div><div class="metric-sub">${m.sub}</div></div>`).join('');}
+function renderConcepts(concepts){document.getElementById('concept-count').textContent=concepts.length||'—';if(!concepts.length){document.getElementById('concept-body').innerHTML=`<div class="empty-state">No quizzes completed yet.<br/>Concepts will appear here after your first quiz.</div>`;return;}document.getElementById('concept-body').innerHTML=concepts.slice(0,8).map((c,i)=>{const pct=Math.round((c.score||0)*100);const barCls=pct>=70?'bar-strong':pct>=40?'bar-medium':'bar-weak';const pctCls=pct>=70?'pct-strong':pct>=40?'pct-medium':'pct-weak';const weakB=pct<40?`<span class="badge badge-weak">Needs work</span>`:'';const nr=computeNextReview(c.score,c.attempts,c.hintCount);const dueB=pct>=40&&nr<=Date.now()+86400000?`<span class="badge badge-due">review</span>`:'';return`<div class="concept-row" style="animation-delay:${i*0.05}s"><div class="concept-name">${c.concept}${weakB}${dueB}</div><div class="bar-track"><div class="bar-fill ${barCls}" style="width:0" data-w="${pct}%"></div></div><div class="bar-pct ${pctCls}">${pct}%</div></div>`;}).join('');setTimeout(()=>{document.querySelectorAll('.bar-fill[data-w]').forEach(el=>{el.style.transition='width 1.2s cubic-bezier(0.16,1,0.3,1)';el.style.width=el.dataset.w;});},120);}
+function renderReview(concepts){const due=concepts.map(c=>({...c,nextReview:computeNextReview(c.score,c.attempts,c.hintCount)})).filter(c=>c.nextReview<=Date.now()+2*86400000).slice(0,4);document.getElementById('review-count').textContent=due.length||'—';if(!due.length){document.getElementById('review-body').innerHTML=`<div class="empty-state">🎉 No reviews due today!</div>`;return;}document.getElementById('review-body').innerHTML=due.map((c,i)=>{const{label,cls}=reviewDueLabel(c.nextReview);const pct=Math.round((c.score||0)*100);return`<div class="review-row" style="animation-delay:${i*0.06}s"><div class="review-left"><div class="review-concept">${c.concept}</div><div class="review-sub"><span>${pct}% mastery</span><span class="review-sub-dot"></span><span>${c.hintCount||0} hints</span></div></div><span class="due-tag ${cls}">${label}</span></div>`;}).join('')+`<button class="review-start-btn" onclick="startReview()">▶ Start today's review</button>`;}
+function renderTopics(topics){document.getElementById('topic-count').textContent=topics.length||'—';if(!topics.length){document.getElementById('topic-body').innerHTML=`<div class="empty-state">No graph data available.</div>`;return;}const maxFreq=Math.max(...topics.map(t=>t.freq||1),1);document.getElementById('topic-body').innerHTML=topics.slice(0,10).map((t,i)=>{const pct=Math.round(((t.freq||1)/maxFreq)*100);const pages=Array.isArray(t.pages)?[...new Set(t.pages)].slice(0,3):[];const pagesLabel=pages.length?`Page ${pages.join(', ')}`:'';return`<div class="topic-row" style="animation-delay:${i*0.05}s"><div class="topic-name">${t.id}</div>${pagesLabel?`<span class="topic-pages">${pagesLabel}</span>`:''}<div class="topic-freq-bar"><div class="topic-freq-fill" style="width:${pct}%"></div></div><div class="topic-freq-num">${t.freq||1}</div></div>`;}).join('');}
+function renderHeatmap(activity){document.getElementById('heatmap-grid').innerHTML=activity.map(day=>{const lvl=day.count===0?0:day.count===1?1:day.count<=3?2:3;const lbl=day.date.toLocaleDateString('en-US',{day:'numeric',month:'short'});return`<div class="heat-cell heat-${lvl}"><div class="tooltip">${lbl}: ${day.count} items</div></div>`;}).join('');const last7=activity.slice(-7);document.getElementById('streak-dots').innerHTML=last7.map(d=>`<div class="streak-dot ${d.count>0?'streak-on':'streak-off'}"></div>`).join('');}
+function renderCrossDoc(cross){if(!cross.length){document.getElementById('cross-body').innerHTML=`<div class="empty-state">Concepts found across multiple documents will appear here.</div>`;return;}document.getElementById('cross-body').innerHTML=cross.map((c,i)=>`<div class="cross-row" style="animation-delay:${i*0.05}s"><div class="cross-concept">${c.concept}</div><div class="cross-docs">${c.docs.slice(0,2).map(d=>`<span class="cross-doc-chip">${d}</span>`).join('')}${c.docs.length>2?`<span class="badge badge-cross">+${c.docs.length-2}</span>`:''}</div></div>`).join('');}
+function renderSkills(skills){if(!skills.length){document.getElementById('skill-body').innerHTML=`<div class="empty-state">Gathering skill data…</div>`;return;}document.getElementById('skill-body').innerHTML=skills.map(s=>{const pips=Array.from({length:s.max},(_,i)=>{const filled=i<s.pips;const cls=filled?(s.pips>=4?'filled strong':s.pips>=3?'filled medium':'filled'):'';return`<div class="skill-pip ${cls}"></div>`;}).join('');return`<div class="skill-row"><div class="skill-label">${s.label}</div><div class="skill-level">${pips}</div></div>`;}).join('');}
+function renderAttention(sessions){const body=document.getElementById('attention-body');const countEl=document.getElementById('att-session-count');if(sessions===null){body.innerHTML=`<div class="att-disabled">👁️ The attention tracker was not enabled for this session.<br/><span style="font-size:0.72rem;opacity:0.6;">Enable the camera in the main app to see attention data here.</span></div>`;countEl.textContent='—';return;}if(!sessions.length){body.innerHTML=`<div class="att-disabled">No attention data has been saved yet.</div>`;countEl.textContent='0';return;}countEl.textContent=sessions.length+' sessions';const latest=sessions[0];const total=Math.max(latest.total||1,1);const focPct=Math.round((latest.focused/total)*100),conPct=Math.round((latest.confused/total)*100),disPct=Math.round((latest.distracted/total)*100),nfPct=Math.round((latest.noFace/total)*100);const mins=Math.floor((latest.duration||0)/60),secs=(latest.duration||0)%60;const durationLabel=mins>0?`${mins}m ${secs}s`:`${secs}s`;const liveTag=latest.live?' <span style="font-size:0.65rem;color:#00e5b0;font-weight:700;">● LIVE</span>':'';const focusScore=focPct>=70?'att-focus-high':focPct>=45?'att-focus-mid':'att-focus-low';const focusLabel=focPct>=70?'High focus':focPct>=45?'Moderate':'Low focus';body.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><div style="font-size:0.75rem;color:var(--text-muted);">Latest session${liveTag}</div><span class="att-focus-pill ${focusScore}">${focusLabel}</span></div><div class="attention-grid"><div class="att-card"><div class="att-emoji">🎯</div><div class="att-val" style="color:#4ade80">${focPct}%</div><div class="att-label">Focused</div></div><div class="att-card"><div class="att-emoji">🤔</div><div class="att-val" style="color:#fbbf24">${conPct}%</div><div class="att-label">Confused</div></div><div class="att-card"><div class="att-emoji">👀</div><div class="att-val" style="color:#f87171">${disPct}%</div><div class="att-label">Distracted</div></div><div class="att-card"><div class="att-emoji">⏱️</div><div class="att-val" style="color:var(--accent)">${durationLabel}</div><div class="att-label">Duration</div></div></div><div class="att-bar-wrap"><div class="att-bar-label"><span>🎯 Focused</span><span>${latest.focused} frames</span></div><div class="att-bar-track"><div class="att-bar-fill att-focused" style="width:0" data-w="${focPct}%"></div></div></div><div class="att-bar-wrap"><div class="att-bar-label"><span>🤔 Confused</span><span>${latest.confused} frames</span></div><div class="att-bar-track"><div class="att-bar-fill att-confused" style="width:0" data-w="${conPct}%"></div></div></div><div class="att-bar-wrap"><div class="att-bar-label"><span>👀 Distracted</span><span>${latest.distracted} frames</span></div><div class="att-bar-track"><div class="att-bar-fill att-distracted" style="width:0" data-w="${disPct}%"></div></div></div>`;setTimeout(()=>{document.querySelectorAll('.att-bar-fill[data-w]').forEach(el=>{el.style.width=el.dataset.w;});},150);}
+function renderDocs(docs,concepts){document.getElementById('doc-count').textContent=docs.length||'—';if(!docs.length){document.getElementById('doc-body').innerHTML=`<div class="empty-state">No documents have been saved yet.</div>`;return;}document.getElementById('doc-body').innerHTML=docs.slice(0,10).map((doc,idx)=>{let score=null;if(doc.conceptMastery){const vals=Object.values(doc.conceptMastery).map(m=>m.score||0);if(vals.length)score=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*100);}else{const docConcepts=concepts.filter(c=>c.docId===doc.docId);if(docConcepts.length)score=Math.round(docConcepts.reduce((s,c)=>s+c.score,0)/docConcepts.length*100);}const scoreColor=score===null?'#A7B3C2':score>=70?'#00e5b0':score>=45?'#fcd34d':'#f87171';const circ=2*Math.PI*16;const dash=score!==null?circ-(score/100)*circ:circ;const dateStr=doc.date?new Date(doc.date).toLocaleDateString('en-US',{day:'numeric',month:'short'}):'';const chunks=doc.chunkCount||doc.chunk_count||0;const pages=doc.pages||0;return`<div class="doc-row" onclick="openDoc('${doc.docId}')" style="animation-delay:${idx*0.06}s"><div class="doc-icon">📄</div><div class="doc-info"><div class="doc-name">${doc.filename||'Unknown document'}</div><div class="doc-meta"><span>${chunks} chunks</span><span>·</span><span>${pages} pages</span>${dateStr?`<span>·</span><span>${dateStr}</span>`:''}</div></div><div class="doc-score-ring"><svg width="42" height="42" viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="16"/><circle class="ring-val" cx="21" cy="21" r="16" stroke="${scoreColor}" stroke-dasharray="${circ}" stroke-dashoffset="${dash}"/></svg><div class="ring-label" style="color:${scoreColor};">${score!==null?score+'%':'—'}</div></div></div>`;}).join('');}
 
 // ═══════════════════════════════════════════════════════════
 // ██████  HOLOGRAPHIC BRAIN RENDERER  ██████
@@ -815,7 +663,7 @@ const BRAIN_MODEL_PATH = '/models/brain_hologram.glb';
 const BRAIN_ZONES = [
   {
     id: 'prefrontal',
-    label: 'প্রিফ্রন্টাল কর্টেক্স',
+    label: 'Prefrontal Cortex',
     labelEn: 'Prefrontal Cortex',
     color: new THREE.Color('#C44DFF'),
     glowColor: '#C44DFF',
@@ -826,7 +674,7 @@ const BRAIN_ZONES = [
   },
   {
     id: 'temporal',
-    label: 'টেম্পোরাল লোব',
+    label: 'Temporal Lobe',
     labelEn: 'Temporal Lobe',
     color: new THREE.Color('#00B7FF'),
     glowColor: '#00B7FF',
@@ -836,7 +684,7 @@ const BRAIN_ZONES = [
   },
   {
     id: 'temporal_r',
-    label: 'টেম্পোরাল লোব (ডান)',
+    label: 'Temporal Lobe (Right)',
     labelEn: 'Temporal Lobe (R)',
     color: new THREE.Color('#38bdf8'),
     glowColor: '#38bdf8',
@@ -846,7 +694,7 @@ const BRAIN_ZONES = [
   },
   {
     id: 'parietal',
-    label: 'প্যারিয়েটাল লোব',
+    label: 'Parietal Lobe',
     labelEn: 'Parietal Lobe',
     color: new THREE.Color('#00e5b0'),
     glowColor: '#00e5b0',
@@ -856,7 +704,7 @@ const BRAIN_ZONES = [
   },
   {
     id: 'occipital',
-    label: 'অক্সিপিটাল লোব',
+    label: 'Occipital Lobe',
     labelEn: 'Occipital Lobe',
     color: new THREE.Color('#f59e0b'),
     glowColor: '#f59e0b',
@@ -866,7 +714,7 @@ const BRAIN_ZONES = [
   },
   {
     id: 'hippocampus',
-    label: 'হিপোক্যাম্পাস',
+    label: 'Hippocampus',
     labelEn: 'Hippocampus',
     color: new THREE.Color('#f87171'),
     glowColor: '#f87171',
@@ -878,11 +726,20 @@ const BRAIN_ZONES = [
 
 let _brainData = {};  // populated after data load
 
+function brainPointColor(x, y, z) {
+  const noise = Math.sin(x * 17.3 + y * 13.7 + z * 9.1);
+  const brightness = 0.72 + 0.28 * (0.5 + 0.5 * Math.sin(x * 8 + y * 11 + z * 7));
+  if (noise > 0.1) return [0.03 * brightness, 0.68 * brightness, 0.92 * brightness];
+  if (noise < -0.1) return [0.78 * brightness, 0.08 * brightness, 0.88 * brightness];
+  return [0.34 * brightness, 0.19 * brightness, 0.82 * brightness];
+}
+
 class HoloBrainRenderer {
   constructor(canvas) {
     this.canvas = canvas;
     this.container = canvas.parentElement;
     this.scene = null;
+    this.brainGroup = new THREE.Group();
     this.camera = null;
     this.renderer = null;
     this.brainPoints = null;      // THREE.Points from GLB geometry
@@ -892,7 +749,6 @@ class HoloBrainRenderer {
     this.mouse = new THREE.Vector2(-999, -999);
     this.clock = new THREE.Clock();
     this.hoveredZone = null;
-    this.autoRotateY = 0;
     this.glbLoaded = false;
     this.tooltip = document.getElementById('brainTooltip');
     this.init();
@@ -904,10 +760,15 @@ class HoloBrainRenderer {
 
     // Scene
     this.scene = new THREE.Scene();
+    this.scene.add(this.brainGroup);
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(42, W / H, 0.01, 100);
-    this.camera.position.set(0, 0.1, 2.2);
+    this.camera.position.set(0, 0.1, 2.9);
+    const BRAIN_SCALE = 1.2;
+    const BRAIN_FACING = 0;
+    this.brainGroup.scale.set(BRAIN_SCALE, BRAIN_SCALE, BRAIN_SCALE);
+    this.brainGroup.rotation.set(0, BRAIN_FACING, 0);
 
     // Renderer
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true });
@@ -928,52 +789,12 @@ class HoloBrainRenderer {
     // Resize
     window.addEventListener('resize', () => this.onResize());
 
-    // Mouse
-    // REPLACE WITH:
-    // Mouse hover for tooltips
-    this.canvas.addEventListener('mousemove', e => this.onMouseMove(e));
+    this.canvas.addEventListener('mousemove', e => this.updateHoveredZone(e));
     this.canvas.addEventListener('mouseleave', () => this.onMouseLeave());
-
-    // Mouse orbit control
-    this.isDragging = false;
-    this.prevMouse = { x: 0, y: 0 };
-    this.orbitX = 0;  // pitch
-    this.orbitY = Math.PI * 0.5; // start facing side view (90 degrees)
-    this.canvas.addEventListener('mousedown', e => {
-      this.isDragging = true;
-      this.prevMouse = { x: e.clientX, y: e.clientY };
-    });
-    window.addEventListener('mouseup', () => { this.isDragging = false; });
-    this.canvas.addEventListener('mousemove', e => {
-      if (!this.isDragging) return;
-      const dx = e.clientX - this.prevMouse.x;
-      const dy = e.clientY - this.prevMouse.y;
-      this.orbitY += dx * 0.008;
-      this.orbitX += dy * 0.008;
-      this.orbitX = Math.max(-1.2, Math.min(1.2, this.orbitX)); // clamp pitch
-      this.prevMouse = { x: e.clientX, y: e.clientY };
-    });
-    // Touch support
-    this.canvas.addEventListener('touchstart', e => {
-      this.isDragging = true;
-      this.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    });
-    this.canvas.addEventListener('touchend', () => { this.isDragging = false; });
-    this.canvas.addEventListener('touchmove', e => {
-      if (!this.isDragging) return;
-      const dx = e.touches[0].clientX - this.prevMouse.x;
-      const dy = e.touches[0].clientY - this.prevMouse.y;
-      this.orbitY += dx * 0.008;
-      this.orbitX += dy * 0.008;
-      this.orbitX = Math.max(-1.2, Math.min(1.2, this.orbitX));
-      this.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    });
 
     // Try loading GLB, fallback to procedural
     this.tryLoadGLB();
 
-    // Start render loop
-    this.animate();
   }
 
   tryLoadGLB() {
@@ -998,8 +819,6 @@ class HoloBrainRenderer {
     });
   }
 
- 
-  // REPLACE WITH:
   onGLBLoaded(gltf) {
     this.glbLoaded = true;
     const model = gltf.scene;
@@ -1010,118 +829,34 @@ class HoloBrainRenderer {
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
     const scale = 1.6 / maxDim;
-    model.position.sub(centre);
-    model.scale.setScalar(scale);
 
-    // Keep original materials — just ensure additive blending + transparency
+    // Collect all geometry vertices → giant point cloud
+    const positions = [];
+    const colors = [];
+
     model.traverse(child => {
-      if (!child.isMesh) return;
-      const mats = Array.isArray(child.material) ? child.material : [child.material];
-      mats.forEach(mat => {
-        mat.transparent = true;
-        mat.depthWrite = false;
-        mat.blending = THREE.AdditiveBlending;
-        // Boost emission so particles glow against dark bg
-        if (mat.emissive) mat.emissive.multiplyScalar(2.2);
-        if (mat.color) mat.color.multiplyScalar(1.4);
-        mat.needsUpdate = true;
-      });
-
-      // If it's already a Points mesh, leave it alone
-      if (child.isPoints) return;
-
-      // Convert mesh to glowing point cloud preserving original vertex colors
+      if (!child.isMesh || !child.geometry) return;
       const geo = child.geometry;
-      if (!geo || !geo.attributes.position) return;
       const pos = geo.attributes.position;
-      const hasColor = !!geo.attributes.color;
-
-      const positions = [];
-      const colors = [];
-      // REPLACE WITH:
-      for (let i = 0; i < pos.count; i += 3) { // skip 2/3 of points
-        positions.push(pos.getX(i), pos.getY(i), pos.getZ(i));
-        
-        // REPLACE WITH:
-        // Always use position-based gradient (matches downloaded model look)
-        const px = pos.getX(i), py = pos.getY(i), pz = pos.getZ(i);
-        const normY = Math.max(0, Math.min(1, (py + 1.2) / 2.4));
-        const normX = Math.abs(px) / 1.2;
-        const normZ = Math.max(0, Math.min(1, (pz + 1.0) / 2.0));
-        // Cyan-to-magenta gradient like the original model
-        // REPLACE WITH:
-        // Cyan (#00B7FF) to Magenta (#C44DFF) mix based on position
-        
-        // REPLACE WITH:
-        const noise = Math.sin(px * 17.3 + py * 13.7 + pz * 9.1);
-        const isCyan = noise > 0.1;
-        const isMag  = noise < -0.1;
-        // Dim, soft colors — not full 1.0 saturation
-        // REPLACE WITH:
-        const r = isCyan ? 0.04 : isMag ? 0.72 : 0.38;
-        const g = isCyan ? 0.58 : isMag ? 0.08 : 0.20;
-        const b = isCyan ? 0.78 : isMag ? 0.82 : 0.80;
-        colors.push(r, g, b);
+      if (!pos) return;
+      for (let vertexIndex = 0; vertexIndex < pos.count; vertexIndex++) {
+        let sampleHash = Math.imul(vertexIndex ^ pos.count, 0x45d9f3b);
+        sampleHash = Math.imul(sampleHash ^ (sampleHash >>> 16), 0x45d9f3b);
+        sampleHash ^= sampleHash >>> 16;
+        if ((sampleHash & 15) !== 0) continue;
+        const x = (pos.getX(vertexIndex) - centre.x) * scale;
+        const y = (pos.getY(vertexIndex) - centre.y) * scale;
+        const z = (pos.getZ(vertexIndex) - centre.z) * scale;
+        positions.push(x, y, z);
+        colors.push(...brainPointColor(x, y, z));
       }
-
-      const ptGeo = new THREE.BufferGeometry();
-      ptGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      ptGeo.setAttribute('aColor', new THREE.Float32BufferAttribute(colors, 3));
-
-      const ptMat = new THREE.ShaderMaterial({
-        uniforms: {
-          uTime: { value: 0 },
-          uSize: { value: 1.3 * window.devicePixelRatio },
-        },
-        vertexShader: `
-          attribute vec3 aColor;
-          varying vec3 vColor;
-          varying float vY;
-          uniform float uTime;
-          uniform float uSize;
-          void main(){
-            vColor = aColor;
-            vY = position.y;
-            vec3 pos = position;
-            pos.x += sin(uTime * 0.7 + position.y * 4.0) * 0.003;
-            pos.y += cos(uTime * 0.5 + position.x * 3.0) * 0.003;
-            vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
-            gl_Position = projectionMatrix * mvPos;
-            gl_PointSize = uSize * (1.2 + 0.5 * sin(uTime * 1.2 + position.x * 8.0));
-          }
-        `,
-        fragmentShader: `
-          varying vec3 vColor;
-          varying float vY;
-          uniform float uTime;
-          void main(){
-            vec2 uv = gl_PointCoord - 0.5;
-            float d = length(uv);
-            if(d > 0.5) discard;
-            float alpha = 1.0 - smoothstep(0.05, 0.5, d);
-            float scan = 0.88 + 0.12 * sin(vY * 20.0 + uTime * 2.0);
-             gl_FragColor = vec4(vColor * scan * 0.7, alpha * 0.38);
-          }
-        `,
-        transparent: true,
-        vertexColors: false,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      });
-
-      const points = new THREE.Points(ptGeo, ptMat);
-      points.userData.isGLBPoints = true;
-      child.parent?.add(points);
-      child.visible = false; // hide original mesh, show points instead
-      this.glbPoints = this.glbPoints || [];
-      this.glbPoints.push(points);
     });
 
-    this.scene.add(model);
-    this.glbModel = model;
+    this.buildParticleSystem(positions, colors);
     this.buildZoneMarkers();
     this.hideLoading();
     document.getElementById('brain-status-text').textContent = 'Neural Sync Active';
+    this.renderFrame();
   }
 
   fallbackProcedural() {
@@ -1155,39 +890,36 @@ class HoloBrainRenderer {
 
       positions.push(x, y, z);
 
-      // Colour gradient: cyan top, magenta bottom, purple sides
-      const normY = (y + 1) / 2;
-      const normX = Math.abs(x);
-      colors.push(normX * 0.8, 0.7 + normY * 0.3, 1.0 - normY * 0.4);
+      colors.push(...brainPointColor(x, y, z));
     }
 
     this.buildParticleSystem(positions, colors);
     this.buildZoneMarkers();
     this.hideLoading();
     document.getElementById('brain-status-text').textContent = 'Demo Mode · Neural Map';
+    this.renderFrame();
   }
 
   buildParticleSystem(positions, colors) {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geo.setAttribute('aColor', new THREE.Float32BufferAttribute(colors, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
     // Custom shader material for glowing particles with scanline effect
     const mat = new THREE.ShaderMaterial({
       uniforms: {
         uTime:      { value: 0 },
-        uSize:      { value: 2.8 * window.devicePixelRatio },
+        uSize:      { value: 2.05 * window.devicePixelRatio },
         uHoverZone: { value: -1 },
       },
       vertexShader: `
-        attribute vec3 acolor;
         varying vec3 vColor;
         varying float vY;
         varying float vDist;
         uniform float uTime;
         uniform float uSize;
         void main(){
-          vColor = acolor;
+          vColor = color;
           vY = position.y;
           vec4 mvPos = modelViewMatrix * vec4(position,1.0);
           vDist = -mvPos.z;
@@ -1196,7 +928,7 @@ class HoloBrainRenderer {
           pos.x += sin(uTime * 0.7 + position.y * 4.0) * 0.005;
           pos.y += cos(uTime * 0.5 + position.x * 3.0) * 0.004;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(pos,1.0);
-          gl_PointSize = uSize * (1.0 + 0.4 * sin(uTime * 1.2 + position.x * 8.0 + position.z * 5.0));
+          gl_PointSize = uSize * (0.9 + 0.2 * sin(uTime * 1.2 + position.x * 8.0 + position.z * 5.0));
         }
       `,
       fragmentShader: `
@@ -1215,17 +947,17 @@ class HoloBrainRenderer {
           float scan = 0.85 + 0.15 * sin(vY * 18.0 + uTime * 2.0);
           // Flicker
           float flicker = 0.92 + 0.08 * sin(uTime * 3.7 + vDist * 2.0);
-          gl_FragColor = vec4(vColor * scan * flicker, alpha * 0.88);
+          gl_FragColor = vec4(vColor * scan * flicker, alpha * 0.84);
         }
       `,
       transparent: true,
-      vertexColors: false,
+      vertexColors: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
 
     this.brainPoints = new THREE.Points(geo, mat);
-    this.scene.add(this.brainPoints);
+    this.brainGroup.add(this.brainPoints);
   }
 
   buildZoneMarkers() {
@@ -1236,29 +968,29 @@ class HoloBrainRenderer {
       const hitMesh = new THREE.Mesh(hitGeo, hitMat);
       hitMesh.position.copy(zone.offset);
       hitMesh.userData = { zoneIndex: i };
-      this.scene.add(hitMesh);
+      this.brainGroup.add(hitMesh);
       this.zoneMarkers.push(hitMesh);
 
       // Visible glow orb
-      const glowGeo = new THREE.SphereGeometry(0.08, 12, 12);
+      const glowGeo = new THREE.SphereGeometry(0.06, 12, 12);
       const glowMat = new THREE.MeshBasicMaterial({
         color: zone.color,
         transparent: true,
-        opacity: 0.55,
+        opacity: 0.48,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
       const glowMesh = new THREE.Mesh(glowGeo, glowMat);
       glowMesh.position.copy(zone.offset);
-      this.scene.add(glowMesh);
+      this.brainGroup.add(glowMesh);
       this.glowSpheres.push(glowMesh);
 
       // Outer ring
-      const ringGeo = new THREE.RingGeometry(0.10, 0.12, 24);
+      const ringGeo = new THREE.RingGeometry(0.07, 0.08, 24);
       const ringMat = new THREE.MeshBasicMaterial({
         color: zone.color,
         transparent: true,
-        opacity: 0.4,
+        opacity: 0.14,
         side: THREE.DoubleSide,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
@@ -1266,7 +998,7 @@ class HoloBrainRenderer {
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.position.copy(zone.offset);
       ring.userData = { isRing: true, zoneIdx: i };
-      this.scene.add(ring);
+      this.brainGroup.add(ring);
     });
   }
 
@@ -1283,7 +1015,7 @@ class HoloBrainRenderer {
     this.camera.updateProjectionMatrix();
   }
 
-  onMouseMove(e) {
+  updateHoveredZone(e) {
     const rect = this.canvas.getBoundingClientRect();
     this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -1324,39 +1056,39 @@ class HoloBrainRenderer {
 
     if (zone.dataKey === 'attention' && data.attention) {
       const a = data.attention;
-      html += this._row('মনোযোগী', `${a.focPct}%`, zone.glowColor);
+      html += this._row('Focused', `${a.focPct}%`, zone.glowColor);
       html += this._miniBar(a.focPct, '#4ade80');
-      html += this._row('বিভ্রান্ত', `${a.conPct}%`, '#fbbf24');
-      html += this._row('সেশন', `${a.sessions}টি`, '#A7B3C2');
-      if (a.duration) html += this._row('সময়', `${Math.floor(a.duration/60)}মি`, '#A7B3C2');
+      html += this._row('Confused', `${a.conPct}%`, '#fbbf24');
+      html += this._row('Sessions', `${a.sessions} sessions`, '#A7B3C2');
+      if (a.duration) html += this._row('Time', `${Math.floor(a.duration/60)}m`, '#A7B3C2');
     } else if (zone.dataKey === 'topics' && data.topics) {
-      html += this._row('বিষয় পড়া', `${data.topics.count}টি`, zone.glowColor);
+      html += this._row('Topics studied', `${data.topics.count}`, zone.glowColor);
       html += this._miniBar(Math.min(100, data.topics.count * 8), zone.glowColor);
       html += this._divider();
       if (data.topics.top.length) {
-        html += `<div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:4px;">শীর্ষ বিষয়:</div>`;
+        html += `<div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:4px;">Top topics:</div>`;
         data.topics.top.slice(0,3).forEach(t => {
           html += `<div style="font-size:0.72rem;color:var(--text);padding:2px 0;">• ${t}</div>`;
         });
       }
     } else if (zone.dataKey === 'mastery' && data.mastery != null) {
-      html += this._row('গড় দখল', `${data.mastery}%`, zone.glowColor);
+      html += this._row('Average mastery', `${data.mastery}%`, zone.glowColor);
       html += this._miniBar(data.mastery, zone.glowColor);
-      html += this._row('শক্তিশালী', `${data.strongCount}টি ধারণা`, '#00e5b0');
-      html += this._row('দুর্বল', `${data.weakCount}টি ধারণা`, '#f87171');
-      html += this._row('মোট ধারণা', `${data.totalConcepts}টি`, '#A7B3C2');
+      html += this._row('Strong', `${data.strongCount} concepts`, '#00e5b0');
+      html += this._row('Needs work', `${data.weakCount} concepts`, '#f87171');
+      html += this._row('Total concepts', `${data.totalConcepts}`, '#A7B3C2');
     } else if (zone.dataKey === 'streak' && data.streak != null) {
-      html += this._row('ধারাবাহিক দিন', `${data.streak} দিন`, zone.glowColor);
+      html += this._row('Study streak', `${data.streak} days`, zone.glowColor);
       html += this._miniBar(Math.min(100, data.streak * 10), zone.glowColor);
-      html += this._row('মোট বার্তা', `${data.msgCount}`, '#A7B3C2');
-      html += this._row('সক্রিয় দিন', `${data.activeDays}`, '#A7B3C2');
+      html += this._row('Total messages', `${data.msgCount}`, '#A7B3C2');
+      html += this._row('Active days', `${data.activeDays}`, '#A7B3C2');
     } else if (zone.dataKey === 'memory' && data.memory != null) {
-      html += this._row('পর্যালোচনা বাকি', `${data.memory.dueToday}টি`, zone.glowColor);
+      html += this._row('Reviews due', `${data.memory.dueToday}`, zone.glowColor);
       html += this._miniBar(Math.min(100, data.memory.dueToday * 10), '#f87171');
-      html += this._row('পরবর্তী', data.memory.nextLabel, '#A7B3C2');
-      html += this._row('মোট নথি', `${data.memory.docCount}`, '#A7B3C2');
+      html += this._row('Next', data.memory.nextLabel, '#A7B3C2');
+      html += this._row('Total documents', `${data.memory.docCount}`, '#A7B3C2');
     } else {
-      html += `<div style="font-size:0.75rem;color:var(--text-muted);">ডেটা সংগ্রহ হচ্ছে…</div>`;
+      html += `<div style="font-size:0.75rem;color:var(--text-muted);">Collecting data…</div>`;
     }
 
     document.getElementById('bt-metrics-body').innerHTML = html;
@@ -1387,56 +1119,8 @@ class HoloBrainRenderer {
     this.tooltip.classList.remove('visible');
   }
 
-  animate() {
-    requestAnimationFrame(() => this.animate());
-    const t = this.clock.getElapsedTime();
-
-    
-    // REPLACE WITH:
-    // Auto-rotate + mouse orbit
-    // REPLACE WITH:
-    const rotY = this.orbitY || 0;
-    const rotX = this.orbitX || 0;
-
-    if (this.brainPoints) {
-      this.brainPoints.rotation.y = rotY;
-      this.brainPoints.rotation.x = rotX;
-    }
-    if (this.glbModel) {
-      this.glbModel.rotation.y = rotY;
-      this.glbModel.rotation.x = rotX;
-    }
-
-    // Sync zone markers
-    this.zoneMarkers.forEach(m => { m.rotation.y = rotY; m.rotation.x = rotX; });
-
-    // Sync zone marker & glow sphere rotations
-    this.zoneMarkers.forEach(m => { m.rotation.y = t * 0.18; });
-    this.glowSpheres.forEach((g, i) => {
-      g.rotation.y = t * 0.18;
-      // Pulse glow opacity
-      const isHovered = this.hoveredZone === i;
-      const baseOp = isHovered ? 0.9 : 0.45 + 0.15 * Math.sin(t * 1.8 + i * 1.3);
-      g.material.opacity = baseOp;
-      const s = isHovered ? 1.5 + 0.2 * Math.sin(t * 4) : 1.0;
-      g.scale.setScalar(s);
-    });
-
-    // Update rings
-    this.scene.children.forEach(obj => {
-      if (obj.userData.isRing) {
-        obj.rotation.y = t * 0.18;
-        obj.rotation.z = t * 0.6 + obj.userData.zoneIdx * 0.8;
-        const isH = this.hoveredZone === obj.userData.zoneIdx;
-        obj.material.opacity = isH ? 0.9 : 0.3 + 0.15 * Math.sin(t * 1.5 + obj.userData.zoneIdx);
-      }
-    });
-
-    // Update shader uniform
-    if (this.brainPoints) {
-      this.brainPoints.material.uniforms.uTime.value = t;
-    }
-
+  renderFrame() {
+    if (this.brainPoints) this.brainPoints.material.uniforms.uTime.value = 0;
     this.renderer.render(this.scene, this.camera);
   }
 }
@@ -1475,7 +1159,7 @@ function updateBrainData(concepts, topics, attentionSessions, streak, msgCount, 
     .sort((a,b)=>a.nr-b.nr)[0];
   const nextLabel = nextDue
     ? reviewDueLabel(nextDue.nr).label + ': ' + nextDue.concept
-    : 'পর্যালোচনা সম্পন্ন';
+    : 'Review complete';
 
   _brainData = {
     attention: attData,
@@ -1513,6 +1197,7 @@ function updateBrainData(concepts, topics, attentionSessions, streak, msgCount, 
       sphere.material.color.lerpColors(dimCol, zone.color, intensity);
     });
     document.getElementById('brain-status-text').textContent = 'Live Sync · Neural Map';
+    _brainRenderer.renderFrame();
   }
 }
 
@@ -1520,22 +1205,22 @@ function updateBrainData(concepts, topics, attentionSessions, streak, msgCount, 
 // MAIN LOAD
 // ═══════════════════════════════════════════════════════════
 async function loadAndRender() {
-  setLoading('ডেটা উৎস শনাক্ত করা হচ্ছে…', '');
+  setLoading('Detecting data source…', '');
   const hasNeo4j = checkNeo4j();
   let usingNeo4j = false;
 
   if (hasNeo4j) {
-    setLoading('Neo4j-এ সংযুক্ত হচ্ছে…', '');
+    setLoading('Connecting to Neo4j…', '');
     try {
       await neo4jRun('RETURN 1 AS ping');
       usingNeo4j = true;
-      setLoading('Neo4j থেকে ডেটা লোড হচ্ছে…', '🔵 Neo4j');
+      setLoading('Loading data from Neo4j…', '🔵 Neo4j');
     } catch(e) {
       usingNeo4j = false;
-      setLoading(' লোড হচ্ছে…', '🟣 ');
+      setLoading('Loading from localStorage…', '🟣 ');
     }
   } else {
-    setLoading(' লোড হচ্ছে…', '🟣 ');
+    setLoading('Loading from localStorage…', '🟣 ');
   }
 
   const badge = document.getElementById('data-source-badge');
@@ -1549,16 +1234,17 @@ async function loadAndRender() {
   }
 
   try {
-    const [docs, concepts, topics, messages, crossLinks, attentionSessions] = await Promise.all([
+    const [docs, quizSessions, concepts, topics, messages, crossLinks, attentionSessions] = await Promise.all([
       fetchDocuments().catch(()=>loadLocal()),
-      fetchConceptMastery().catch(()=>aggregateConceptsFromDocs(loadLocal())),
+      fetchQuizSessions().catch(()=>loadLocalRecords(LS_QUIZ_SESSIONS_KEY)),
+      fetchConceptMastery().catch(()=>aggregateConceptsFromDocs(loadLocal(),loadLocalRecords(LS_QUIZ_SESSIONS_KEY))),
       fetchTopicNodes().catch(()=>[]),
       fetchMessages().catch(()=>[]),
       fetchCoOccurrenceLinks().catch(()=>[]),
       fetchAttentionSessions().catch(()=>null),
     ]);
 
-    const activity = messages.length ? buildActivityFromMessages(messages) : buildActivityFromDocs(docs);
+    const activity = buildActivity(messages, quizSessions, attentionSessions);
     const streak = computeStreak(activity);
     const activeDays = activity.filter(d=>d.count>0).length;
 
@@ -1576,7 +1262,7 @@ async function loadAndRender() {
     const skills = computeSkills(concepts, topics.length, msgCount);
 
     // Render all panels
-    renderMetrics(avgMastery, dueToday, msgCount, streak);
+    renderMetrics(avgMastery, quizSessions, attentionSessions, streak);
     renderConcepts(concepts);
     renderReview(concepts);
     renderTopics(topics);
@@ -1589,7 +1275,7 @@ async function loadAndRender() {
     // Feed brain
     updateBrainData(concepts, topics, attentionSessions, streak, msgCount, activity, docs, dueToday);
 
-    document.getElementById('nav-streak').textContent = `${streak} দিন ধারা`;
+    document.getElementById('nav-streak').textContent = `${streak}-day streak`;
 
     setTimeout(() => {
       const ov = document.getElementById('loading-overlay');
@@ -1599,17 +1285,27 @@ async function loadAndRender() {
 
   } catch(err) {
     console.error('[Dashboard]', err);
-    showToast('ডেটা লোড করতে সমস্যা হয়েছে: ' + err.message);
+    showToast('Could not load data: ' + err.message);
     document.getElementById('loading-overlay').classList.add('done');
   }
 }
 
-function openDoc(docId) { try{sessionStorage.setItem('amplify_open_doc',docId);}catch(e){} history.back(); }
-function startReview() { try{sessionStorage.setItem('amplify_start_review','1');}catch(e){} showToast('মূল অ্যাপে ফিরে যাচ্ছে…'); setTimeout(()=>history.back(),1200); }
+function navigateBack() {
+  if (window.history.length > 1 && document.referrer) window.history.back();
+  else window.location.assign('/index.html');
+}
+function openDoc(docId) { try{sessionStorage.setItem('amplify_open_doc',docId);}catch(e){} navigateBack(); }
+function startReview() { try{sessionStorage.setItem('amplify_start_review','1');}catch(e){} showToast('Returning to the main app…'); setTimeout(navigateBack,1200); }
 function setLoading(text,source) { document.getElementById('loading-text').textContent=text; document.getElementById('loading-source').textContent=source; }
 function showToast(msg) { const t=document.getElementById('toast'); document.getElementById('toast-msg').textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2800); }
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-history-back]').forEach(link => {
+    link.addEventListener('click', event => {
+      event.preventDefault();
+      navigateBack();
+    });
+  });
   initBrain();
   loadAndRender();
 });

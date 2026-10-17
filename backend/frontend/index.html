@@ -6,922 +6,9 @@
     <title>Amplify — Don't Memorise, Visualise.</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2306060e'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%2300ff88'>A</text></svg>">
-    <style>
-/* ─── Design Tokens ─────────────────────────────────────────── */
-:root {
-    --bg-primary:       #06060e;
-    --bg-secondary:     #0d0d1a;
-    --card-bg:          rgba(13, 13, 26, 0.65);
-    --border:           rgba(0, 255, 136, 0.22);
-    --border-strong:    rgba(0, 255, 136, 0.45);
-    --accent:           #00ff88;
-    --accent-secondary: #00dd75;
-    --accent-soft:      rgba(0, 255, 136, 0.10);
-    --accent-cyan:      #00e5ff;
-    --accent-purple:    #a855f7;
-    --text-primary:     #e8eaf0;
-    --text-secondary:   #b0b3c6;
-    --radius-lg:        16px;
-    --radius-xl:        22px;
-
-    --font-display: 'Sora', system-ui, sans-serif;
-    --font-body:    'Inter', system-ui, sans-serif;
-}
-
-/* ─── Reset ──────────────────────────────────────────────────── */
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-
-body {
-    font-family: var(--font-body);
-    background: #06060e;
-    color: var(--text-primary);
-    line-height: 1.65;
-    overflow-x: hidden;
-    min-height: 100vh;
-}
-
-/* ─── Layout ─────────────────────────────────────────────────── */
-.container {
-    max-width: 1120px;
-    margin: 0 auto;
-    padding: 0 28px;
-    position: relative;
-    z-index: 1;
-}
-
-/* ─── Header ─────────────────────────────────────────────────── */
-.header {
-    padding: 14px 0;
-    position: fixed;
-    width: 100%;
-    top: 0;
-    background: rgba(6, 6, 14, 0.88);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
-    border-bottom: 1px solid rgba(0, 255, 136, 0.1);
-    z-index: 20;
-    transition: padding 0.25s ease, box-shadow 0.25s ease;
-}
-.header.scrolled {
-    padding: 9px 0;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-}
-
-.nav {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    justify-content: space-between;
-}
-
-.logo {
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 20px;
-    letter-spacing: -0.02em;
-    color: var(--accent);
-    text-decoration: none;
-    flex-shrink: 0;
-}
-
-.nav-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    align-items: center;
-}
-
-.nav-link {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 13px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: color 0.2s, background 0.2s;
-    font-family: var(--font-body);
-}
-.nav-link:hover {
-    color: var(--accent);
-    background: rgba(0,255,136,0.06);
-}
-
-.nav-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-
-/* Language toggle */
-.lang-toggle {
-    display: inline-flex;
-    padding: 3px;
-    border-radius: 7px;
-    background: rgba(0,255,136,0.05);
-    border: 1px solid rgba(0,255,136,0.15);
-}
-.lang-btn {
-    border: none;
-    background: transparent;
-    padding: 5px 13px;
-    border-radius: 5px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: var(--font-body);
-    letter-spacing: 0.03em;
-}
-.lang-btn.active {
-    background: var(--accent);
-    color: #030a06;
-}
-
-/* ─── Buttons ────────────────────────────────────────────────── */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 14px;
-    padding: 11px 22px;
-    transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
-    text-decoration: none;
-    white-space: nowrap;
-    line-height: 1;
-}
-.btn-primary {
-    background: var(--accent);
-    color: #030a06;
-}
-.btn-primary:hover {
-    background: #1affaa;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,255,136,0.25);
-}
-.btn-secondary {
-    background: rgba(0,255,136,0.06);
-    color: var(--text-primary);
-    border: 1px solid rgba(0,255,136,0.18);
-}
-.btn-secondary:hover {
-    background: rgba(0,255,136,0.12);
-    border-color: rgba(0,255,136,0.35);
-}
-.btn-outline {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid rgba(255,255,255,0.12);
-}
-.btn-outline:hover {
-    color: var(--accent);
-    border-color: rgba(0,255,136,0.3);
-    background: rgba(0,255,136,0.05);
-}
-.btn-lg { padding: 14px 36px; font-size: 15px; }
-
-/* ─── Hero ───────────────────────────────────────────────────── */
-.hero {
-    padding: 150px 0 96px;
-}
-.hero-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 32px;
-    padding: 6px 14px;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    background: var(--accent-soft);
-    font-family: var(--font-body);
-}
-
-.hero-inner {
-    display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 56px;
-    align-items: center;
-}
-
-/* ─── Hero Headline Animation ────────────────────────────────── */
-.hero-headline {
-    font-family: var(--font-display);
-    font-size: clamp(38px, 5.2vw, 62px);
-    font-weight: 800;
-    line-height: 1.04;
-    letter-spacing: -0.03em;
-    margin-bottom: 22px;
-}
-
-.hero-line-1 {
-    display: block;
-    color: var(--text-primary);
-    overflow: hidden;
-}
-
-.hero-line-2 {
-    display: inline-block;
-    color: var(--accent);
-    position: relative;
-    overflow: hidden;
-}
-
-/* Word-by-word reveal */
-.word {
-    display: inline-block;
-    opacity: 0;
-    transform: translateY(32px);
-    animation: wordReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.hero-line-1 .word:nth-child(1) { animation-delay: 0.1s; }
-.hero-line-1 .word:nth-child(2) { animation-delay: 0.22s; }
-.hero-line-2 .word:nth-child(1) { animation-delay: 0.38s; }
-
-@keyframes wordReveal {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Underline draw on "Visualise." */
-.hero-line-2::after {
-    content: '';
-    position: absolute;
-    bottom: 2px;
-    left: 0;
-    height: 3px;
-    width: 0;
-    background: var(--accent);
-    border-radius: 2px;
-    animation: underlineDraw 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.85s forwards;
-}
-
-@keyframes underlineDraw {
-    to { width: 100%; }
-}
-
-/* Cursor blink after "Visualise." */
-.hero-cursor {
-    display: inline-block;
-    width: 3px;
-    height: 0.85em;
-    background: var(--accent);
-    border-radius: 2px;
-    vertical-align: middle;
-    margin-left: 4px;
-    opacity: 0;
-    animation: cursorAppear 0.1s ease 0.92s forwards, cursorBlink 1s ease 1.1s 4;
-}
-
-@keyframes cursorAppear { to { opacity: 1; } }
-@keyframes cursorBlink {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0; }
-}
-
-.hero-sub {
-    font-size: 16.5px;
-    color: var(--text-secondary);
-    max-width: 460px;
-    margin-bottom: 28px;
-    line-height: 1.75;
-    opacity: 0;
-    animation: fadeUp 0.6s ease 0.65s forwards;
-}
-
-.hero-meta {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 32px;
-    opacity: 0;
-    animation: fadeUp 0.6s ease 0.75s forwards;
-}
-.hero-meta span {
-    font-size: 12px;
-    font-weight: 500;
-    padding: 5px 13px;
-    background: rgba(0,255,136,0.04);
-    border: 1px solid rgba(0,255,136,0.14);
-    border-radius: 20px;
-    color: var(--text-secondary);
-    font-family: var(--font-body);
-}
-
-.hero-buttons {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    opacity: 0;
-    animation: fadeUp 0.6s ease 0.85s forwards;
-}
-
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ─── Hero Visual Card ───────────────────────────────────────── */
-.hero-visual {
-    background: rgba(10,10,20,0.9);
-    border-radius: var(--radius-xl);
-    padding: 22px;
-    border: 1px solid rgba(0,255,136,0.15);
-    position: relative;
-    opacity: 0;
-    animation: fadeUp 0.7s ease 0.5s forwards;
-}
-.hero-visual-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--font-body);
-}
-.hero-visual-label::before {
-    content: '';
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-    animation: livePulse 1.8s ease-in-out infinite;
-}
-@keyframes livePulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-
-.hero-visual-card {
-    background: rgba(6,6,14,0.9);
-    border-radius: 14px;
-    padding: 18px;
-    border: 1px solid rgba(255,255,255,0.06);
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 16px;
-    align-items: start;
-}
-.hvc-title {
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    color: var(--text-primary);
-}
-.hero-visual-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    background: var(--accent-soft);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    font-size: 11.5px;
-    font-weight: 600;
-    color: var(--accent);
-    font-family: var(--font-body);
-}
-.hero-visual-list {
-    list-style: none;
-    margin-top: 14px;
-}
-.hero-visual-list li {
-    font-size: 12.5px;
-    color: var(--text-secondary);
-    margin-bottom: 7px;
-    padding-left: 14px;
-    position: relative;
-}
-.hero-visual-list li::before {
-    content: '›';
-    position: absolute;
-    left: 0;
-    top: 0;
-    color: var(--accent);
-    opacity: 0.6;
-}
-.hvc-right {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 16px;
-    height: 100%;
-}
-.hvc-btn {
-    font-size: 12px;
-    padding: 9px 14px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-.hvc-note {
-    font-size: 11px;
-    color: var(--text-secondary);
-    text-align: right;
-    line-height: 1.6;
-    opacity: 0.55;
-    font-family: var(--font-body);
-}
-
-/* ─── Partners / Press ───────────────────────────────────────── */
-.partners-section {
-    padding: 80px 0;
-    background: #ffffff;
-    border-top: none;
-    border-bottom: none;
-    overflow: hidden;
-}
-
-@keyframes partnersFadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-
-
-
-.partners-label {
-    
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #111;
-    margin-bottom: 36px;
-    opacity: 0;
-    display: block;
-    text-align: center;
-    font-family: var(--font-body);
-    animation: partnersFadeUp 0.7s ease forwards;
-}
-.partners-label:nth-of-type(2) {
-    animation-delay: 0.15s;
-}
-.partners-label::after { display: none; }
-
-
-
-
-
-.partners-row {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 36px;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 52px;
-    opacity: 0;
-    animation: partnersFadeUp 0.7s ease 0.1s forwards;
-}
-.partners-row + .partners-label { margin-top: 8px; }
-#featuredIn {
-    animation-delay: 0.25s;
-}
-
-
-
-.partner-slot {
-    
-    width: auto;
-    height: 60px;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    overflow: visible;
-    padding: 0;
-}
-.partner-slot:hover {
-    background: transparent;
-}
-
-
-.partner-slot img {
-    max-width: 200px;
-    max-height: 89px;
-    object-fit: contain;
-    filter: none;
-    opacity: 1;
-    transition: opacity 0.2s;
-}
-.partner-slot:hover img {
-    filter: none;
-    opacity: 0.8;
-}
-
-.partner-slot-name {
-    font-size: 15px;
-    font-weight: 700;
-    color: #444;
-    font-family: var(--font-body);
-    letter-spacing: 0.01em;
-}
-
-/* ─── Section Shared ─────────────────────────────────────────── */
-section { padding: 96px 0; }
-
-.section-eyebrow {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--font-body);
-}
-
-.section-header {
-    margin-bottom: 52px;
-    max-width: 640px;
-}
-.section-header h2 {
-    font-family: var(--font-display);
-    font-size: clamp(26px, 3.2vw, 38px);
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    line-height: 1.1;
-    color: var(--text-primary);
-    margin-bottom: 14px;
-}
-.section-header p {
-    font-size: 15.5px;
-    color: var(--text-secondary);
-    line-height: 1.75;
-}
-
-/* ─── Features ───────────────────────────────────────────────── */
-#whySection {
-    background: rgba(8,8,16,0.6);
-    border-top: 1px solid rgba(0,255,136,0.06);
-    border-bottom: 1px solid rgba(0,255,136,0.06);
-}
-
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    border: 1px solid rgba(0,255,136,0.1);
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-}
-
-.feature-card {
-    background: rgba(8,8,16,0.95);
-    padding: 34px 30px;
-    transition: background 0.2s ease;
-    box-shadow: 1px 1px 0 0 rgba(0,255,136,0.07);
-}
-.feature-card:hover { background: rgba(12,14,24,1); }
-.feature-card--wide { grid-column: span 2; }
-
-.fc-tag {
-    display: inline-flex;
-    align-items: center;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 12px;
-    padding: 3px 10px;
-    background: var(--accent-soft);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    font-family: var(--font-body);
-}
-.feature-card h3 {
-    font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-}
-.feature-card p {
-    font-size: 13.5px;
-    color: var(--text-secondary);
-    line-height: 1.72;
-}
-
-/* ─── Steps ──────────────────────────────────────────────────── */
-#download { background: transparent; }
-
-.steps-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
-    margin-bottom: 56px;
-}
-.step-card {
-    padding: 34px 26px;
-    border: 1px solid rgba(0,255,136,0.1);
-    border-radius: var(--radius-lg);
-    background: rgba(10,10,18,0.7);
-    transition: border-color 0.25s, box-shadow 0.25s;
-}
-.step-card:hover {
-    border-color: rgba(0,255,136,0.28);
-    box-shadow: 0 0 24px rgba(0,255,136,0.06);
-}
-.step-num {
-    font-family: var(--font-display);
-    font-size: 38px;
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    color: rgba(0,255,136,0.14);
-    line-height: 1;
-    margin-bottom: 18px;
-}
-.step-card h3 {
-    font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-}
-.step-card p { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; }
-.download-cta { text-align: center; }
-
-/* ─── Generic card grid ──────────────────────────────────────── */
-.grid-3 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-    gap: 18px;
-}
-.card {
-    background: var(--card-bg);
-    border-radius: var(--radius-lg);
-    padding: 26px;
-    border: 1px solid rgba(0,255,136,0.08);
-    backdrop-filter: blur(20px);
-    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-}
-.card:hover {
-    border-color: rgba(0,255,136,0.22);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
-}
-.card h3 {
-    font-family: var(--font-display);
-    font-size: 15px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    color: var(--text-primary);
-}
-.card p { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; }
-
-/* ─── Daily Dashboard ────────────────────────────────────────── */
-.daily-dashboard { padding: 0 0 96px; }
-.dashboard-inner {
-    background: rgba(10,10,18,0.9);
-    border: 1px solid rgba(0,255,136,0.12);
-    border-radius: var(--radius-xl);
-    padding: 38px;
-    backdrop-filter: blur(20px);
-    animation: fadeUp 0.5s ease forwards;
-}
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 32px;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-.dashboard-title-row { display: flex; align-items: center; gap: 14px; }
-.dashboard-icon-wrap {
-    width: 42px; height: 42px;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--accent-soft);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--accent);
-    flex-shrink: 0;
-}
-.dashboard-title {
-    font-family: var(--font-display);
-    font-size: 19px; font-weight: 700;
-    margin-bottom: 2px; color: var(--text-primary);
-}
-.dashboard-subtitle { font-size: 12px; color: var(--accent); font-weight: 600; font-family: var(--font-body); }
-.dashboard-actions { display: flex; align-items: center; gap: 10px; }
-.dashboard-speak-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--accent-soft); border: 1px solid var(--border);
-    color: var(--accent); font-size: 12px; font-weight: 600;
-    padding: 7px 16px; border-radius: 7px; cursor: pointer; transition: all 0.2s;
-    font-family: var(--font-body);
-}
-.dashboard-speak-btn:hover { background: rgba(0,255,136,0.16); }
-.dashboard-speak-btn.speaking { animation: speakPulse 1.2s ease-in-out infinite; }
-@keyframes speakPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,255,136,0.3); } 50% { box-shadow: 0 0 0 7px rgba(0,255,136,0); } }
-
-.dashboard-sessions { display: flex; flex-direction: column; gap: 7px; margin-bottom: 28px; }
-.dash-session {
-    display: grid; grid-template-columns: 130px 1fr auto;
-    align-items: center; gap: 16px;
-    background: rgba(255,255,255,0.018);
-    border: 1px solid rgba(0,255,136,0.07);
-    border-radius: 10px; padding: 14px 18px; transition: border-color 0.2s;
-}
-.dash-session:hover { border-color: rgba(0,255,136,0.2); }
-.dash-session.is-break { opacity: 0.35; padding: 8px 18px; }
-.dash-time { font-size: 12px; font-weight: 600; color: var(--accent); white-space: nowrap; font-family: var(--font-body); }
-.dash-subject { font-size: 13.5px; font-weight: 700; margin-bottom: 2px; color: var(--text-primary); }
-.dash-detail  { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
-.dash-tag {
-    font-size: 10px; font-weight: 600; padding: 3px 10px;
-    border-radius: 20px; white-space: nowrap; text-transform: uppercase;
-    letter-spacing: 0.05em; font-family: var(--font-body);
-}
-.dash-tag-study    { background: rgba(0,255,136,0.08);  color: #00ff88; border: 1px solid rgba(0,255,136,0.18); }
-.dash-tag-revision { background: rgba(255,200,0,0.08);  color: #ffc800; border: 1px solid rgba(255,200,0,0.18); }
-.dash-tag-break    { background: rgba(255,255,255,0.04); color: #555;   border: 1px solid rgba(255,255,255,0.07); }
-.dash-tag-mock     { background: rgba(255,80,80,0.08);  color: #ff6060; border: 1px solid rgba(255,80,80,0.18); }
-
-.dashboard-nav {
-    display: flex; align-items: center; justify-content: space-between;
-    padding-top: 20px; border-top: 1px solid rgba(0,255,136,0.07);
-}
-.dash-nav-btn {
-    background: transparent; border: 1px solid rgba(0,255,136,0.14);
-    color: var(--text-secondary); font-size: 12px; font-weight: 600;
-    padding: 8px 18px; border-radius: 7px; cursor: pointer; transition: all 0.2s; font-family: var(--font-body);
-}
-.dash-nav-btn:hover { border-color: var(--border); color: var(--accent); }
-.dash-nav-btn:disabled { opacity: 0.2; cursor: not-allowed; }
-.dash-day-counter { font-size: 12px; color: var(--text-secondary); font-weight: 600; font-family: var(--font-body); }
-
-/* ─── Opportunities ──────────────────────────────────────────── */
-#opportunitiesSection {
-    background: rgba(8,8,16,0.5);
-    border-top: 1px solid rgba(0,255,136,0.06);
-}
-.opp-filters { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
-.opp-filter-btn {
-    background: rgba(10,10,18,0.8); border: 1px solid rgba(0,255,136,0.12);
-    color: var(--text-secondary); font-size: 12px; font-weight: 500;
-    padding: 6px 16px; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-family: var(--font-body);
-}
-.opp-filter-btn:hover, .opp-filter-btn.active {
-    background: rgba(0,255,136,0.08); color: var(--accent); border-color: rgba(0,255,136,0.3);
-}
-.opp-search {
-    margin-left: auto; background: rgba(10,10,18,0.8);
-    border: 1px solid rgba(0,255,136,0.12); color: var(--text-primary);
-    font-size: 13px; padding: 7px 16px; border-radius: 20px; outline: none;
-    font-family: var(--font-body); width: 220px; transition: border-color 0.2s;
-}
-.opp-search:focus { border-color: var(--border); }
-.opp-search::placeholder { color: var(--text-secondary); }
-
-.opp-live-bar {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 12px; color: var(--text-secondary); margin-bottom: 24px; font-family: var(--font-body);
-}
-.opp-live-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--accent); animation: livePulse 1.8s ease-in-out infinite; flex-shrink: 0;
-}
-
-.opp-skeleton {
-    height: 180px;
-    background: linear-gradient(90deg, rgba(12,12,20,0.7) 25%, rgba(18,18,30,0.9) 50%, rgba(12,12,20,0.7) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s infinite;
-}
-@keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
-
-.opp-card-type {
-    display: inline-block; font-size: 10px; font-weight: 600;
-    padding: 3px 10px; border-radius: 20px; margin-bottom: 10px;
-    letter-spacing: 0.06em; text-transform: uppercase; font-family: var(--font-body);
-}
-.opp-type-scholarship { background:rgba(0,255,136,0.08);  color:var(--accent); border:1px solid rgba(0,255,136,0.2); }
-.opp-type-research    { background:rgba(255,200,0,0.08);  color:#ffc800;       border:1px solid rgba(255,200,0,0.2); }
-.opp-type-fellowship  { background:rgba(168,85,247,0.1);  color:#c084fc;       border:1px solid rgba(168,85,247,0.22); }
-
-.opp-card-title  { font-family: var(--font-display); font-size:14px; font-weight:700; margin-bottom:6px; line-height:1.4; color:var(--text-primary); }
-.opp-card-source { font-size:12px; color:var(--text-secondary); margin-bottom:10px; font-family: var(--font-body); }
-.opp-card-desc {
-    font-size:13px; color:var(--text-secondary); line-height:1.65; margin-bottom:14px;
-    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
-}
-.opp-card-footer {
-    display:flex; align-items:center; justify-content:space-between;
-    margin-top:auto; padding-top:12px; border-top:1px solid rgba(0,255,136,0.07);
-}
-.opp-card-region { font-size:11px; color:var(--text-secondary); font-family: var(--font-body); }
-.opp-card-link   { font-size:12px; font-weight:600; color:var(--accent); text-decoration:none; transition:opacity 0.2s; font-family: var(--font-body); }
-.opp-card-link:hover { opacity:0.7; }
-.opp-no-results  { grid-column:1/-1; text-align:center; color:var(--text-secondary); padding:60px 0; }
-#oppGrid .card   { display:flex; flex-direction:column; }
-
-/* ─── Footer ─────────────────────────────────────────────────── */
-.footer {
-    padding: 46px 0;
-    border-top: 1px solid rgba(0,255,136,0.08);
-}
-.footer-inner {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 16px; flex-wrap: wrap;
-}
-.footer-brand p { font-size:13px; color:var(--text-secondary); margin-top:6px; }
-.footer-copy    { font-size:12px; color:var(--text-secondary); opacity:0.45; font-family: var(--font-body); }
-
-/* ─── Floating Stop Voice ────────────────────────────────────── */
-.floating-stop-voice-btn {
-    position: fixed; bottom: 28px; right: 28px;
-    width: 46px; height: 46px; border-radius: 10px;
-    background: var(--accent); border: none; color: #030a06;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 20px rgba(0,255,136,0.3); z-index: 30; transition: all 0.25s;
-}
-.floating-stop-voice-btn:hover { transform: scale(1.08); }
-
-/* ─── Modal ──────────────────────────────────────────────────── */
-.modal-box {
-    width: min(420px, 92vw);
-    background: #0a0a16;
-    border: 1px solid rgba(0,255,136,0.18);
-    border-radius: var(--radius-xl);
-    padding: 26px 22px;
-    box-shadow: 0 40px 100px rgba(0,0,0,0.8);
-}
-.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.modal-title { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--text-primary); }
-.modal-close {
-    background: transparent; border: 1px solid rgba(255,255,255,0.1);
-    color: var(--text-secondary); width: 30px; height: 30px;
-    border-radius: 7px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-}
-.modal-close:hover { border-color: rgba(0,255,136,0.3); color: var(--accent); }
-.modal-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 16px; }
-.modal-input {
-    width: 100%; padding: 12px 16px; border-radius: 8px;
-    border: 1px solid rgba(0,255,136,0.16); background: rgba(0,255,136,0.03);
-    color: var(--accent); letter-spacing: 6px; text-transform: uppercase;
-    font-weight: 700; font-size: 16px; font-family: var(--font-body);
-    margin-bottom: 16px; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-}
-.modal-input:focus { border-color: var(--border); box-shadow: 0 0 0 3px rgba(0,255,136,0.07); }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-.modal-err {
-    margin-top: 14px; background: rgba(255,60,60,0.08);
-    border: 1px solid rgba(255,60,60,0.22); color: #ff8080;
-    border-radius: 8px; padding: 10px 14px; font-size: 13px; line-height: 1.5;
-}
-
-/* ─── Responsive ─────────────────────────────────────────────── */
-@media (max-width: 960px) {
-    .features-grid { grid-template-columns: repeat(2, 1fr); }
-    .feature-card--wide { grid-column: span 2; }
-    .steps-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 768px) {
-    .hero-inner { grid-template-columns: 1fr; gap: 40px; }
-    .hero-visual { order: -1; }
-    .features-grid { grid-template-columns: 1fr; border-radius: var(--radius-lg); }
-    .feature-card--wide { grid-column: span 1; }
-    .steps-grid { grid-template-columns: 1fr; }
-    .dashboard-inner { padding: 22px 18px; }
-    .dash-session { grid-template-columns: 1fr auto; gap: 8px; }
-    .dash-time { grid-column: 1/-1; margin-bottom: -4px; }
-    .dashboard-header { flex-direction: column; }
-    .nav-links { display: none; }
-    .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
-    .hero-visual-card { grid-template-columns: 1fr; }
-    .partner-slot { width: 150px; height: 64px; }
-}
-@media (max-width: 480px) {
-    .hero { padding: 120px 0 64px; }
-    .partners-row { gap: 8px; }
-    .partner-slot { width: 130px; height: 56px; }
-}
-    </style>
+    <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
 
@@ -930,18 +17,14 @@ section { padding: 96px 0; }
         <nav class="nav">
             <a href="/index.html" class="logo">Amplify</a>
             <div class="nav-links" id="navLinksEn">
-                <a href="https://amplifywebsite-production.up.railway.app/career.html" class="nav-link" target="_blank" rel="noopener noreferrer">Career Engine</a>
-                <a href="https://amplifywebsite-production.up.railway.app/experiments.html" class="nav-link" target="_blank" rel="noopener noreferrer">Experiments</a>
-                <a href="https://huggingface.co/spaces/addyjeddy/book-chatbot-better" class="nav-link" target="_blank" rel="noopener noreferrer">AI Assist</a>
-                <a href="https://amplifywebsite-production.up.railway.app/classroomai.html" class="nav-link" target="_blank" rel="noopener noreferrer">Classroom AI</a>
-                <a href="https://amplifywebsite-production.up.railway.app/deeplearn.html" class="nav-link" target="_blank" rel="noopener noreferrer">DeepLearn</a>
-                <a href="https://amplifywebsite-production.up.railway.app/amplify-tutor.html" class="nav-link" target="_blank" rel="noopener noreferrer">Amplify Tutor</a>
+                <a href="/career.html" class="nav-link">Career Engine</a>
+                <a href="/experiments.html" class="nav-link">Experiments</a>
+                <a href="https://huggingface.co/spaces/addyjeddy/book-chatbot-better" class="nav-link" target="_blank">AI Assist</a>
+                <a href="/classroomai.html" class="nav-link">Classroom AI</a>
+                <a href="/deeplearn.html" class="nav-link">DeepLearn</a>
+                <a href="/amplify-tutor.html" class="nav-link">Amplify Tutor</a>
             </div>
             <div class="nav-right">
-                <div class="lang-toggle">
-                    <button class="lang-btn active" id="langEn" onclick="setLang('en')">EN</button>
-                    <button class="lang-btn" id="langBn" onclick="setLang('bn')">বাং</button>
-                </div>
             </div>
         </nav>
     </div>
@@ -952,38 +35,32 @@ section { padding: 96px 0; }
     <!-- Hero -->
     <section class="hero">
         <div class="container">
-            <div class="hero-eyebrow" data-en="Adaptive Learning Platform — Built for Bangladesh" data-bn="অ্যাডাপ্টিভ লার্নিং প্ল্যাটফর্ম — বাংলাদেশের জন্য তৈরি">
+            <div class="hero-eyebrow" data-en="Adaptive Learning Platform — Built for Bangladesh">
                 Adaptive Learning Platform — Built for Bangladesh
             </div>
             <div class="hero-inner">
                 <div class="hero-copy">
                     <h1 class="hero-headline">
-                        <span class="hero-line-1">
-                            <span class="word" data-en="Don't" data-bn="মুখস্থ">Don't</span>
-                            <span class="word" data-en="Memorise," data-bn="নয়,"> Memorise,</span>
-                        </span>
-                        <span class="hero-line-2">
-                            <span class="word" data-en="Visualise." data-bn="ভিজুয়ালাইজ করো।">Visualise.</span>
-                            <span class="hero-cursor" aria-hidden="true"></span>
-                        </span>
+                        <span class="hero-line-1" data-en="Don't Memorise,">Don't Memorise,</span>
+                        <span class="hero-line-2" data-en="Visualise.">Visualise.</span>
                     </h1>
-                    <p class="hero-sub" data-en="A tutor that connects with you — adapting to how you learn, not how books are written." data-bn="একটি টিউটর যা আপনার সাথে সংযুক্ত হয় — আপনি কীভাবে শেখেন তার সাথে মানিয়ে নেয়, বই যেভাবে লেখা হয় সেভাবে নয়।">
+                    <p class="hero-sub" data-en="A tutor that connects with you — adapting to how you learn, not how books are written.">
                         A tutor that connects with you — adapting to how you learn, not how books are written.
                     </p>
                     <div class="hero-meta">
-                        <span data-en="Any network" data-bn="যেকোনো নেটওয়ার্ক">Any network</span>
-                        <span data-en="OTP-based access" data-bn="OTP ভিত্তিক অ্যাক্সেস">OTP-based access</span>
-                        <span data-en="Private by design" data-bn="ডিজাইনে প্রাইভেট">Private by design</span>
-                        <span data-en="NCTB aligned" data-bn="NCTB অ্যালাইন্ড">NCTB aligned</span>
+                        <span data-en="Any network">Any network</span>
+                        <span data-en="OTP-based access">OTP-based access</span>
+                        <span data-en="Private by design">Private by design</span>
+                        <span data-en="NCTB aligned">NCTB aligned</span>
                     </div>
                     <div class="hero-buttons">
-                        <button class="btn btn-primary" onclick="showDownloadAlert()" data-en="Download Amplify" data-bn="ডাউনলোড করুন">
+                        <button class="btn btn-primary" onclick="showDownloadAlert()" data-en="Download Amplify">
                             Download Amplify
                         </button>
-                        <button class="btn btn-secondary" onclick="openJoinClassroomModal()" data-en="Join a Classroom" data-bn="ক্লাসরুমে যোগ দিন">
+                        <button class="btn btn-secondary" onclick="openJoinClassroomModal()" data-en="Join a Classroom">
                             Join a Classroom
                         </button>
-                        <button class="btn btn-outline" onclick="openMyClassroomsFromIndex()" data-en="My Classrooms" data-bn="আমার ক্লাসরুম">
+                        <button class="btn btn-outline" onclick="openMyClassroomsFromIndex()" data-en="My Classrooms">
                             My Classrooms
                         </button>
                     </div>
@@ -991,20 +68,20 @@ section { padding: 96px 0; }
 
                 <!-- Preview Card -->
                 <div class="hero-visual">
-                    <div class="hero-visual-label" data-en="Today's overview" data-bn="আজকের সারসংক্ষেপ">Today's overview</div>
+                    <div class="hero-visual-label" data-en="Today's overview">Today's overview</div>
                     <div class="hero-visual-card">
                         <div class="hvc-left">
-                            <div class="hvc-title" data-en="Mind Check-in" data-bn="মাইন্ড চেক-ইন">Mind Check-in</div>
-                            <span class="hero-visual-pill" data-en="Balanced · 7/10" data-bn="সুষম · ৭/১০">Balanced · 7/10</span>
+                            <div class="hvc-title" data-en="Mind Check-in">Mind Check-in</div>
+                            <span class="hero-visual-pill" data-en="Balanced · 7/10">Balanced · 7/10</span>
                             <ul class="hero-visual-list">
-                                <li data-en="2 study sessions completed" data-bn="২টি স্টাডি সেশন সম্পন্ন">2 study sessions completed</li>
-                                <li data-en="1 mock test scheduled" data-bn="১টি মক টেস্ট নির্ধারিত">1 mock test scheduled</li>
-                                <li data-en="3 revision cards ready" data-bn="৩টি রিভিশন কার্ড প্রস্তুত">3 revision cards ready</li>
+                                <li data-en="2 study sessions completed">2 study sessions completed</li>
+                                <li data-en="1 mock test scheduled">1 mock test scheduled</li>
+                                <li data-en="3 revision cards ready">3 revision cards ready</li>
                             </ul>
                         </div>
                         <div class="hvc-right">
-                            <a href="/routine.html" class="btn btn-secondary hvc-btn" data-en="Routine mode" data-bn="রুটিন মোড">Routine mode</a>
-                            <div class="hvc-note" data-en="Planner · Check-ins · Cards" data-bn="প্ল্যানার · চেক-ইন · কার্ড">Planner · Check-ins · Cards</div>
+                            <a href="/routine.html" class="btn btn-secondary hvc-btn" data-en="Routine mode">Routine mode</a>
+                            <div class="hvc-note" data-en="Planner · Check-ins · Cards">Planner · Check-ins · Cards</div>
                         </div>
                     </div>
                 </div>
@@ -1015,96 +92,135 @@ section { padding: 96px 0; }
     <!-- Supported By / Featured In -->
     <section class="partners-section">
         <div class="container">
-            <div class="partners-label" data-en="Supported by" data-bn="সহযোগিতায়">Supported by</div>
-            
+
+            <div class="partners-label" data-en="Supported by">Supported by</div>
             <div class="partners-row" id="supportedBy">
-                
-                <div class="partner-slot"><a href="https://www.facebook.com/share/1934mvVEYD/" target="_blank" rel="noopener noreferrer"><img src="/images/logos/banglalink.jpg" alt="Banglalink"></a></div>
-                <div class="partner-slot"><a href="https://www.facebook.com/photo?fbid=1274687658019788&set=pcb.1274689928019561" target="_blank" rel="noopener noreferrer"><img src="/images/logos/applink.png" alt="Applink Store"></a></div>
-                <div class="partner-slot"><img src="/images/logos/henid.png" alt="hSenid Mobile"></div>
-                <div class="partner-slot"><a href="https://aceit.fit" target="_blank" rel="noopener noreferrer"><img src="/images/logos/ace.png" alt="AceIT"></a></div>
+                <!--
+                    HOW TO ADD LOGOS:
+                    Replace each <span class="partner-slot-name"> with an <img> tag inside the .partner-slot div.
+                    Example:
+                        <div class="partner-slot">
+                            <img src="/assets/logos/banglalink.svg" alt="Banglalink" />
+                        </div>
+                    Recommended: SVG or PNG with transparent background, any size (CSS will fit it).
+                    The slot is 140×52px. Images auto-grayscale and restore color on hover.
+                -->
+                <div class="partner-slot">
+                    <span class="partner-slot-name">Banglalink</span>
+                </div>
+                <div class="partner-slot">
+                    <span class="partner-slot-name">Applink Store</span>
+                </div>
+                <div class="partner-slot">
+                    <span class="partner-slot-name">hSenid Mobile</span>
+                </div>
+                <div class="partner-slot">
+                    <span class="partner-slot-name">AceIT</span>
+                </div>
             </div>
- 
-            <div class="partners-label" style="margin-top: 48px;" data-en="Featured in" data-bn="যেখানে প্রকাশিত হয়েছে">Featured in</div>
-            
+
+            <div class="partners-label" style="margin-top: 48px;" data-en="Featured in">Featured in</div>
             <div class="partners-row" id="featuredIn">
-                <div class="partner-slot"><a href="https://www.facebook.com/reel/3053067948216520/" target="_blank" rel="noopener noreferrer"><img src="/images/logos/aspireins.jpg" alt="Aspire Institute"></a></div>
-                
-                
-                <div class="partner-slot"><a href="https://www.dhakatribune.com/business/401277/banglalink-holds-appquest-applink-hackathon-2025" target="_blank" rel="noopener noreferrer"><img src="/images/logos/dhaka.jpg" alt="Dhaka Tribune"></a></div>
-                <div class="partner-slot"><a href="https://en.prothomalo.com/corporate/e9tgkeq4vf" target="_blank" rel="noopener noreferrer"><img src="/images/logos/prothom.png" alt="Prothom Alo"></a></div>
-                <div class="partner-slot"><img src="/images/logos/tbh.png" alt="The Business Standard"></div>
+                <!--
+                    Same pattern — swap the <span> for an <img> when you have logos ready.
+                    Example:
+                        <div class="partner-slot">
+                            <img src="/assets/logos/dhaka-tribune.png" alt="Dhaka Tribune" />
+                        </div>
+                -->
+                <div class="partner-slot">
+                    <span class="partner-slot-name">Aspire Institute</span>
+                </div>
+                <div class="partner-slot">
+                    <span class="partner-slot-name">Dhaka Tribune</span>
+                </div>
+                <div class="partner-slot">
+                    <span class="partner-slot-name">Prothom Alo</span>
+                </div>
+                <div class="partner-slot">
+                    <span class="partner-slot-name">The Business Standard</span>
+                </div>
             </div>
-        </div> 
-    </section> 
+
+        </div>
+    </section>
 
     <!-- Features -->
     <section id="whySection">
         <div class="container">
             <div class="section-header">
-                <div class="section-eyebrow" data-en="Platform Features" data-bn="প্ল্যাটফর্ম ফিচার">Platform Features</div>
-                <h2 data-en="Built to replace passive learning" data-bn="নিষ্ক্রিয় শিক্ষার বিকল্প হিসেবে তৈরি">Built to replace passive learning</h2>
-                <p data-en="Every tool here exists to make a student genuinely understand — not just pass." data-bn="এখানকার প্রতিটি টুল একজন শিক্ষার্থীকে সত্যিকার অর্থে বুঝতে সাহায্য করার জন্য তৈরি — শুধু পাস করার জন্য নয়।">
+                <div class="section-eyebrow" data-en="Platform Features">Platform Features</div>
+                <h2 data-en="Built to replace passive learning">Built to replace passive learning</h2>
+                <p data-en="Every tool here exists to make a student genuinely understand — not just pass.">
                     Every tool here exists to make a student genuinely understand — not just pass.
                 </p>
             </div>
             <div class="features-grid">
+
                 <div class="feature-card feature-card--wide">
-                    <div class="fc-tag" data-en="Adaptive AI" data-bn="অ্যাডাপ্টিভ AI">Adaptive AI</div>
-                    <h3 data-en="Personalised AI Tutor" data-bn="ব্যক্তিগতকৃত AI টিউটর">Personalised AI Tutor</h3>
-                    <p data-en="The tutor learns your pace, weak areas, and learning style. It generates live animations from lesson topics, runs contextual quizzes, and delivers improvement suggestions based on your actual performance — not a generic syllabus." data-bn="টিউটর আপনার গতি, দুর্বল বিষয় এবং শেখার ধরন শেখে। এটি পাঠের বিষয় থেকে লাইভ অ্যানিমেশন তৈরি করে, প্রাসঙ্গিক কুইজ পরিচালনা করে এবং আপনার প্রকৃত পারফরম্যান্সের ভিত্তিতে উন্নতির পরামর্শ দেয়।">
+                    <div class="fc-tag" data-en="Adaptive AI">Adaptive AI</div>
+                    <h3 data-en="Personalised AI Tutor">Personalised AI Tutor</h3>
+                    <p data-en="The tutor learns your pace, weak areas, and learning style. It generates live animations from lesson topics, runs contextual quizzes, and delivers improvement suggestions based on your actual performance — not a generic syllabus.">
                         The tutor learns your pace, weak areas, and learning style. It generates live animations from lesson topics, runs contextual quizzes, and delivers improvement suggestions based on your actual performance — not a generic syllabus.
                     </p>
                 </div>
+
                 <div class="feature-card">
-                    <div class="fc-tag" data-en="Second Brain" data-bn="সেকেন্ড ব্রেইন">Second Brain</div>
-                    <h3 data-en="Full Knowledge System" data-bn="সম্পূর্ণ জ্ঞান সিস্টেম">Full Knowledge System</h3>
-                    <p data-en="Topic breakdowns, spaced repetition scheduling, and an attention tracker that surfaces what you're drifting away from before exams." data-bn="টপিক ব্রেকডাউন, স্পেসড রিপিটিশন শিডিউলিং, এবং একটি অ্যাটেনশন ট্র্যাকার যা পরীক্ষার আগে আপনি কোথা থেকে দূরে সরে যাচ্ছেন তা দেখায়।">
+                    <div class="fc-tag" data-en="Second Brain">Second Brain</div>
+                    <h3 data-en="Full Knowledge System">Full Knowledge System</h3>
+                    <p data-en="Topic breakdowns, spaced repetition scheduling, and an attention tracker that surfaces what you're drifting away from before exams.">
                         Topic breakdowns, spaced repetition scheduling, and an attention tracker that surfaces what you're drifting away from before exams.
                     </p>
                 </div>
+
                 <div class="feature-card">
-                    <div class="fc-tag" data-en="Offline" data-bn="অফলাইন">Offline</div>
-                    <h3 data-en="NCTB Offline Mode" data-bn="NCTB অফলাইন মোড">NCTB Offline Mode</h3>
-                    <p data-en="Ask any question and receive answers sourced directly from NCTB textbooks — no internet, no image uploads, no hallucination risk. Just accurate curriculum answers, always available." data-bn="যেকোনো প্রশ্ন করুন এবং সরাসরি NCTB পাঠ্যপুস্তক থেকে উত্তর পান — ইন্টারনেট নেই, ইমেজ আপলোড নেই, হ্যালুসিনেশনের ঝুঁকি নেই।">
+                    <div class="fc-tag" data-en="Offline">Offline</div>
+                    <h3 data-en="NCTB Offline Mode">NCTB Offline Mode</h3>
+                    <p data-en="Ask any question and receive answers sourced directly from NCTB textbooks — no internet, no image uploads, no hallucination risk. Just accurate curriculum answers, always available.">
                         Ask any question and receive answers sourced directly from NCTB textbooks — no internet, no image uploads, no hallucination risk. Just accurate curriculum answers, always available.
                     </p>
                 </div>
+
                 <div class="feature-card">
-                    <div class="fc-tag" data-en="Einstein Mode" data-bn="আইনস্টাইন মোড">Einstein Mode</div>
-                    <h3 data-en="Advanced Research Assistance" data-bn="উন্নত গবেষণা সহায়তা">Advanced Research Assistance</h3>
-                    <p data-en="A multimodal research layer for students ready to go beyond the textbook — from foundational concepts to advanced academic material, with visual context at every step." data-bn="পাঠ্যপুস্তকের বাইরে যেতে প্রস্তুত শিক্ষার্থীদের জন্য একটি মাল্টিমোডাল গবেষণা স্তর।">
+                    <div class="fc-tag" data-en="Einstein Mode">Einstein Mode</div>
+                    <h3 data-en="Advanced Research Assistance">Advanced Research Assistance</h3>
+                    <p data-en="A multimodal research layer for students ready to go beyond the textbook — from foundational concepts to advanced academic material, with visual context at every step.">
                         A multimodal research layer for students ready to go beyond the textbook — from foundational concepts to advanced academic material, with visual context at every step.
                     </p>
                 </div>
+
                 <div class="feature-card">
-                    <div class="fc-tag" data-en="3D Lab" data-bn="থ্রিডি ল্যাব">3D Lab</div>
-                    <h3 data-en="3D Practical Animations" data-bn="থ্রিডি প্র্যাক্টিক্যাল অ্যানিমেশন">3D Practical Animations</h3>
-                    <p data-en="Science practicals, diagrams, and spatial concepts rendered in 3D with personalised tutoring. Navigate with voice or gesture — no lab equipment required." data-bn="বিজ্ঞান প্র্যাক্টিক্যাল, ডায়াগ্রাম এবং স্থানিক ধারণাগুলি ব্যক্তিগতকৃত টিউটরিং সহ 3D-তে রেন্ডার করা হয়েছে।">
+                    <div class="fc-tag" data-en="3D Lab">3D Lab</div>
+                    <h3 data-en="3D Practical Animations">3D Practical Animations</h3>
+                    <p data-en="Science practicals, diagrams, and spatial concepts rendered in 3D with personalised tutoring. Navigate with voice or gesture — no lab equipment required.">
                         Science practicals, diagrams, and spatial concepts rendered in 3D with personalised tutoring. Navigate with voice or gesture — no lab equipment required.
                     </p>
                 </div>
+
                 <div class="feature-card feature-card--wide">
-                    <div class="fc-tag" data-en="Classroom AI" data-bn="ক্লাসরুম AI">Classroom AI</div>
-                    <h3 data-en="AI-Powered Classroom System" data-bn="AI-চালিত ক্লাসরুম সিস্টেম">AI-Powered Classroom System</h3>
-                    <p data-en="Three AI student models — Curious, Skeptic, and Achiever — participate in real-time classroom sessions alongside real students, raising the quality of discussion in classrooms across rural and urban regions alike. Teachers get a full ecosystem: attendance, announcements, assignments, and live engagement data." data-bn="তিনটি AI ছাত্র মডেল — কৌতূহলী, সন্দেহবাদী এবং অর্জনকারী — বাস্তব ছাত্রদের পাশাপাশি রিয়েল-টাইম ক্লাসরুম সেশনে অংশগ্রহণ করে।">
+                    <div class="fc-tag" data-en="Classroom AI">Classroom AI</div>
+                    <h3 data-en="AI-Powered Classroom System">AI-Powered Classroom System</h3>
+                    <p data-en="Three AI student models — Curious, Skeptic, and Achiever — participate in real-time classroom sessions alongside real students, raising the quality of discussion in classrooms across rural and urban regions alike. Teachers get a full ecosystem: attendance, announcements, assignments, and live engagement data.">
                         Three AI student models — Curious, Skeptic, and Achiever — participate in real-time classroom sessions alongside real students, raising the quality of discussion in classrooms across rural and urban regions alike. Teachers get a full ecosystem: attendance, announcements, assignments, and live engagement data.
                     </p>
                 </div>
+
                 <div class="feature-card">
-                    <div class="fc-tag" data-en="Focus" data-bn="ফোকাস">Focus</div>
-                    <h3 data-en="Focus Monitoring" data-bn="ফোকাস মনিটরিং">Focus Monitoring</h3>
-                    <p data-en="Tracks attention levels using facial feature analysis during study sessions. Identifies drift patterns and nudges the student back — passively, without interrupting flow." data-bn="স্টাডি সেশনের সময় ফেসিয়াল ফিচার বিশ্লেষণ ব্যবহার করে মনোযোগের স্তর ট্র্যাক করে।">
+                    <div class="fc-tag" data-en="Focus">Focus</div>
+                    <h3 data-en="Focus Monitoring">Focus Monitoring</h3>
+                    <p data-en="Tracks attention levels using facial feature analysis during study sessions. Identifies drift patterns and nudges the student back — passively, without interrupting flow.">
                         Tracks attention levels using facial feature analysis during study sessions. Identifies drift patterns and nudges the student back — passively, without interrupting flow.
                     </p>
                 </div>
+
                 <div class="feature-card">
-                    <div class="fc-tag" data-en="Wellbeing" data-bn="সুস্থতা">Wellbeing</div>
-                    <h3 data-en="Daily Mind Check-in" data-bn="দৈনিক মাইন্ড চেক-ইন">Daily Mind Check-in</h3>
-                    <p data-en="Track mood, stress, and study energy daily. Smart scheduling adjusts around your mental state so you're never pushed to grind through the wrong sessions." data-bn="প্রতিদিন মুড, স্ট্রেস এবং স্টাডি এনার্জি ট্র্যাক করুন। স্মার্ট শিডিউলিং আপনার মানসিক অবস্থার সাথে মিলিয়ে নিজেকে সামঞ্জস্য করে।">
+                    <div class="fc-tag" data-en="Wellbeing">Wellbeing</div>
+                    <h3 data-en="Daily Mind Check-in">Daily Mind Check-in</h3>
+                    <p data-en="Track mood, stress, and study energy daily. Smart scheduling adjusts around your mental state so you're never pushed to grind through the wrong sessions.">
                         Track mood, stress, and study energy daily. Smart scheduling adjusts around your mental state so you're never pushed to grind through the wrong sessions.
                     </p>
                 </div>
+
             </div>
         </div>
     </section>
@@ -1113,28 +229,28 @@ section { padding: 96px 0; }
     <section id="download">
         <div class="container">
             <div class="section-header">
-                <div class="section-eyebrow" data-en="Get Started" data-bn="শুরু করুন">Get Started</div>
-                <h2 data-en="Up and running in three steps" data-bn="তিনটি ধাপে শুরু করুন">Up and running in three steps</h2>
+                <div class="section-eyebrow" data-en="Get Started">Get Started</div>
+                <h2 data-en="Up and running in three steps">Up and running in three steps</h2>
             </div>
             <div class="steps-grid">
                 <div class="step-card">
                     <div class="step-num">01</div>
-                    <h3 data-en="Download the app" data-bn="অ্যাপ ডাউনলোড করুন">Download the app</h3>
-                    <p data-en="Available on any network, optimised for low-bandwidth connections." data-bn="যেকোনো নেটওয়ার্কে পাওয়া যায়, কম-ব্যান্ডউইথ সংযোগের জন্য অপ্টিমাইজড।">Available on any network, optimised for low-bandwidth connections.</p>
+                    <h3 data-en="Download the app">Download the app</h3>
+                    <p data-en="Available on any network, optimised for low-bandwidth connections.">Available on any network, optimised for low-bandwidth connections.</p>
                 </div>
                 <div class="step-card">
                     <div class="step-num">02</div>
-                    <h3 data-en="Sign up with your number" data-bn="আপনার নম্বর দিয়ে সাইন আপ করুন">Sign up with your number</h3>
-                    <p data-en="No email or password required. OTP access keeps it simple and secure." data-bn="ইমেইল বা পাসওয়ার্ডের প্রয়োজন নেই। OTP অ্যাক্সেস এটিকে সহজ এবং নিরাপদ রাখে।">No email or password required. OTP access keeps it simple and secure.</p>
+                    <h3 data-en="Sign up with your number">Sign up with your number</h3>
+                    <p data-en="No email or password required. OTP access keeps it simple and secure.">No email or password required. OTP access keeps it simple and secure.</p>
                 </div>
                 <div class="step-card">
                     <div class="step-num">03</div>
-                    <h3 data-en="Start your first session" data-bn="আপনার প্রথম সেশন শুরু করুন">Start your first session</h3>
-                    <p data-en="The tutor calibrates to you from day one. No setup, no configuration." data-bn="টিউটর প্রথম দিন থেকেই আপনার সাথে ক্যালিব্রেট করে। কোনো সেটআপ নেই।">The tutor calibrates to you from day one. No setup, no configuration.</p>
+                    <h3 data-en="Start your first session">Start your first session</h3>
+                    <p data-en="The tutor calibrates to you from day one. No setup, no configuration.">The tutor calibrates to you from day one. No setup, no configuration.</p>
                 </div>
             </div>
             <div class="download-cta">
-                <button class="btn btn-primary btn-lg" onclick="showDownloadAlert()" data-en="Download Amplify" data-bn="অ্যাম্প্লিফাই ডাউনলোড করুন">
+                <button class="btn btn-primary btn-lg" onclick="showDownloadAlert()" data-en="Download Amplify">
                     Download Amplify
                 </button>
             </div>
@@ -1151,20 +267,24 @@ section { padding: 96px 0; }
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         </div>
                         <div>
-                            <h2 class="dashboard-title" data-en="Today's Routine" data-bn="আজকের রুটিন">Today's Routine</h2>
+                            <h2 class="dashboard-title" data-en="Today's Routine">Today's Routine</h2>
                             <span class="dashboard-subtitle" id="dashboardDayLabel"></span>
                         </div>
                     </div>
                     <div class="dashboard-actions">
-                        <button class="dashboard-speak-btn" id="dashboardSpeakBtn" title="Read aloud" data-en="Listen" data-bn="শুনুন">Listen</button>
-                        <a href="/routine.html" class="btn btn-outline" style="font-size:0.82rem;padding:7px 16px;" data-en="New Routine" data-bn="নতুন রুটিন">New Routine</a>
+                        <button class="dashboard-speak-btn" id="dashboardSpeakBtn" title="Read aloud" data-en="Listen">
+                            Listen
+                        </button>
+                        <a href="/routine.html" class="btn btn-outline" style="font-size:0.82rem;padding:7px 16px;" data-en="New Routine">
+                            New Routine
+                        </a>
                     </div>
                 </div>
                 <div class="dashboard-sessions" id="dashboardSessions"></div>
                 <div class="dashboard-nav">
-                    <button class="dash-nav-btn" id="dashPrevDay" data-en="Previous Day" data-bn="আগের দিন">Previous Day</button>
+                    <button class="dash-nav-btn" id="dashPrevDay" data-en="Previous Day">Previous Day</button>
                     <span class="dash-day-counter" id="dashDayCounter"></span>
-                    <button class="dash-nav-btn" id="dashNextDay" data-en="Next Day" data-bn="পরের দিন">Next Day</button>
+                    <button class="dash-nav-btn" id="dashNextDay" data-en="Next Day">Next Day</button>
                 </div>
             </div>
         </div>
@@ -1174,20 +294,20 @@ section { padding: 96px 0; }
     <section id="opportunitiesSection">
         <div class="container">
             <div class="section-header">
-                <div class="section-eyebrow" data-en="Live Opportunities" data-bn="লাইভ সুযোগ">Live Opportunities</div>
-                <h2 data-en="International Scholarships &amp; Fellowships" data-bn="আন্তর্জাতিক বৃত্তি ও ফেলোশিপ">International Scholarships &amp; Fellowships</h2>
-                <p data-en="Updated automatically. No applications to miss." data-bn="স্বয়ংক্রিয়ভাবে আপডেট হয়। কোনো আবেদন মিস করবেন না।">Updated automatically. No applications to miss.</p>
+                <div class="section-eyebrow" data-en="Live Opportunities">Live Opportunities</div>
+                <h2 data-en="International Scholarships &amp; Fellowships">International Scholarships &amp; Fellowships</h2>
+                <p data-en="Updated automatically. No applications to miss.">Updated automatically. No applications to miss.</p>
             </div>
             <div class="opp-filters">
-                <button class="opp-filter-btn active" onclick="setOppFilter('ALL', this)" data-en="All" data-bn="সব">All</button>
-                <button class="opp-filter-btn" onclick="setOppFilter('Scholarship', this)" data-en="Scholarships" data-bn="বৃত্তি">Scholarships</button>
-                <button class="opp-filter-btn" onclick="setOppFilter('Research', this)" data-en="Research" data-bn="গবেষণা">Research</button>
-                <button class="opp-filter-btn" onclick="setOppFilter('Fellowship', this)" data-en="Fellowships" data-bn="ফেলোশিপ">Fellowships</button>
+                <button class="opp-filter-btn active" onclick="setOppFilter('ALL', this)" data-en="All">All</button>
+                <button class="opp-filter-btn" onclick="setOppFilter('Scholarship', this)" data-en="Scholarships">Scholarships</button>
+                <button class="opp-filter-btn" onclick="setOppFilter('Research', this)" data-en="Research">Research</button>
+                <button class="opp-filter-btn" onclick="setOppFilter('Fellowship', this)" data-en="Fellowships">Fellowships</button>
                 <input class="opp-search" id="oppSearch" placeholder="Search opportunities..." oninput="renderOpportunities()" />
             </div>
             <div class="opp-live-bar">
                 <span class="opp-live-dot"></span>
-                <span id="oppStatus" data-en="Fetching live opportunities..." data-bn="লাইভ সুযোগ আনা হচ্ছে...">Fetching live opportunities...</span>
+                <span id="oppStatus" data-en="Fetching live opportunities...">Fetching live opportunities...</span>
                 <span id="oppCount" style="margin-left:auto;font-size:12px;color:var(--text-secondary);"></span>
             </div>
             <div class="grid-3" id="oppGrid">
@@ -1196,7 +316,7 @@ section { padding: 96px 0; }
                 <div class="card opp-skeleton"></div>
             </div>
             <div style="text-align:center;margin-top:32px;">
-                <button class="btn btn-secondary" onclick="loadOpportunities()" data-en="Refresh" data-bn="রিফ্রেশ">Refresh</button>
+                <button class="btn btn-secondary" onclick="loadOpportunities()" data-en="Refresh">Refresh</button>
             </div>
         </div>
     </section>
@@ -1208,7 +328,7 @@ section { padding: 96px 0; }
         <div class="footer-inner">
             <div class="footer-brand">
                 <span class="logo">Amplify</span>
-                <p data-en="Built for students across Bangladesh." data-bn="বাংলাদেশের শিক্ষার্থীদের জন্য তৈরি।">Built for students across Bangladesh.</p>
+                <p data-en="Built for students across Bangladesh.">Built for students across Bangladesh.</p>
             </div>
             <div class="footer-copy">&copy; 2026 Amplify. All rights reserved.</div>
         </div>
@@ -1224,18 +344,18 @@ section { padding: 96px 0; }
 <div id="joinClassroomOverlay" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.78);backdrop-filter:blur(8px);z-index:9998;">
     <div class="modal-box">
         <div class="modal-header">
-            <div class="modal-title" data-en="Join a Classroom" data-bn="ক্লাসরুমে যোগ দিন">Join a Classroom</div>
+            <div class="modal-title" data-en="Join a Classroom">Join a Classroom</div>
             <button class="modal-close" onclick="closeJoinClassroomModal()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
-        <p class="modal-desc" data-en="Enter the classroom code your teacher shared with you." data-bn="আপনার শিক্ষক যে ক্লাসরুম কোড শেয়ার করেছেন তা লিখুন।">
+        <p class="modal-desc" data-en="Enter the classroom code your teacher shared with you.">
             Enter the classroom code your teacher shared with you.
         </p>
         <input id="studentJoinCode" placeholder="ABC123" maxlength="8" class="modal-input" />
         <div class="modal-actions">
-            <button class="btn btn-outline" onclick="closeJoinClassroomModal()" data-en="Cancel" data-bn="বাতিল">Cancel</button>
-            <button class="btn btn-primary" id="joinClassroomBtn" onclick="submitJoinClassroomFromIndex()" data-en="Join" data-bn="যোগ দিন">Join</button>
+            <button class="btn btn-outline" onclick="closeJoinClassroomModal()" data-en="Cancel">Cancel</button>
+            <button class="btn btn-primary" id="joinClassroomBtn" onclick="submitJoinClassroomFromIndex()" data-en="Join">Join</button>
         </div>
         <div id="joinClassroomErr" class="modal-err" style="display:none;"></div>
     </div>
@@ -1246,11 +366,6 @@ section { padding: 96px 0; }
 <script type="module" src="/src/opportunities.js"></script>
 <script src="/src/auth-modal.js"></script>
 <script>
-    // Scroll header shrink
-    window.addEventListener('scroll', () => {
-        document.getElementById('header').classList.toggle('scrolled', window.scrollY > 20);
-    });
-
     const CLASSROOM_API_BASE = '/api';
 
     function openJoinClassroomModal() {

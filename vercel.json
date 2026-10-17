@@ -22,6 +22,14 @@
       "dest": "/backend/api.py"
     },
     {
+      "src": "/research/(.*)",
+      "dest": "/backend/api.py"
+    },
+    {
+      "src": "/api/biology/(.*)",
+      "dest": "/backend/api.py"
+    },
+    {
       "handle": "filesystem"
     },
     {

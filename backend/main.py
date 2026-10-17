@@ -2,8 +2,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import subprocess, json, os, uuid, re, ast, sys
+from pydantic import BaseModel, Field
+import asyncio, subprocess, json, os, uuid, re, ast, sys
+import urllib.parse, urllib.request, xml.etree.ElementTree as ET
+import html
 from openai import OpenAI
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -158,38 +160,29 @@ async def root_health():
 # ══════════════════════════════════════════
 
 EXPERT_SYSTEMS = {
-  'expert1': """তুমি ড. আরিফ, বিষয় বিশেষজ্ঞ।
-নিয়ম:
-- সরাসরি বিষয়ের কথা দিয়ে শুরু করো। কোনো পরিচয় দিও না।
-- "আমি ড. আরিফ", "আমি বলব", "আমি মনে করি যে" — এই ধরনের বাক্য সম্পূর্ণ নিষিদ্ধ।
-- প্রথম বাক্যেই মূল বক্তব্য শুরু হবে।
-- মোট ২-৩টি সম্পূর্ণ বাক্য লিখবে। প্রতিটি বাক্য দাঁড়ি (।) দিয়ে শেষ করবে।
-- বাক্য যেন মাঝপথে না কাটে।
-- বাংলা বানান: "হল" লিখতে হবে "হলো" হিসেবে, "বল" লিখতে হবে "বলো" হিসেবে, "কর" লিখতে হবে "করো" হিসেবে।""",
+  'expert1': """You are Dr. Arifa, a subject-matter expert.
+- Start directly with the topic; do not introduce yourself.
+- State the central idea in the opening sentence.
+- Give 2–3 complete sentences and respond to the discussion.
+- Never narrate yourself or another expert in the third person.""",
 
-  'expert2': """তুমি ড. নাফিসা, বিশ্লেষক।
-নিয়ম:
-- সরাসরি বিশ্লেষণ দিয়ে শুরু করো। কোনো পরিচয় দিও না।
-- "আমি ড. নাফিসা", "আমি বলব", "আমি মনে করি যে" — এই ধরনের বাক্য সম্পূর্ণ নিষিদ্ধ।
-- প্রথম বাক্যেই মূল বক্তব্য শুরু হবে।
-- মোট ২-৩টি সম্পূর্ণ বাক্য লিখবে। প্রতিটি বাক্য দাঁড়ি (।) দিয়ে শেষ করবে।
-- বাক্য যেন মাঝপথে না কাটে।
-- বাংলা বানান: "হল" লিখতে হবে "হলো" হিসেবে, "বল" লিখতে হবে "বলো" হিসেবে, "কর" লিখতে হবে "করো" হিসেবে।""",
+  'expert2': """You are Dr. Nafisa, an analytical researcher.
+- Start directly with your analysis; do not introduce yourself.
+- State the central idea in the opening sentence.
+- Give 2–3 complete sentences and respond to the discussion.
+- Never narrate yourself or another expert in the third person.""",
 
-  'expert3': """তুমি ড. রাকিব, সমালোচক।
-নিয়ম:
-- সরাসরি প্রশ্ন বা চ্যালেঞ্জ দিয়ে শুরু করো। কোনো পরিচয় দিও না।
-- "আমি ড. রাকিব", "আমি বলব", "আমি মনে করি যে" — এই ধরনের বাক্য সম্পূর্ণ নিষিদ্ধ।
-- প্রথম বাক্যেই মূল বক্তব্য শুরু হবে।
-- মোট ২-৩টি সম্পূর্ণ বাক্য লিখবে। প্রতিটি বাক্য দাঁড়ি (।) দিয়ে শেষ করবে।
-- বাক্য যেন মাঝপথে না কাটে।
-- বাংলা বানান: "হল" লিখতে হবে "হলো" হিসেবে, "বল" লিখতে হবে "বলো" হিসেবে, "কর" লিখতে হবে "করো" হিসেবে।""",
+  'expert3': """You are Dr. Rakib, a critical questioner.
+- Start with a direct challenge or question; do not introduce yourself.
+- State the central idea in the opening sentence.
+- Give 2–3 complete sentences and respond to the discussion.
+- Never narrate yourself or another expert in the third person.""",
 }
 
 EXPERT_NAMES = {
-  'expert1': 'ড. আরিফ',
-  'expert2': 'ড. নাফিসা',
-  'expert3': 'ড. রাকিব',
+  'expert1': 'Dr. Arifa',
+  'expert2': 'Dr. Nafisa',
+  'expert3': 'Dr. Rakib',
 }
 
 EXPERT_MODELS = {
@@ -210,23 +203,22 @@ class DiscussionState(TypedDict):
 
 
 EXPERT_INSTRUCTIONS = {
-    'expert1': 'তুমি বিষয়টির মূল ধারণা, তত্ত্ব ও বৈজ্ঞানিক ব্যাখ্যা দাও। সংশ্লেষণ করো।',
-    'expert2': 'তুমি তুলনামূলক বিশ্লেষণ করো, নতুন দিক আনো, ড. আরিফের বক্তব্য বিস্তার করো।',
-    'expert3': 'তুমি বিদ্যমান বক্তব্যকে চ্যালেঞ্জ করো, দুর্বলতা খোঁজো, কঠিন প্রশ্ন করো।',
+    'expert1': 'Explain the core concepts, theory, and scientific reasoning, then synthesize them.',
+    'expert2': 'Compare perspectives, add a new angle, and build on Dr. Arifa’s analysis.',
+    'expert3': 'Challenge existing claims, identify weaknesses, and ask difficult questions.',
 }
 
 def build_expert_prompt(state: DiscussionState) -> str:
     transcript = "\n\n".join(f"[{d['name']}]: {d['text']}" for d in state['dialogue'][-12:])
-    doc = f"\nডকুমেন্ট:\n{state['pdf_context']}\n" if state.get('pdf_context') else ''
+    doc = f"\nSource material:\n{state['pdf_context']}\n" if state.get('pdf_context') else ''
     instruction = EXPERT_INSTRUCTIONS.get(state['expert_id'], '')
     return (
-        f"বিষয়: {state['topic']}\n"
-        f"পর্যায়: {state['phase']}\n"
-        f"তোমার ভূমিকা: {instruction}\n"
+        f"Topic: {state['topic']}\n"
+        f"Phase: {state['phase']}\n"
+        f"Your role: {instruction}\n"
         f"{doc}"
-        f"\nআলোচনা:\n{transcript}\n\n"
-        f"এখন সরাসরি বিষয়বস্তু দিয়ে শুরু করো। ২-৩টি সম্পূর্ণ বাক্য লিখবে, শেষ বাক্যটি অবশ্যই দাঁড়ি (।) দিয়ে শেষ করবে। কোনো পরিচয় বাক্য লিখবে না।\n"
-        f"মনে রাখবে: \"হল\" লিখতে হবে \"হলো\" হিসেবে, \"বল\" লিখতে হবে \"বলো\" হিসেবে, \"কর\" লিখতে হবে \"করো\" হিসেবে।"
+        f"\nDiscussion:\n{transcript}\n\n"
+        f"Respond directly to the topic in 2–3 complete English sentences. Do not introduce yourself."
     )
 
 # ── Nodes ─────────────────────────────────────
@@ -484,21 +476,88 @@ class TurnRequest(BaseModel):
     pdf_context: str = ''
     dialogue:    List[dict] = []
 
+class BiologyVoiceoverRequest(BaseModel):
+    model_name: str = Field(min_length=1, max_length=120)
+
+
+@app.post("/biology/voiceover")
+@app.post("/api/biology/voiceover")
+async def biology_voiceover(req: BiologyVoiceoverRequest):
+    model_name = req.model_name.strip()
+    if not model_name:
+        raise HTTPException(422, "A model name is required.")
+
+    system_message = SystemMessage(content=(
+        "You are a biology teacher writing a spoken explanation for a student. "
+        "Respond in clear, natural English. Return only valid JSON with a "
+        '"segments" array of exactly four objects, each containing "label" and "text". '
+        "The four sections must cover an overview, structure, key features, and function. "
+        "Each text must be one or two concise, scientifically accurate sentences. "
+        "Do not include markdown or make up uncertain numerical claims."
+    ))
+    user_message = HumanMessage(content=f"Create the four-section voiceover for: {model_name}")
+    models = ["openai/gpt-oss-20b", "llama-3.3-70b-versatile", "openai/gpt-oss-120b"]
+    last_error = None
+    try:
+        groq_keys = get_groq_keys()
+    except RuntimeError as exc:
+        print(f"[biology voiceover] Groq configuration error: {exc}")
+        raise HTTPException(503, "Groq is not configured for the biology voiceover.")
+
+    for model in models:
+        for key_index, key in enumerate(groq_keys, start=1):
+            try:
+                llm_kwargs = {"api_key": key, "model": model, "max_tokens": 700, "temperature": 0.6}
+                if model.startswith("openai/gpt-oss"):
+                    llm_kwargs["reasoning_effort"] = "low"
+                llm = ChatGroq(**llm_kwargs)
+                result = await asyncio.to_thread(llm.invoke, [system_message, user_message])
+                raw = str(result.content).strip()
+                raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.IGNORECASE)
+                data = json.loads(raw)
+                segments = data.get("segments") if isinstance(data, dict) else None
+                if not isinstance(segments, list) or len(segments) != 4:
+                    raise ValueError("Groq returned an invalid voiceover structure.")
+                if any(
+                    not isinstance(segment, dict)
+                    or not isinstance(segment.get("label"), str)
+                    or not isinstance(segment.get("text"), str)
+                    or not segment["label"].strip()
+                    or not segment["text"].strip()
+                    for segment in segments
+                ):
+                    raise ValueError("Groq returned an incomplete voiceover segment.")
+                return {
+                    "segments": [
+                        {"label": segment["label"].strip()[:40], "text": segment["text"].strip()[:700]}
+                        for segment in segments
+                    ]
+                }
+            except Exception as exc:
+                last_error = exc
+                print(f"[biology voiceover] {model} key {key_index} failed: {type(exc).__name__}")
+                if "429" in str(exc) or "rate_limit" in str(exc).lower():
+                    break
+
+    print(f"[biology voiceover] All Groq models failed: {type(last_error).__name__ if last_error else 'no keys'}")
+    raise HTTPException(502, "Groq could not generate the biology voiceover. Please try again.")
+
 import re as _re
 
 def strip_intro(text: str, expert_id: str) -> str:
     name_map = {
-        'expert1': ['আরিফ', 'Arif'],
-        'expert2': ['নাফিসা', 'Nafisa'],
-        'expert3': ['রাকিব', 'Rakib'],
+        'expert1': ['Arifa'],
+        'expert2': ['Nafisa'],
+        'expert3': ['Rakib'],
     }
     names = name_map.get(expert_id, [])
     lines = text.strip().split('\n')
     # Drop any leading line that contains the expert's own name + intro pattern
     while lines:
         l = lines[0]
-        is_intro = any(n in l for n in names) and any(
-            w in l for w in ['আমি', 'বলব', 'মনে করি যে', 'একজন', 'হিসেবে']
+        is_intro = any(n.lower() in l.lower() for n in names) and any(
+            phrase in l.lower()
+            for phrase in ('i am', "i'm", "i'll", 'i think', 'as an expert')
         )
         if is_intro:
             lines.pop(0)
@@ -671,6 +730,182 @@ async def get_config():
         "AZURE_SPEECH_KEY": os.getenv('AZURE_SPEECH_KEY', ''),
         "AZURE_SPEECH_REGION": os.getenv('AZURE_SPEECH_REGION', 'southeastasia'),
     }
+
+
+def _fetch_research_url(url: str) -> bytes:
+    request = urllib.request.Request(
+        url,
+        headers={"User-Agent": "AmplifyWebsite/1.0 (educational research references)"},
+    )
+    with urllib.request.urlopen(request, timeout=12) as response:
+        return response.read()
+
+
+def _search_arxiv(query: str) -> list[dict]:
+    search_text = f'"{query}"' if " " in query else query
+    params = urllib.parse.urlencode({
+        "search_query": f"all:{search_text}",
+        "start": 0,
+        "max_results": 5,
+        "sortBy": "relevance",
+        "sortOrder": "descending",
+    }, quote_via=urllib.parse.quote)
+    xml_data = _fetch_research_url(f"https://export.arxiv.org/api/query?{params}")
+    root = ET.fromstring(xml_data)
+    ns = {"atom": "http://www.w3.org/2005/Atom"}
+    papers = []
+    for entry in root.findall("atom:entry", ns):
+        arxiv_id = (entry.findtext("atom:id", default="", namespaces=ns)).strip()
+        if arxiv_id.startswith("http://arxiv.org/"):
+            arxiv_id = "https://arxiv.org/" + arxiv_id.removeprefix("http://arxiv.org/")
+        papers.append({
+            "title": " ".join(entry.findtext("atom:title", default="", namespaces=ns).split()),
+            "authors": [
+                author.findtext("atom:name", default="", namespaces=ns).strip()
+                for author in entry.findall("atom:author", ns)
+            ],
+            "year": (entry.findtext("atom:published", default="", namespaces=ns) or "")[:4],
+            "abstract": " ".join(entry.findtext("atom:summary", default="", namespaces=ns).split()),
+            "url": arxiv_id,
+            "source": "arXiv",
+        })
+    return papers
+
+
+def _search_crossref(query: str) -> list[dict]:
+    params = urllib.parse.urlencode({
+        "query": query,
+        "rows": 5,
+        "select": "title,author,published,created,abstract,URL,DOI,type",
+    })
+    payload = json.loads(_fetch_research_url(f"https://api.crossref.org/works?{params}"))
+    papers = []
+    for item in payload.get("message", {}).get("items", []):
+        titles = item.get("title") or []
+        title = titles[0].strip() if titles else ""
+        if not title:
+            continue
+        authors = [
+            " ".join(part for part in (author.get("given"), author.get("family")) if part)
+            for author in item.get("author", [])
+        ]
+        date_parts = (
+            item.get("published", {}).get("date-parts")
+            or item.get("created", {}).get("date-parts")
+            or [[]]
+        )
+        abstract = re.sub(r"<[^>]*>", " ", item.get("abstract", ""))
+        abstract = " ".join(urllib.parse.unquote(abstract).split())
+        papers.append({
+            "title": title,
+            "authors": authors,
+            "year": str(date_parts[0][0]) if date_parts and date_parts[0] else "",
+            "abstract": abstract,
+            "url": item.get("URL") or (f"https://doi.org/{item['DOI']}" if item.get("DOI") else ""),
+            "source": "Crossref",
+        })
+    return papers
+
+
+@app.get("/research/references")
+async def research_references(q: str = ""):
+    query = " ".join(q.split())
+    if not query:
+        raise HTTPException(400, "A search query is required.")
+    if len(query) > 200:
+        raise HTTPException(400, "Search query must be 200 characters or fewer.")
+
+    providers = await asyncio.gather(
+        asyncio.to_thread(_search_arxiv, query),
+        asyncio.to_thread(_search_crossref, query),
+        return_exceptions=True,
+    )
+    results = []
+    errors = []
+    for source, response in zip(("arXiv", "Crossref"), providers):
+        if isinstance(response, Exception):
+            print(f"[research/references] {source} search failed: {response}")
+            errors.append(source)
+        else:
+            results.extend(response)
+
+    if not results and len(errors) == 2:
+        raise HTTPException(502, "Research providers could not be reached. Please try again.")
+
+    seen_titles = set()
+    unique_results = []
+    for paper in results:
+        key = re.sub(r"[^a-z0-9]+", "", paper["title"].lower())
+        if key and key not in seen_titles:
+            seen_titles.add(key)
+            unique_results.append(paper)
+
+    return {"query": query, "results": unique_results, "unavailable_sources": errors}
+
+
+def _search_wikimedia_gifs(query: str) -> list[dict]:
+    params = urllib.parse.urlencode({
+        "action": "query",
+        "generator": "search",
+        "gsrsearch": f"filemime:image/gif {query} animation",
+        "gsrnamespace": 6,
+        "gsrlimit": 6,
+        "prop": "imageinfo",
+        "iiprop": "url|extmetadata",
+        "iiurlwidth": 640,
+        "format": "json",
+    })
+    payload = json.loads(_fetch_research_url(f"https://commons.wikimedia.org/w/api.php?{params}"))
+    pages = payload.get("query", {}).get("pages", {})
+    if isinstance(pages, list):
+        items = pages
+    else:
+        items = pages.values()
+
+    results = []
+    for page in items:
+        title = page.get("title", "")
+        image_info = (page.get("imageinfo") or [{}])[0]
+        image_url = image_info.get("thumburl") or image_info.get("url", "")
+        file_url = image_info.get("descriptionurl", "")
+        if not title.lower().endswith(".gif"):
+            continue
+        if not image_url.startswith(("https://upload.wikimedia.org/", "https://thumb.wikimedia.org/")):
+            continue
+        if not file_url.startswith("https://commons.wikimedia.org/"):
+            continue
+
+        metadata = image_info.get("extmetadata", {})
+        artist_html = metadata.get("Artist", {}).get("value", "")
+        license_html = metadata.get("LicenseShortName", {}).get("value", "")
+        artist = html.unescape(re.sub(r"<[^>]*>", " ", artist_html))
+        license_name = html.unescape(re.sub(r"<[^>]*>", " ", license_html))
+        results.append({
+            "title": title.removeprefix("File:"),
+            "image_url": image_url,
+            "file_url": file_url,
+            "artist": " ".join(artist.split()),
+            "license": " ".join(license_name.split()),
+        })
+        if len(results) >= 5:
+            break
+    return results
+
+
+@app.get("/research/gifs")
+async def research_gifs(q: str = ""):
+    query = " ".join(q.split())
+    if not query:
+        raise HTTPException(400, "A search query is required.")
+    if len(query) > 200:
+        raise HTTPException(400, "Search query must be 200 characters or fewer.")
+
+    try:
+        results = await asyncio.to_thread(_search_wikimedia_gifs, query)
+    except Exception as error:
+        print(f"[research/gifs] Wikimedia Commons search failed: {error}")
+        raise HTTPException(502, "GIF search is temporarily unavailable. Please try again.")
+    return {"query": query, "results": results}
 
 
 

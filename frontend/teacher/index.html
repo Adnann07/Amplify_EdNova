@@ -14,7 +14,7 @@
   <nav>
     <div class="container">
       <div class="nav-inner">
-        <a href="#" class="logo">Amplify <span>Educators</span></a>
+        <a href="/index.html" class="logo">Amplify <span>Educators</span></a>
         <div class="nav-links">
           <button class="nav-btn" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Features</button>
           <button class="nav-btn" onclick="document.getElementById('notify').scrollIntoView({behavior:'smooth'})">Notify Students</button>
@@ -44,8 +44,8 @@
               <span class="stat-label">instructors</span>
             </div>
             <div class="stat-item">
-              <span class="stat-num">BD First</span>
-              <span class="stat-label">Bangla-native</span>
+              <span class="stat-num">English-first</span>
+              <span class="stat-label">English-language</span>
             </div>
           </div>
           <div class="hero-btns">
@@ -117,7 +117,7 @@
 
         <div class="feat-card">
           <h3>Notify Students</h3>
-          <p>Send announcements, schedule changes, or homework reminders instantly. Speak in Bangla — the app transcribes your voice and lets you send as-is or edit before sending.</p>
+          <p>Send announcements, schedule changes, or homework reminders instantly. Speak in English — the app transcribes your voice and lets you send as-is or edit before sending.</p>
           <span class="feat-tag">Voice + AI</span>
         </div>
 
@@ -157,13 +157,13 @@
         <div class="notify-info">
           <div class="section-label">Live Feature</div>
           <h2 class="section-h">Notify students<br>with your voice</h2>
-          <p class="section-sub">Speak naturally in Bangla. Amplify transcribes your speech — you can edit the message and send it instantly to all students.</p>
+          <p class="section-sub">Speak naturally in English. Amplify transcribes your speech — you can edit the message and send it instantly to all students.</p>
           <div class="notify-steps">
             <div class="step">
               <div class="step-num">1</div>
               <div class="step-text">
-                <h4>Press &amp; speak in Bangla</h4>
-                <p>Press the mic button and say your message in Bangla.</p>
+                <h4>Press &amp; speak in English</h4>
+                <p>Press the mic button and say your message in English.</p>
               </div>
             </div>
             <div class="step">
@@ -206,10 +206,10 @@
                 <line x1="8" y1="23" x2="16" y2="23"/>
               </svg>
             </button>
-            <span class="vw-hint" id="vwHint">Press to start speaking in Bangla</span>
+            <span class="vw-hint" id="vwHint">Press to start speaking in English</span>
           </div>
 
-          <div class="vw-label">Bangla transcript</div>
+          <div class="vw-label">English transcript</div>
           <div class="vw-transcript-box" id="vwTranscript">Your spoken words will appear here...</div>
 
           <div class="vw-direct-send" id="vwDirectSendWrap">
@@ -267,7 +267,7 @@
       recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'bn-BD';
+      recognition.lang = 'en-US';
 
       recognition.onresult = (e) => {
         let interim = '';
@@ -346,7 +346,7 @@
         <line x1="12" y1="19" x2="12" y2="23"/>
         <line x1="8" y1="23" x2="16" y2="23"/>
       </svg>`;
-      document.getElementById('vwHint').textContent = 'Press to start speaking in Bangla';
+      document.getElementById('vwHint').textContent = 'Press to start speaking in English';
 
       if (finalTranscript.trim()) {
         document.getElementById('vwEditInput').value = finalTranscript.trim();
@@ -394,5 +394,6 @@
     initSpeechRecognition();
   </script>
 
+  <script type="module" src="/src/site-navigation.js"></script>
 </body>
 </html>

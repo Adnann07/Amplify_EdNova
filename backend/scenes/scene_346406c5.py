@@ -5,16 +5,16 @@ config.background_color = BLACK
 class Scene(MovingCameraScene):
     def construct(self):
         # Title Card
-        title = Text("কোষ বিভাজন (Cell Division)", font_size=60, color=YELLOW)
+        title = Text("Cell Division", font_size=60, color=YELLOW)
         self.play(Write(title))
         self.wait(2)
         self.play(FadeOut(title))
         self.wait(1)
 
         # Introduction: Single Cell
-        intro_text = Text("জীবন শুরু হয় একটি কোষ থেকে", font_size=36).to_edge(UP)
+        intro_text = Text("Life begins with a single cell", font_size=36).to_edge(UP)
         single_cell = Circle(radius=1.5, color=BLUE)
-        single_cell_label = Text("একক কোষ", font_size=24).next_to(single_cell, DOWN)
+        single_cell_label = Text("Single cell", font_size=24).next_to(single_cell, DOWN)
         self.play(Write(intro_text))
         self.play(Create(single_cell), Write(single_cell_label))
         self.wait(3)
@@ -22,17 +22,17 @@ class Scene(MovingCameraScene):
         self.wait(1)
 
         # Step 1: Cell Growth
-        growth_text = Text("কোষ বৃদ্ধি পায়", font_size=36).to_edge(UP)
+        growth_text = Text("The cell grows", font_size=36).to_edge(UP)
         self.play(Write(growth_text))
         grown_cell = Circle(radius=2, color=BLUE)
-        grown_cell_label = Text("বর্ধিত কোষ", font_size=24).next_to(grown_cell, DOWN)
+        grown_cell_label = Text("Grown cell", font_size=24).next_to(grown_cell, DOWN)
         self.play(Transform(single_cell, grown_cell), FadeOut(single_cell_label), Write(grown_cell_label))
         self.wait(3)
         self.play(FadeOut(growth_text))
         self.wait(1)
 
         # Step 2: DNA Replication
-        replication_text = Text("DNA প্রতিলিপি তৈরি হয়", font_size=36).to_edge(UP)
+        replication_text = Text("DNA replication", font_size=36).to_edge(UP)
         self.play(Write(replication_text))
         self.camera.frame.move_to(single_cell)
         self.camera.frame.scale(0.7)
@@ -53,7 +53,7 @@ class Scene(MovingCameraScene):
         new_dna_helix.move_to(single_cell.get_center())
 
         arrow_replication = Arrow(single_cell.get_center() + UP * 1.5, single_cell.get_center() + UP * 2.5, color=YELLOW)
-        replication_arrow_label = Text("প্রতিলিপি", font_size=20, color=YELLOW).next_to(arrow_replication, UP)
+        replication_arrow_label = Text("Replication", font_size=20, color=YELLOW).next_to(arrow_replication, UP)
 
         self.play(
             dna_helix.animate.shift(LEFT * 0.5),
@@ -66,7 +66,7 @@ class Scene(MovingCameraScene):
         self.wait(1)
 
         # Step 3: Chromosome Condensation
-        condensation_text = Text("ক্রোমোজোম ঘনীভূত হয়", font_size=36).to_edge(UP)
+        condensation_text = Text("Chromosomes condense", font_size=36).to_edge(UP)
         self.play(Write(condensation_text))
         self.camera.frame.move_to(ORIGIN)
         self.camera.frame.scale(1)
@@ -78,7 +78,7 @@ class Scene(MovingCameraScene):
             chromosome.set_y(random.uniform(-2, 2))
             condensed_chromosomes.add(chromosome)
 
-        chromosome_labels = VGroup(*[Text("ক্রোমোজোম", font_size=18).next_to(c, DOWN) for c in condensed_chromosomes])
+        chromosome_labels = VGroup(*[Text("Chromosome", font_size=18).next_to(c, DOWN) for c in condensed_chromosomes])
 
         self.play(
             FadeOut(grown_cell, grown_cell_label),
@@ -90,7 +90,7 @@ class Scene(MovingCameraScene):
         self.wait(1)
 
         # Step 4: Mitosis - Prophase & Metaphase
-        mitosis_text = Text("মাইটোসিস: প্রফেস ও মেটাফেস", font_size=36).to_edge(UP)
+        mitosis_text = Text("Mitosis: Prophase and Metaphase", font_size=36).to_edge(UP)
         self.play(Write(mitosis_text))
 
         # Prophase
@@ -100,13 +100,13 @@ class Scene(MovingCameraScene):
             spindle_fibers.add(Line(start=chromo.get_center(), end=chromo.get_center() + DOWN*2, color=WHITE))
 
         chromosome_alignment_arrow = Arrow(condensed_chromosomes.get_center() + LEFT * 2, condensed_chromosomes.get_center() + RIGHT * 2, color=YELLOW)
-        alignment_label = Text("মেটাফেস প্লেটে সারিবদ্ধ", font_size=24, color=YELLOW).next_to(chromosome_alignment_arrow, UP)
+        alignment_label = Text("Align at the metaphase plate", font_size=24, color=YELLOW).next_to(chromosome_alignment_arrow, UP)
 
         self.play(FadeIn(spindle_fibers), GrowArrow(chromosome_alignment_arrow), Write(alignment_label))
         self.wait(3)
 
         # Step 5: Mitosis - Anaphase & Telophase
-        anaphase_telophase_text = Text("মাইটোসিস: অ্যানাফেস ও টেলোফেস", font_size=36).to_edge(UP)
+        anaphase_telophase_text = Text("Mitosis: Anaphase and Telophase", font_size=36).to_edge(UP)
         self.play(ReplacementTransform(mitosis_text, anaphase_telophase_text))
 
         separated_chromosomes = VGroup()
@@ -119,7 +119,7 @@ class Scene(MovingCameraScene):
             separated_chromosomes.add(new_chromo)
 
         split_arrow = Arrow(condensed_chromosomes.get_center(), condensed_chromosomes.get_center() + DOWN, color=RED)
-        split_label = Text("বিভাজন", font_size=24, color=RED).next_to(split_arrow, DOWN)
+        split_label = Text("Division", font_size=24, color=RED).next_to(split_arrow, DOWN)
 
         self.play(
             FadeOut(spindle_fibers),
@@ -135,16 +135,16 @@ class Scene(MovingCameraScene):
         self.wait(1)
 
         # Step 6: Two Daughter Cells
-        two_cells_text = Text("দুটি নতুন কোষ তৈরি", font_size=36).to_edge(UP)
+        two_cells_text = Text("Two new cells form", font_size=36).to_edge(UP)
         self.play(Write(two_cells_text))
 
         cell_membrane = Circle(radius=2, color=GREEN, fill_opacity=0.5)
         cell_membrane.move_to(ORIGIN)
 
         daughter_cell1 = Circle(radius=1.2, color=BLUE).shift(LEFT * 2)
-        daughter_cell1_label = Text("কোষ ১", font_size=24).next_to(daughter_cell1, DOWN)
+        daughter_cell1_label = Text("Cell 1", font_size=24).next_to(daughter_cell1, DOWN)
         daughter_cell2 = Circle(radius=1.2, color=BLUE).shift(RIGHT * 2)
-        daughter_cell2_label = Text("কোষ ২", font_size=24).next_to(daughter_cell2, DOWN)
+        daughter_cell2_label = Text("Cell 2", font_size=24).next_to(daughter_cell2, DOWN)
 
         self.play(
             FadeOut(separated_chromosomes),
@@ -159,11 +159,11 @@ class Scene(MovingCameraScene):
         self.wait(1)
 
         # Summary
-        summary_text = Text("একটি কোষ থেকে দুটি নতুন কোষ", font_size=48, color=GOLD).to_edge(UP)
+        summary_text = Text("One cell becomes two new cells", font_size=48, color=GOLD).to_edge(UP)
         self.play(Write(summary_text))
 
         final_arrow = Arrow(daughter_cell1.get_center(), daughter_cell2.get_center(), color=YELLOW)
-        final_arrow_label = Text("প্রক্রিয়াটি চলতে থাকে", font_size=24, color=YELLOW).next_to(final_arrow, UP)
+        final_arrow_label = Text("The process continues", font_size=24, color=YELLOW).next_to(final_arrow, UP)
 
         self.play(
             FadeOut(daughter_cell1, daughter_cell1_label),

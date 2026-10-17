@@ -1,13 +1,20 @@
 // ══════════════════════════════════════════════
-//  গভীর শিক্ষা — deeplearn.js
-//  3 Expert Agents · Groq multi-model · Bangla Deep Discussion
+//  DeepLearn — deeplearn.js
+//  3 Expert Agents · Groq multi-model · English discussion
 // ══════════════════════════════════════════════
 
 import { loadEnvConfig, getGroqKeys, getOpenRouterKeys, getGroqBase, getOpenRouterBase, getViteEnv } from './env-config.js';
 
 let _config = {};
 const _env = getViteEnv();
-loadEnvConfig().then(cfg => { _config = cfg; });
+let _azureKey = '';
+let _azureRegion = 'southeastasia';
+loadEnvConfig().then(cfg => {
+  _config = cfg;
+  _azureKey    = cfg.AZURE_SPEECH_KEY    || '';
+  _azureRegion = cfg.AZURE_SPEECH_REGION || 'southeastasia';
+  console.log('[DeepLearn Azure] config loaded. key present:', !!_azureKey, '| key length:', _azureKey.length, '| region:', _azureRegion);
+});
 
 function groqKeys() { return getGroqKeys(_config, _env); }
 function openRouterKeys() { return getOpenRouterKeys(_config, _env); }
@@ -39,7 +46,7 @@ class VectorStore {
   constructor() { this.reset(); }
   reset() { this.chunks = []; this.tfidf = []; this.idf = {}; this.vocab = new Set(); this.ready = false; }
   tokenize(text) {
-    return text.toLowerCase().replace(/[।,!?;:()\[\]{}"'\/\\]/g, ' ').split(/\s+/).filter(t => t.length > 1);
+    return text.toLowerCase()    .replace(/[.,!?;:()\[\]{}"'\/\\]/g, ' ').split(/\s+/).filter(t => t.length > 1);
   }
   build() {
     const tfRaw = this.chunks.map(c => {
@@ -116,12 +123,12 @@ function chunkText(text, pageNum) {
 
 function getRelevantContext(query, maxChars = 5000) {
   if (!store.ready || !store.chunks.length)
-    return pdfPages.map(p => `[পৃষ্ঠা ${p.page}]\n${p.text}`).join('\n\n').slice(0, maxChars);
+    return pdfPages.map(p => `[Page ${p.page}]\n${p.text}`).join('\n\n').slice(0, maxChars);
   const results = store.retrieve(query, TOP_K);
   if (!results.length) return '';
   let out = '', chars = 0;
   for (const r of results) {
-    const block = `[পৃষ্ঠা ${r.pageNum}]\n${r.text}`;
+    const block = `[Page ${r.pageNum}]\n${r.text}`;
     if (chars + block.length > maxChars) break;
     out += block + '\n\n'; chars += block.length;
   }
@@ -175,13 +182,13 @@ async function groqVisionOCR(base64Img, pageNum) {
 
 async function loadAndIndexPDF(file, onProgress) {
   store.reset(); pdfPages = [];
-  onProgress?.('PDF খোলা হচ্ছে…');
+  onProgress?.('Opening PDF…');
   const buf    = await file.arrayBuffer();
   const pdfDoc = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
   const pages  = Math.min(pdfDoc.numPages, MAX_PAGES);
   const mode   = await detectPDFMode(pdfDoc);
   for (let i = 1; i <= pages; i++) {
-    onProgress?.(`পৃষ্ঠা ${i}/${pages} পড়া হচ্ছে…`);
+    onProgress?.(`Reading page ${i}/${pages}…`);
     const pg = await pdfDoc.getPage(i);
     let pageText = await extractPageText(pg);
     if (pageText.trim().length < 30 && mode === 'image') {
@@ -196,92 +203,86 @@ async function loadAndIndexPDF(file, onProgress) {
       for (const c of chunkText(pageText, i)) store.addChunk(c);
     }
   }
-  if (store.chunks.length === 0) { onProgress?.('⚠️ কোনো পাঠ্য পাওয়া যায়নি।'); return; }
+  if (store.chunks.length === 0) { onProgress?.('⚠️ No text was found.'); return; }
   store.build();
-  onProgress?.(`প্রস্তুত! (${store.chunks.length} অংশ)`);
+  onProgress?.(`Ready! (${store.chunks.length} chunks)`);
 }
 
 
 const EXPERTS = {
   expert1: {
     id:    'expert1',
-    name:  'ড. আরিফ',
-    nameShort: 'ড.আ',
-    role:  'বিষয় বিশেষজ্ঞ ও সংশ্লেষক',
+    name:  'Dr. Arifa',
+    nameShort: 'A',
+    role:  'Subject expert and synthesizer',
     model: 'openai/gpt-oss-120b',
     color: '#5b21b6',
     avatarClass: 'expert1-avatar',
     bubbleClass: 'bubble-expert1',
-    system: `তুমি ড. আরিফ, একজন অভিজ্ঞ বিষয় বিশেষজ্ঞ ও সংশ্লেষক। তুমি সরাসরি বাংলায় কথা বলছ।
-কঠোর নিয়ম:
-- প্রথম পুরুষে কথা বলো।
-- "ড. আরিফ বলেছেন" বা তৃতীয় পুরুষের বর্ণনা সম্পূর্ণ নিষিদ্ধ।
-- প্রতিটি বক্তব্যে গভীর ধারণা, বৈজ্ঞানিক ব্যাখ্যা, এবং বাস্তব প্রাসঙ্গিকতা উল্লেখ করো।
-- তথ্য উল্লেখ করো কিন্তু কোনো প্রতিষ্ঠানের নাম বা ব্যক্তির নাম ব্যবহার করো না।
-- ৩-৫টি বাক্যে বিস্তারিত বলো।
-- অন্য বিশেষজ্ঞদের কথায় সরাসরি সাড়া দাও।`,
+    system: `You are Dr. Arifa, an experienced subject expert and synthesizer. Speak directly in English.
+Rules:
+- Speak in the first person; never narrate yourself in the third person.
+- Explain deep concepts with scientific reasoning and practical context.
+- Use evidence without inventing institutional or personal citations.
+- Keep each response to 2 concise sentences and no more than 45 words.
+- Respond directly to points raised by the other experts.`,
   },
   expert2: {
     id:    'expert2',
-    name:  'ড. নাফিসা',
-    nameShort: 'ড.না',
-    role:  'বিশ্লেষক ও গবেষক',
+    name:  'Dr. Nafisa',
+    nameShort: 'N',
+    role:  'Analyst and researcher',
     model: 'qwen/qwen3.6-27b',
     color: '#0369a1',
     avatarClass: 'expert2-avatar',
     bubbleClass: 'bubble-expert2',
-    system: `তুমি ড. নাফিসা, একজন তীক্ষ্ণ বিশ্লেষক ও গবেষক। তুমি সরাসরি বাংলায় কথা বলছ।
-কঠোর নিয়ম:
-- প্রথম পুরুষে কথা বলো।
-- "ড. নাফিসা বলেছেন" বা তৃতীয় পুরুষের বর্ণনা সম্পূর্ণ নিষিদ্ধ।
-- তুলনামূলক বিশ্লেষণ করো, তথ্য-ভিত্তিক যুক্তি দাও।
-- ড. আরিফের বক্তব্যকে আরও বিশ্লেষণ করো বা নতুন দিক আনো।
-- কোনো প্রতিষ্ঠানের নাম বা ব্যক্তির নাম ব্যবহার করো না।
-- ৩-৫টি বাক্যে বিস্তারিত বলো।`,
+    system: `You are Dr. Nafisa, a sharp analyst and researcher. Speak directly in English.
+Rules:
+- Speak in the first person; never narrate yourself in the third person.
+- Compare perspectives and support arguments with evidence.
+- Build on Dr. Arifa's ideas or add a new angle.
+- Avoid unsupported institutional or personal citations.
+- Keep each response to 2 concise sentences and no more than 45 words.`,
   },
   expert3: {
     id:    'expert3',
-    name:  'ড. রাকিব',
-    nameShort: 'ড.রা',
-    role:  'সমালোচক ও প্রশ্নকর্তা',
+    name:  'Dr. Rakib',
+    nameShort: 'R',
+    role:  'Critic and questioner',
     model: 'openai/gpt-oss-20b',
     color: '#b45309',
     avatarClass: 'expert3-avatar',
     bubbleClass: 'bubble-expert3',
-    system: `তুমি ড. রাকিব, একজন তীব্র সমালোচক ও প্রশ্নকর্তা। তুমি সরাসরি বাংলায় কথা বলছ।
-কঠোর নিয়ম:
-- প্রথম পুরুষে কথা বলো।
-- "ড. রাকিব বলেছেন" বা তৃতীয় পুরুষের বর্ণনা সম্পূর্ণ নিষিদ্ধ।
-- বিদ্যমান বক্তব্যকে চ্যালেঞ্জ করো, বিকল্প দৃষ্টিভঙ্গি তুলে ধরো, গুরুত্বপূর্ণ প্রশ্ন করো।
-- বিতর্কমূলক হও কিন্তু তথ্যভিত্তিক থাকো।
-- কোনো প্রতিষ্ঠানের নাম বা ব্যক্তির নাম ব্যবহার করো না।
-- ৩-৫টি বাক্যে বিস্তারিত বলো।`,
+    system: `You are Dr. Rakib, a rigorous critic and questioner. Speak directly in English.
+Rules:
+- Speak in the first person; never narrate yourself in the third person.
+- Challenge existing claims, offer alternative perspectives, and ask important questions.
+- Keep the debate evidence-based.
+- Avoid unsupported institutional or personal citations.
+- Keep each response to 2 concise sentences and no more than 45 words.`,
   },
 };
 
 // ── Discussion phases ─────────────────────────
 const DISCUSSION_PHASES = [
-  { id: 'intro',     label: 'পরিচিতি ও ভিত্তি',  rounds: 2, stance: 'discuss'   },
-  { id: 'analysis',  label: 'গভীর বিশ্লেষণ',      rounds: 3, stance: 'discuss'   },
-  { id: 'debate',    label: 'বিতর্ক ও খণ্ডন',     rounds: 3, stance: 'debate'    },
-  { id: 'synthesis', label: 'সংশ্লেষণ',           rounds: 2, stance: 'synthesis' },
-  { id: 'conclude',  label: 'উপসংহার',             rounds: 1, stance: 'synthesis' },
+  { id: 'intro',     label: 'Introduction and foundations', rounds: 2, stance: 'discuss' },
+  { id: 'analysis',  label: 'In-depth analysis', rounds: 3, stance: 'discuss' },
+  { id: 'debate',    label: 'Debate and rebuttal', rounds: 3, stance: 'debate' },
+  { id: 'synthesis', label: 'Synthesis', rounds: 2, stance: 'synthesis' },
+  { id: 'conclude',  label: 'Conclusion', rounds: 1, stance: 'synthesis' },
 ];
 
 const STANCE_LABELS = {
-  discuss:   { label: '💬 আলোচনা',   class: 'stance-discuss'  },
-  debate:    { label: '⚔️ বিতর্ক',    class: 'stance-debate'   },
-  critique:  { label: '🔍 সমালোচনা', class: 'stance-critique' },
-  synthesis: { label: '🔗 সংশ্লেষণ', class: 'stance-synthesis'},
+  discuss:   { label: '💬 Discussion', class: 'stance-discuss' },
+  debate:    { label: '⚔️ Debate', class: 'stance-debate' },
+  critique:  { label: '🔍 Critique', class: 'stance-critique' },
+  synthesis: { label: '🔗 Synthesis', class: 'stance-synthesis'},
 };
 
 const TURN_ORDER = ['expert1', 'expert2', 'expert3'];
 
 const ALL_EXPERT_PREFIXES = [
-  'ড. আরিফ','Dr. Arif','ড.আরিফ',
-  'ড. নাফিসা','Dr. Nafisa','ড.নাফিসা',
-  'ড. রাকিব','Dr. Rakib','ড.রাকিব',
-  'আরিফ','নাফিসা','রাকিব',
+  'Dr. Arifa','Dr. Nafisa','Dr. Rakib',
 ];
 
 // ── State ─────────────────────────────────────
@@ -302,14 +303,21 @@ let userInterrupted    = false;
 let agentVoiceMap      = { expert1: null, expert2: null, expert3: null };
 
 const AGENT_TTS = {
-  expert1: { rate: 0.85, pitch: 0.95 },
-  expert2: { rate: 0.88, pitch: 1.10 },
-  expert3: { rate: 0.92, pitch: 0.85 },
+  expert1: { rate: 0.97, pitch: 1.00 },
+  expert2: { rate: 0.98, pitch: 1.02 },
+  expert3: { rate: 0.96, pitch: 0.98 },
+};
+
+const EXPERT_AZURE_VOICES = {
+  expert1: { voice: 'en-US-GuyNeural',   rate: '-5%', pitch: '-5%'  },
+  expert2: { voice: 'en-US-JennyNeural', rate: '0%',  pitch: '+8%'  },
+  expert3: { voice: 'en-US-DavisNeural', rate: '+5%', pitch: '-12%' },
 };
 
 // ── DOM ───────────────────────────────────────
 const uploadScreen    = document.getElementById('upload-screen');
 const deeplearnScreen = document.getElementById('deeplearn-screen');
+const backToPreviousPage = document.getElementById('backToPreviousPage');
 const uploadZone      = document.getElementById('uploadZone');
 const fileInput       = document.getElementById('fileInput');
 const uploadPreviews  = document.getElementById('uploadPreviews');
@@ -330,6 +338,18 @@ const exportBtn       = document.getElementById('exportBtn');
 const resetBtn        = document.getElementById('resetBtn');
 const sessionTimer    = document.getElementById('sessionTimer');
 const phaseLabel      = document.getElementById('phaseLabel');
+const refsBody        = document.getElementById('refsBody');
+const topicGifFrame   = document.getElementById('topicGifFrame');
+const topicGifCredit  = document.getElementById('topicGifCredit');
+let topicGifs = [];
+let topicGifIndex = 0;
+let referenceSearchController = null;
+
+backToPreviousPage.addEventListener('click', event => {
+  event.preventDefault();
+  if (window.history.length > 1 && document.referrer) window.history.back();
+  else window.location.assign('/index.html');
+});
 
 // ── Auto-fill topic from URL param (passed by classroom page) ──
 (function () {
@@ -380,7 +400,7 @@ async function toBase64(file) {
 startBtn.addEventListener('click', async () => {
   const topic = topicInput.value.trim();
   if (!topic && uploadedFiles.length === 0) {
-    alert('অনুগ্রহ করে একটি বিষয় লিখুন অথবা ফাইল আপলোড করুন।');
+    alert('Please enter a topic or upload a file.');
     return;
   }
   
@@ -394,7 +414,197 @@ async function switchToDeepLearn() {
   stageTopic.textContent = sessionTopic;
   startTimer();
   loadVoices();
+  searchReferences(sessionTopic);
+  searchTopicGif(sessionTopic);
   await startDiscussion();
+}
+
+async function searchReferences(query) {
+  referenceSearchController?.abort();
+  const controller = new AbortController();
+  referenceSearchController = controller;
+  refsBody.replaceChildren();
+  const loading = document.createElement('div');
+  loading.className = 'refs-loading';
+  loading.setAttribute('role', 'status');
+  loading.textContent = 'Searching arXiv and research papers…';
+  refsBody.appendChild(loading);
+
+  try {
+    const response = await fetch(`/research/references?q=${encodeURIComponent(query)}`, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || `Reference search failed (${response.status}).`);
+    if (controller.signal.aborted) return;
+
+    refsBody.replaceChildren();
+    if (data.results.length === 0) {
+      refsBody.appendChild(createReferenceMessage(`No papers found for “${query}”. Try a broader topic.`));
+      return;
+    }
+
+    for (const paper of data.results) {
+      refsBody.appendChild(createReferenceCard(paper));
+    }
+    if (data.unavailable_sources?.length) {
+      refsBody.appendChild(createReferenceMessage(
+        `Some sources could not be reached: ${data.unavailable_sources.join(', ')}.`
+      ));
+    }
+  } catch (error) {
+    if (error.name === 'AbortError') return;
+    console.error('[DeepLearn references]', error);
+    refsBody.replaceChildren(createReferenceMessage(error.message || 'Could not search for research papers.'));
+    const retry = document.createElement('button');
+    retry.className = 'refs-retry';
+    retry.type = 'button';
+    retry.textContent = 'Retry search';
+    retry.addEventListener('click', () => searchReferences(query));
+    refsBody.appendChild(retry);
+  }
+}
+
+function createReferenceMessage(message) {
+  const el = document.createElement('div');
+  el.className = 'refs-empty';
+  el.textContent = message;
+  return el;
+}
+
+function createReferenceCard(paper) {
+  const card = document.createElement('article');
+  card.className = 'ref-card';
+
+  const source = document.createElement('div');
+  source.className = 'ref-card-source';
+  source.textContent = [paper.source, paper.year].filter(Boolean).join(' · ');
+  card.appendChild(source);
+
+  const title = document.createElement('div');
+  title.className = 'ref-card-title';
+  title.textContent = paper.title;
+  card.appendChild(title);
+
+  if (paper.authors?.length) {
+    const authors = document.createElement('div');
+    authors.className = 'ref-card-snippet';
+    authors.textContent = paper.authors.slice(0, 3).join(', ')
+      + (paper.authors.length > 3 ? ', et al.' : '');
+    card.appendChild(authors);
+  }
+
+  if (paper.abstract) {
+    const abstract = document.createElement('div');
+    abstract.className = 'ref-card-snippet';
+    abstract.textContent = paper.abstract;
+    card.appendChild(abstract);
+  }
+
+  if (paper.url && /^https?:\/\//i.test(paper.url)) {
+    const link = document.createElement('a');
+    link.className = 'ref-card-link';
+    link.href = paper.url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'View paper ↗';
+    card.appendChild(link);
+  }
+  return card;
+}
+
+async function searchTopicGif(query) {
+  topicGifs = [];
+  topicGifIndex = 0;
+  document.getElementById('topicGifNext')?.classList.add('hidden');
+  topicGifFrame.replaceChildren();
+  topicGifCredit.classList.add('hidden');
+  const status = document.createElement('div');
+  status.className = 'topic-gif-status';
+  status.setAttribute('role', 'status');
+  status.textContent = 'Finding a GIF related to your topic…';
+  topicGifFrame.appendChild(status);
+
+  try {
+    const response = await fetch(`/research/gifs?q=${encodeURIComponent(query)}`, {
+      headers: { Accept: 'application/json' },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || `GIF search failed (${response.status}).`);
+    topicGifs = data.results;
+    topicGifIndex = 0;
+    if (!topicGifs.length) {
+      status.textContent = 'No relevant GIFs were found for this topic.';
+      return;
+    }
+    renderTopicGif();
+  } catch (error) {
+    console.error('[DeepLearn GIFs]', error);
+    status.textContent = error.message || 'Could not search for related GIFs.';
+    const retry = document.createElement('button');
+    retry.className = 'topic-gif-retry';
+    retry.type = 'button';
+    retry.textContent = 'Retry';
+    retry.addEventListener('click', () => searchTopicGif(query));
+    topicGifFrame.appendChild(retry);
+  }
+}
+
+function renderTopicGif() {
+  const gif = topicGifs[topicGifIndex];
+  if (!gif) return;
+
+  const image = document.createElement('img');
+  image.className = 'topic-gif-image';
+  image.src = gif.image_url;
+  image.alt = gif.title;
+  image.loading = 'lazy';
+  image.decoding = 'async';
+  image.addEventListener('error', () => {
+    if (topicGifIndex + 1 < topicGifs.length) {
+      topicGifIndex++;
+      renderTopicGif();
+    } else {
+      const status = document.createElement('div');
+      status.className = 'topic-gif-status';
+      status.textContent = 'The related GIF could not be loaded.';
+      topicGifFrame.replaceChildren(status);
+      topicGifCredit.classList.add('hidden');
+    }
+  }, { once: true });
+  topicGifFrame.replaceChildren(image);
+
+  topicGifCredit.replaceChildren();
+  const attribution = document.createElement('span');
+  attribution.textContent = [gif.artist, gif.license].filter(Boolean).join(' · ') || 'Wikimedia Commons';
+  topicGifCredit.appendChild(attribution);
+
+  const fileLink = document.createElement('a');
+  fileLink.href = gif.file_url;
+  fileLink.target = '_blank';
+  fileLink.rel = 'noopener noreferrer';
+  fileLink.textContent = 'Source';
+  fileLink.setAttribute('aria-label', `GIF source and license: ${gif.title}`);
+  topicGifCredit.appendChild(fileLink);
+  topicGifCredit.classList.remove('hidden');
+
+  let nextButton = document.getElementById('topicGifNext');
+  if (!nextButton && topicGifs.length > 1) {
+    nextButton = document.createElement('button');
+    nextButton.id = 'topicGifNext';
+    nextButton.className = 'topic-gif-retry';
+    nextButton.type = 'button';
+    nextButton.addEventListener('click', () => {
+      topicGifIndex = (topicGifIndex + 1) % topicGifs.length;
+      renderTopicGif();
+    });
+    topicGifCredit.after(nextButton);
+  }
+  if (nextButton) {
+    nextButton.textContent = `Next GIF (${topicGifIndex + 1}/${topicGifs.length})`;
+    nextButton.classList.toggle('hidden', topicGifs.length <= 1);
+  }
 }
 
 // ── Timer ─────────────────────────────────────
@@ -404,58 +614,122 @@ function startTimer() {
     if (!isPaused) sessionSeconds++;
     const m = String(Math.floor(sessionSeconds / 60)).padStart(2, '0');
     const s = String(sessionSeconds % 60).padStart(2, '0');
-    sessionTimer.textContent = toBengaliNumerals(`${m}:${s}`);
+    sessionTimer.textContent = toEnglishNumerals(`${m}:${s}`);
   }, 1000);
 }
 
-function toBengaliNumerals(str) {
-  return str.replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[d]);
-}
+function toEnglishNumerals(str) { return str; }
 
 // ── Voices ────────────────────────────────────
 function loadVoices() {
   const assign = () => {
-    const all   = speechSynthesis.getVoices();
-    const bnAll = all.filter(v => v.lang.startsWith('bn'));
-    if (bnAll.length === 0) {
-      const any = all[0] || null;
-      Object.keys(EXPERTS).forEach(id => { agentVoiceMap[id] = any; });
+    const all = speechSynthesis.getVoices();
+    const enAll = all.filter(v => /^en(?:-|$)/i.test(v.lang));
+    if (!enAll.length) {
+      Object.keys(EXPERTS).forEach(id => { agentVoiceMap[id] = all[0] || null; });
       return;
     }
-    const MALE   = /Pradeep|Bashkar|Arnav|Ravi|male/i;
-    const FEMALE = /Nabanita|Tanishaa|Asha|Heera|Swara|female/i;
-    const males   = bnAll.filter(v =>  MALE.test(v.name));
-    const females = bnAll.filter(v =>  FEMALE.test(v.name));
-    const neutral = bnAll.filter(v => !MALE.test(v.name) && !FEMALE.test(v.name));
-    const mPool = males.length   ? males   : [...neutral, ...females];
-    const fPool = females.length ? females : [...neutral, ...males];
-    agentVoiceMap.expert1 = mPool[0] || bnAll[0];
-    agentVoiceMap.expert2 = fPool[0] || bnAll[0];
-    agentVoiceMap.expert3 = mPool[1] || mPool[0] || bnAll[0];
+    const naturalVoiceScore = voice => {
+      let score = voice.localService === false ? 100 : 0;
+      if (/natural|neural|online|enhanced/i.test(voice.name)) score += 1000;
+      if (/google|aria|ava|jenny|guy|davis|sonia|ryan/i.test(voice.name)) score += 100;
+      return score;
+    };
+    const ranked = [...enAll].sort((a, b) => naturalVoiceScore(b) - naturalVoiceScore(a));
+    const used = new Set();
+    const pick = pattern => {
+      const voice = ranked.find(candidate => !used.has(candidate) && pattern.test(candidate.name))
+        || ranked.find(candidate => !used.has(candidate))
+        || ranked[0];
+      if (voice) used.add(voice);
+      return voice || null;
+    };
+    agentVoiceMap.expert1 = pick(/guy|david|mark|ryan|andrew|eric|male/i);
+    agentVoiceMap.expert2 = pick(/aria|ava|jenny|zira|sara|susan|michelle|female/i);
+    agentVoiceMap.expert3 = pick(/davis|guy|david|mark|ryan|andrew|eric|male/i);
   };
   assign();
-  speechSynthesis.addEventListener('voiceschanged', assign);
+  speechSynthesis.onvoiceschanged = assign;
 }
 
 // ── TTS ───────────────────────────────────────
-function speak(text, expertId) {
+async function speakAzure(text, expertId) {
+  if (!_azureKey) {
+    console.warn('[DeepLearn Azure] No key loaded — skipping Azure, going to browser fallback.');
+    return false;
+  }
+  const cfg = EXPERT_AZURE_VOICES[expertId];
+  const ssml = `<speak version='1.0' xml:lang='en-US'><voice name='${cfg.voice}'><prosody rate='${cfg.rate}' pitch='${cfg.pitch}'>${text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</prosody></voice></speak>`;
+
+  try {
+    ttsWave.classList.add('speaking');
+    ttsLabel.textContent = EXPERTS[expertId].name + ' speaking…';
+
+    const res = await fetch(`https://${_azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`, {
+      method: 'POST',
+      headers: {
+        'Ocp-Apim-Subscription-Key': _azureKey,
+        'Content-Type': 'application/ssml+xml',
+        'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
+      },
+      body: ssml,
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      console.error(`[DeepLearn Azure] HTTP ${res.status} | region:${_azureRegion} | key prefix:${_azureKey.slice(0,6)} | body:`, errBody.slice(0, 300));
+      ttsWave.classList.remove('speaking');
+      return false;
+    }
+
+    const blob  = await res.blob();
+    const url   = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    await new Promise(resolve => {
+      audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+      audio.onerror = (e) => { console.error('[DeepLearn Azure] audio playback error:', e); URL.revokeObjectURL(url); resolve(); };
+      audio.play().catch(e => { console.error('[DeepLearn Azure] audio.play() rejected:', e.message); resolve(); });
+    });
+
+    ttsWave.classList.remove('speaking');
+    ttsLabel.textContent = 'Muted';
+    return true;
+  } catch (e) {
+    console.error('[DeepLearn Azure] fetch threw:', e.message);
+    ttsWave.classList.remove('speaking');
+    return false;
+  }
+}
+
+function speakBrowser(text, expertId) {
   return new Promise(resolve => {
-    if (!ttsEnabled) { resolve(); return; }
     const voice = agentVoiceMap[expertId];
-    if (!voice)  { resolve(); return; }
+    if (!voice) {
+      console.warn('[DeepLearn Browser TTS] No browser voice available either — silent.');
+      resolve();
+      return;
+    }
     const tts = AGENT_TTS[expertId];
-    speechSynthesis.cancel();
     const utt   = new SpeechSynthesisUtterance(text);
     utt.voice   = voice;
     utt.lang    = voice.lang;
     utt.rate    = tts.rate;
     utt.pitch   = tts.pitch;
     ttsWave.classList.add('speaking');
-    ttsLabel.textContent = EXPERTS[expertId].name + ' বলছেন...';
-    utt.onend   = () => { ttsWave.classList.remove('speaking'); ttsLabel.textContent = 'নীরব'; resolve(); };
-    utt.onerror = () => { ttsWave.classList.remove('speaking'); ttsLabel.textContent = 'নীরব'; resolve(); };
+    ttsLabel.textContent = EXPERTS[expertId].name + ' speaking…';
+    utt.onend   = () => { ttsWave.classList.remove('speaking'); ttsLabel.textContent = 'Muted'; resolve(); };
+    utt.onerror = (e) => { console.warn('[DeepLearn Browser TTS] error:', e.error); ttsWave.classList.remove('speaking'); ttsLabel.textContent = 'Muted'; resolve(); };
     speechSynthesis.speak(utt);
   });
+}
+
+async function speak(text, expertId) {
+  if (!ttsEnabled || !text?.trim()) return;
+  const azureOk = await speakAzure(text, expertId);
+  if (!azureOk) {
+    console.warn('[DeepLearn TTS] Azure failed or unavailable, falling back to browser voice.');
+    await speakBrowser(text, expertId);
+  }
 }
 
 ttsToggle.addEventListener('click', () => {
@@ -464,9 +738,9 @@ ttsToggle.addEventListener('click', () => {
   if (!ttsEnabled) {
     speechSynthesis.cancel();
     ttsWave.classList.remove('speaking');
-    ttsLabel.textContent = 'TTS বন্ধ';
+    ttsLabel.textContent = 'Text-to-speech off';
   } else {
-    ttsLabel.textContent = 'নীরব';
+    ttsLabel.textContent = 'Muted';
   }
 });
 
@@ -549,6 +823,20 @@ function showTyping(expertId) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+function addSystemBubble(text) {
+  const div = document.createElement('div');
+  div.className = 'chat-bubble bubble-system';
+  const meta = document.createElement('div');
+  meta.className = 'bubble-meta';
+  meta.textContent = 'Discussion notice';
+  const body = document.createElement('div');
+  body.className = 'bubble-text';
+  body.textContent = text;
+  div.append(meta, body);
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 function hideTyping() {
   if (typingBubbleEl) { typingBubbleEl.remove(); typingBubbleEl = null; }
 }
@@ -571,7 +859,7 @@ function addUserBubble(text) {
   const div = document.createElement('div');
   div.className = 'chat-bubble bubble-user';
   div.innerHTML = `
-    <div class="bubble-meta" style="justify-content:flex-end">আপনি</div>
+    <div class="bubble-meta" style="justify-content:flex-end">You</div>
     <div class="bubble-text">${text}</div>`;
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -624,20 +912,24 @@ async function buildInitialContent() {
     }
   }
 
-  const docCtx = getRelevantContext(sessionTopic || 'মূল বিষয়', 4000);
-  const docBlock = docCtx ? `\n\nডকুমেন্ট থেকে প্রাসঙ্গিক অংশ:\n${docCtx}` : '';
-  const topicLine = sessionTopic ? `বিষয়: ${sessionTopic}` : 'আপলোড করা ফাইলের বিষয়বস্তু:';
-  return `${topicLine}${docBlock}\n\nএই বিষয়ের সবচেয়ে গুরুত্বপূর্ণ এবং গভীর দিকগুলো কি? বিশেষজ্ঞ পর্যায়ে আলোচনার জন্য ৩-৫টি মূল বিষয় চিহ্নিত করো।`;
+  const docCtx = getRelevantContext(sessionTopic || 'Main topic', 4000);
+  const docBlock = docCtx ? `\n\nRelevant source material:\n${docCtx}` : '';
+  const topicLine = sessionTopic ? `Topic: ${sessionTopic}` : 'Uploaded file content:';
+  return `${topicLine}${docBlock}\n\nWhat are the most important and challenging aspects of this topic? Identify 3–5 key points for an expert-level discussion.`;
 }
 
 function buildMessagesForExpert(expertId) {
   const expert = EXPERTS[expertId];
   const phase  = getCurrentPhase();
+  const previousTurn = dialogueLog.at(-1);
 
   if (dialogueLog.length === 0) {
     return [{
       role: 'user',
-      content: typeof initialContent === 'string' ? initialContent : JSON.stringify(initialContent),
+      content:
+        `${typeof initialContent === 'string' ? initialContent : JSON.stringify(initialContent)}\n\n` +
+        `You are ${expert.name}, the ${expert.role}. Make the opening contribution from your own perspective. ` +
+        `Explain one core idea in 2 concise sentences, no more than 40 words.`,
     }];
   }
 
@@ -646,35 +938,38 @@ function buildMessagesForExpert(expertId) {
     .join('\n\n');
 
   const phaseInstruction = {
-    intro:     'বিষয়টির মূল ভিত্তি, ইতিহাস এবং মূল ধারণাগুলো ব্যাখ্যা করো।',
-    analysis:  'বিষয়টির গভীর বিশ্লেষণ করো — কারণ, প্রভাব, প্রক্রিয়া, এবং প্রমাণ নিয়ে আলোচনা করো।',
-    debate:    'বিদ্যমান বক্তব্যকে চ্যালেঞ্জ করো, বিরোধী মতামত তুলে ধরো, যুক্তিতর্ক করো।',
-    synthesis: 'বিভিন্ন দৃষ্টিভঙ্গিকে একসাথে বিবেচনা করে একটি সমন্বিত বোঝাপড়া তৈরি করো।',
-    conclude:  'আলোচনার উপসংহার টানো এবং ভবিষ্যতের দিকনির্দেশনা দাও।',
+    intro:     'Explain the foundations, history, and core concepts of the topic.',
+    analysis:  'Analyze the topic in depth, including causes, effects, processes, and evidence.',
+    debate:    'Challenge existing claims, present opposing views, and debate the evidence.',
+    synthesis: 'Combine the different perspectives into a coherent understanding.',
+    conclude:  'Summarize the discussion and identify possible future directions.',
   }[phase.id] || '';
 
   const docCtx = getRelevantContext(
     `${sessionTopic} ${phaseInstruction} ${transcript.slice(-300)}`, 3000
   );
-  const docBlock = docCtx ? `\nডকুমেন্ট থেকে প্রাসঙ্গিক তথ্য:\n${docCtx}\n` : '';
+  const docBlock = docCtx ? `\nRelevant source material:\n${docCtx}\n` : '';
 
   return [{
     role: 'user',
     content:
-      `বিষয়: ${sessionTopic}\n` +
-      `বর্তমান পর্যায়: ${phase.label}\n` +
-      `নির্দেশনা: ${phaseInstruction}\n` +
+      `Topic: ${sessionTopic}\n` +
+      `Current phase: ${phase.label}\n` +
+      `Instructions: ${phaseInstruction}\n` +
+      `Your role: ${expert.role}\n` +
+      `Previous contribution: ${previousTurn?.name || 'None'} said: ${previousTurn?.text || 'No contribution yet.'}\n` +
+      `In 2 concise sentences (no more than 45 words), respond specifically to that contribution, then add a distinct insight from your role. ` +
+      `Do not repeat or paraphrase earlier contributions; if you agree, extend the argument with new reasoning or evidence. ` +
       docBlock +
-      `\nএখন পর্যন্ত আলোচনা:\n${transcript}\n\n` +
-      `এখন ${expert.name} হিসেবে বিস্তারিত ও গভীরভাবে তোমার মত দাও। ` +
-      `উপরের ডকুমেন্টের তথ্যের উপর ভিত্তি করো। ` +
-      `সরাসরি শুরু করো, কোনো নাম-পরিচয় ছাড়া।`,
+      `\nDiscussion so far:\n${transcript}\n\n` +
+      `Respond as ${expert.name} with a concise, thoughtful contribution. ` +
+      `Use the source material above where relevant, address another expert by name, and start directly without an introduction.`,
   }];
 }
 
 // ── Groq API call ─────────────────────────────
 
-async function openRouterChat(messages, system, maxTokens = 600, temp = 0.8) {
+async function openRouterChat(messages, system, maxTokens = 200, temp = 0.8) {
   for (const model of OPENROUTER_MODELS) {
     for (let i = 0; i < openRouterKeys().length; i++) {
       try {
@@ -710,13 +1005,13 @@ async function callGroq(expertId, modelOverride) {
   }
 
   // Groq fallback — rotate models × keys
-  const models = modelOverride ? [modelOverride] : [expert.model, ...GROQ_MODELS];
+  const models = modelOverride ? [modelOverride] : [expert.model, ...GROQ_MODELS.filter(model => model !== expert.model)];
   for (const model of models) {
     for (let ki = 0; ki < groqKeys().length; ki++) {
       try {
         const payload = {
           model,
-          max_tokens: 900,
+          max_tokens: 200,
           temperature: 0.8,
           messages: [{ role: 'system', content: expert.system }, ...messages],
         };
@@ -740,19 +1035,19 @@ async function callGroq(expertId, modelOverride) {
       } catch (e) { console.warn(`[Groq] ${model} key${ki+1}: ${e.message}`); }
     }
   }
-  throw new Error('সব OpenRouter ও Groq কী ব্যর্থ।');
+  throw new Error('All configured OpenRouter and Groq API keys failed.');
 }
 
 // ── Knowledge fetch (enrichment panel) ────────
 async function fetchKnowledgeInsert(topic, phaseId) {
   if (phaseId !== 'analysis' && phaseId !== 'debate') return null;
 
-  const prompt = `বিষয়: "${topic}"
+  const prompt = `Topic: "${topic}"
 
-এই বিষয়ে ইন্টারনেট থেকে পাওয়া সাম্প্রতিক গবেষণা ও তথ্যের উপর ভিত্তি করে ২-৩টি গুরুত্বপূর্ণ তথ্যবিন্দু বাংলায় দাও।
-- শিক্ষামূলক প্ল্যাটফর্ম, বিজ্ঞান জার্নাল, এবং অনলাইন কোর্সের তথ্য অন্তর্ভুক্ত করো
-- কোনো প্রতিষ্ঠানের নাম বা ব্যক্তির নাম উল্লেখ করো না
-- শুধু JSON রিটার্ন করো: {"insight": "বাংলায় ২-৩ বাক্য", "sources": ["বিষয়ভিত্তিক উৎস ধরন ১", "উৎস ধরন ২"]}`;
+Provide 2–3 useful English insights based on recent research and factual information about this topic.
+- Include relevant educational platforms, scientific journals, or online courses.
+- Do not invent institution or author names.
+- Return only JSON: {"insight":"2–3 sentences in English","sources":["source type 1","source type 2"]}`;
 
   try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -786,7 +1081,7 @@ function showKnowledgeInsert(insight, sources) {
   div.innerHTML = `
     <div class="knowledge-header">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      গবেষণা তথ্য
+      Research insights
     </div>
     <div class="knowledge-body">${insight}</div>
     ${chips ? `<div class="knowledge-sources">${chips}</div>` : ''}`;
@@ -854,10 +1149,22 @@ async function runExpertTurn(expertId) {
       }
     }
     reply = await callGroq(expertId);
+    const recentExpertTurns = dialogueLog.filter(entry => entry.name !== 'You').slice(-3);
+    const repeatsRecentTurn = text => recentExpertTurns.some(entry => normalizedReply(text) === normalizedReply(entry.text));
+    if (repeatsRecentTurn(reply)) {
+      console.warn(`[DeepLearn] ${expert.name} repeated a recent response; requesting a new contribution.`);
+      reply = await callGroq(expertId, EXPERTS[expertId].model);
+      if (repeatsRecentTurn(reply)) {
+        throw new Error(`${expert.name} returned a recent response twice. Please retry the discussion.`);
+      }
+    }
   } catch (err) {
     console.error(err);
     hideTyping();
     clearExpertSpeaking();
+    if (err instanceof Error && err.message.includes('returned a recent response twice')) {
+      addSystemBubble(`${expert.name} repeated an earlier point and could not provide a distinct contribution. The discussion will continue with the next expert.`);
+    }
     await sleep(1200);
     return;
   }
@@ -877,11 +1184,15 @@ async function runExpertTurn(expertId) {
   clearExpertSpeaking();
 }
 
+function normalizedReply(text) {
+  return cleanReply(text).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
 async function handleUserTurn() {
   const msg       = userPendingMsg;
   userPendingMsg  = null;
   userInterrupted = false;
-  dialogueLog.push({ name: 'পর্যবেক্ষক', text: msg });
+  dialogueLog.push({ name: 'You', text: msg });
   for (const id of TURN_ORDER) {
     if (!isRunning) break;
     await runExpertTurn(id);
@@ -903,7 +1214,7 @@ function submitUserMsg() {
   userPendingMsg  = msg;
   userInterrupted = true;
   isPaused        = false;
-  pauseBtn.textContent = 'বিরতি';
+  pauseBtn.textContent = 'Pause';
   pauseInputBtn.classList.remove('active');
 }
 
@@ -913,14 +1224,14 @@ pauseInputBtn.addEventListener('click', togglePause);
 
 function togglePause() {
   isPaused = !isPaused;
-  pauseBtn.textContent = isPaused ? 'চালিয়ে যান' : 'বিরতি';
+  pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
   pauseInputBtn.classList.toggle('active', isPaused);
   if (isPaused) {
     speechSynthesis.cancel();
     ttsWave.classList.remove('speaking');
-    ttsLabel.textContent = 'বিরতি';
+    ttsLabel.textContent = 'Paused';
   } else {
-    ttsLabel.textContent = 'নীরব';
+    ttsLabel.textContent = 'Muted';
   }
 }
 
@@ -928,7 +1239,7 @@ function togglePause() {
 exportBtn.addEventListener('click', () => {
   const lines = dialogueLog.map(e => `[${e.name}]: ${e.text}`).join('\n\n');
   const blob = new Blob(
-    [`গভীর শিক্ষা আলোচনা\nবিষয়: ${sessionTopic}\n\n${lines}`],
+    [`DeepLearn Discussion\nTopic: ${sessionTopic}\n\n${lines}`],
     { type: 'text/plain;charset=utf-8' }
   );
   const a = document.createElement('a');
@@ -939,7 +1250,7 @@ exportBtn.addEventListener('click', () => {
 
 // ── Reset ─────────────────────────────────────
 resetBtn.addEventListener('click', () => {
-  if (!confirm('আলোচনা শেষ করতে চান?')) return;
+  if (!confirm('End this discussion?')) return;
   isRunning = false;
   isPaused  = false;
   speechSynthesis.cancel();
@@ -947,7 +1258,7 @@ resetBtn.addEventListener('click', () => {
   deeplearnScreen.classList.remove('active');
   uploadScreen.classList.add('active');
   dialogueLog    = [];
-  chatMessages.innerHTML = '<div class="chat-welcome">আলোচনা শুরু হলে এখানে সম্পূর্ণ বিতর্ক দেখা যাবে</div>';
+  chatMessages.innerHTML = '<div class="chat-welcome">The full discussion will appear here when it begins.</div>';
   debateStage.innerHTML  = '';
   debateStage.classList.add('hidden');
   stageIdle.classList.remove('hidden');

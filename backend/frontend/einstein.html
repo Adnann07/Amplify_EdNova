@@ -1420,7 +1420,7 @@ async function fetchRefs() {
         method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${GROQ_KEYS[0]}`},
         body:JSON.stringify({model:'openai/gpt-oss-120b',max_tokens:20,temperature:0.1,messages:[{role:'user',content:`Extract 3 English academic keywords from: "${topic}". Output ONLY the keywords, nothing else.`}]}),
       });
-      if (r.ok) { const d=await r.json(); const t=d?.choices?.[0]?.message?.content?.trim().replace(/[\u0980-\u09FF]/g,'').replace(/[^\w\s]/g,'').trim(); if(t&&t.length>2) kw=t; }
+      if (r.ok) { const d=await r.json(); const t=d?.choices?.[0]?.message?.content?.trim().replace(/[^\w\s]/g,'').trim(); if(t&&t.length>2) kw=t; }
     }
     const res = await fetch(`https://api.openalex.org/works?search=${encodeURIComponent(kw)}&per-page=5&sort=relevance_score:desc&filter=has_abstract:true`);
     if (!res.ok) throw new Error();

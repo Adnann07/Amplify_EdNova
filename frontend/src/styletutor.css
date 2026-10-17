@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════════════════════════
    Amplify Tutors — Dark Space Stylesheet
    Palette: deep navy-black + cyan + purple (matching classroom.css)
-   Typography: Hind Siliguri (body) + Tiro Bangla (display)
+   Typography: DM Sans (body) + Syne (display)
    Layout: PDF left | Video+Subtitle center | Chat right
    ══════════════════════════════════════════════════════════════ */
 
@@ -68,8 +68,8 @@
   --dur-slow: 420ms;
 
   /* Typography */
-  --font-body:    'Hind Siliguri', system-ui, -apple-system, sans-serif;
-  --font-display: 'Tiro Bangla', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Syne', Georgia, serif;
 }
 
 /* ── Reset ── */
@@ -1117,6 +1117,12 @@ main {
   color: var(--text-muted);
   line-height: 1.6;
   margin-bottom: 20px;
+}
+.quiz-setup-error {
+  color: var(--red);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0 0 16px;
 }
 .quiz-setup-row {
   display: flex;

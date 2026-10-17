@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 
 <head>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23020B16'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%2300B7FF'>A</text></svg>">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#faf6ec" />
-  <title>AI ক্লাসরুম — আপনার ব্যক্তিগত শিক্ষাসঙ্গী</title>
+  <title>AI Classroom — Your Personal Learning Companion</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Tiro+Bangla:ital@0;1&display=swap"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap"
     rel="stylesheet" />
 
   <link rel="stylesheet" href="src/classroom.css" />
@@ -27,17 +27,17 @@
   <div id="upload-screen" class="screen active">
     <div class="upload-container">
 
-      <div class="upload-brand">
+      <a class="upload-brand" href="/index.html" aria-label="Amplify homepage">
         <div class="brand-dot"></div>
-        <span>AI ক্লাসরুম</span>
-      </div>
+        <span>AI Classroom</span>
+      </a>
 
-      <h1 class="upload-title">আপনার পাঠ শুরু করুন</h1>
+      <h1 class="upload-title">Start your lesson</h1>
       <p class="upload-subtitle">
-        সিলেবাস বা নোট আপলোড করুন — AI শিক্ষক ও শিক্ষার্থীরা আপনার সঙ্গে আলোচনা শুরু করবে।
+        Upload a syllabus or notes and start an interactive discussion with AI tutors.
       </p>
 
-      <div class="upload-zone" id="uploadZone" role="button" tabindex="0" aria-label="ফাইল আপলোড করুন">
+      <div class="upload-zone" id="uploadZone" role="button" tabindex="0" aria-label="Upload files">
         <div class="upload-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
             stroke-linejoin="round">
@@ -46,21 +46,21 @@
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
         </div>
-        <p class="upload-zone-text">PDF বা ছবি টেনে আনুন অথবা ক্লিক করুন</p>
-        <p class="upload-zone-hint">সর্বোচ্চ ৩টি ফাইল · PDF, PNG, JPG</p>
+        <p class="upload-zone-text">Drag and drop PDFs or images, or click to browse</p>
+        <p class="upload-zone-hint">Up to 3 files · PDF, PNG, JPG</p>
         <input type="file" id="fileInput" accept="image/*,.pdf" multiple hidden />
       </div>
 
       <div id="uploadPreviews" class="upload-previews hidden"></div>
 
       <div class="topic-row">
-        <span class="topic-or">অথবা বিষয় লিখুন</span>
-        <input type="text" id="topicInput" class="topic-input" placeholder="যেমন: বাংলাদেশের মুক্তিযুদ্ধ, ত্বরণ ও গতি…"
+        <span class="topic-or">Or enter a topic</span>
+        <input type="text" id="topicInput" class="topic-input" placeholder="For example: quantum physics, climate change, or evolution…"
           autocomplete="off" />
       </div>
 
       <button class="start-btn" id="startBtn">
-        <span>ক্লাস শুরু করুন</span>
+        <span>Start class</span>
       </button>
     </div>
   </div>
@@ -71,16 +71,17 @@
   <div id="classroom-screen" class="screen">
 
     <!-- Left: Stage -->
-    <section class="stage-panel" aria-label="প্রধান মঞ্চ">
+    <section class="stage-panel" aria-label="Lesson stage">
       <header class="stage-header">
-        <div class="stage-topic-label">বিষয়</div>
+        <div class="stage-topic-label">Topic</div>
         <div class="stage-topic-text" id="stageTopic">—</div>
+        <a class="stage-home-link" href="/index.html">Home</a>
       </header>
 
       <div class="stage-area" id="stageArea">
         <div class="stage-idle" id="stageIdle">
           <div class="stage-idle-ring" aria-hidden="true"></div>
-          <p>পাঠ শুরু হচ্ছে…</p>
+          <p>Preparing your lesson…</p>
         </div>
         <div class="stage-message hidden" id="stageMessage">
           <div class="stage-speaker-name" id="stageSpeakerName"></div>
@@ -89,12 +90,12 @@
         </div>
       </div>
 
-      <div class="tts-bar" id="ttsBar" aria-label="ভয়েস কন্ট্রোল">
+      <div class="tts-bar" id="ttsBar" aria-label="Voice controls">
         <div class="tts-wave" id="ttsWave" aria-hidden="true">
           <span></span><span></span><span></span><span></span><span></span>
         </div>
-        <span class="tts-label" id="ttsLabel">নীরব</span>
-        <button class="tts-toggle" id="ttsToggle" title="ভয়েস চালু/বন্ধ" aria-label="ভয়েস চালু/বন্ধ">
+        <span class="tts-label" id="ttsLabel">Muted</span>
+        <button class="tts-toggle" id="ttsToggle" title="Toggle voice" aria-label="Toggle voice">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
@@ -106,16 +107,16 @@
     </section>
 
     <!-- Right: Agents + Chat -->
-    <aside class="right-panel" aria-label="শিক্ষার্থী ও আলোচনা">
+    <aside class="right-panel" aria-label="Students and discussion">
 
       <!-- Agent Cards -->
       <div class="agents-grid" id="agentsGrid" role="list">
 
         <div class="agent-card" id="card-teacher" data-agent="teacher" role="listitem">
-          <div class="agent-avatar teacher-avatar" aria-hidden="true">শি</div>
+          <div class="agent-avatar teacher-avatar" aria-hidden="true">T</div>
           <div class="agent-info">
-            <div class="agent-name">শিক্ষক</div>
-            <div class="agent-role">পাঠ পরিচালক</div>
+            <div class="agent-name">Teacher</div>
+            <div class="agent-role">Lesson guide</div>
           </div>
           <div class="agent-status" id="status-teacher">
             <span class="status-dot"></span>
@@ -123,10 +124,10 @@
         </div>
 
         <div class="agent-card" id="card-curious" data-agent="curious" role="listitem">
-          <div class="agent-avatar curious-avatar" aria-hidden="true">রা</div>
+          <div class="agent-avatar curious-avatar" aria-hidden="true">A</div>
           <div class="agent-info">
-            <div class="agent-name">রাফি</div>
-            <div class="agent-role">কৌতূহলী শিক্ষার্থী</div>
+            <div class="agent-name">Alex</div>
+            <div class="agent-role">Curious student</div>
           </div>
           <div class="agent-status" id="status-curious">
             <span class="status-dot"></span>
@@ -134,10 +135,10 @@
         </div>
 
         <div class="agent-card" id="card-skeptic" data-agent="skeptic" role="listitem">
-          <div class="agent-avatar skeptic-avatar" aria-hidden="true">ই</div>
+          <div class="agent-avatar skeptic-avatar" aria-hidden="true">J</div>
           <div class="agent-info">
-            <div class="agent-name">ইতি</div>
-            <div class="agent-role">চিন্তাশীল শিক্ষার্থী</div>
+            <div class="agent-name">Jordan</div>
+            <div class="agent-role">Thoughtful student</div>
           </div>
           <div class="agent-status" id="status-skeptic">
             <span class="status-dot"></span>
@@ -145,10 +146,10 @@
         </div>
 
         <div class="agent-card" id="card-achiever" data-agent="achiever" role="listitem">
-          <div class="agent-avatar achiever-avatar" aria-hidden="true">মে</div>
+          <div class="agent-avatar achiever-avatar" aria-hidden="true">S</div>
           <div class="agent-info">
-            <div class="agent-name">মেধা</div>
-            <div class="agent-role">মেধাবী শিক্ষার্থী</div>
+            <div class="agent-name">Sam</div>
+            <div class="agent-role">Advanced student</div>
           </div>
           <div class="agent-status" id="status-achiever">
             <span class="status-dot"></span>
@@ -160,11 +161,11 @@
       <!-- Chat -->
       <div class="chat-panel">
         <div class="chat-messages" id="chatMessages" aria-live="polite">
-          <div class="chat-welcome">ক্লাস শুরু হলে এখানে কথোপকথন দেখা যাবে</div>
+          <div class="chat-welcome">The discussion will appear here when class begins.</div>
         </div>
 
         <div class="chat-input-row">
-          <button class="raise-hand-btn" id="raiseHandBtn" title="হাত তুলুন — ক্লাস বিরতি দেবে" aria-label="হাত তুলুন">
+          <button class="raise-hand-btn" id="raiseHandBtn" title="Raise your hand to pause the class" aria-label="Raise your hand">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" />
@@ -173,10 +174,10 @@
               <path
                 d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
             </svg>
-            <span>হাত তুলুন</span>
+            <span>Raise hand</span>
           </button>
 
-          <button class="mic-btn" id="micBtn" disabled title="বাংলায় বলুন (Whisper)" aria-label="মাইক">
+          <button class="mic-btn" id="micBtn" disabled title="Speak in English (Whisper)" aria-label="Microphone">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="2" width="6" height="12" rx="3" />
@@ -184,12 +185,12 @@
               <line x1="12" y1="19" x2="12" y2="22" />
               <line x1="8" y1="22" x2="16" y2="22" />
             </svg>
-            <span id="micBtnLabel">বলুন</span>
+            <span id="micBtnLabel">Speak</span>
           </button>
 
-          <input type="text" id="userInput" class="user-input" placeholder="প্রশ্ন করুন…" disabled />
+          <input type="text" id="userInput" class="user-input" placeholder="Ask a question…" disabled />
 
-          <button class="send-btn" id="sendBtn" disabled aria-label="পাঠান">
+          <button class="send-btn" id="sendBtn" disabled aria-label="Send">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <line x1="22" y1="2" x2="11" y2="13" />
@@ -205,23 +206,23 @@
     <div class="bottom-bar">
       <div class="bottom-left">
         <div class="session-info">
-          <span class="session-label">পাঠ চলছে</span>
-          <span class="session-timer" id="sessionTimer">০০:০০</span>
+          <span class="session-label">Session</span>
+          <span class="session-timer" id="sessionTimer">00:00</span>
         </div>
       </div>
       <div class="bottom-right">
-        <button class="bar-btn" id="pauseBtn">বিরতি</button>
-        <button class="bar-btn quiz-trigger" id="quizBtn" title="কুইজ শুরু করুন">
+        <button class="bar-btn" id="pauseBtn">Pause</button>
+        <button class="bar-btn quiz-trigger" id="quizBtn" title="Start quiz">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="10" />
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
-          <span>কুইজ</span>
+          <span>Quiz</span>
         </button>
-        <button class="bar-btn" id="exportBtn">কথোপকথন সংরক্ষণ</button>
-        <button class="bar-btn danger" id="resetBtn">ক্লাস শেষ</button>
+        <button class="bar-btn" id="exportBtn">Save discussion</button>
+        <button class="bar-btn danger" id="resetBtn">End class</button>
       </div>
     </div>
 
@@ -235,55 +236,55 @@
 
       <div class="quiz-header">
         <div>
-          <div class="quiz-header-title" id="quizTitle">📝 কুইজ</div>
-          <div class="quiz-header-sub">Bloom&apos;s Taxonomy · ZPD অ্যাডাপ্টিভ</div>
+          <div class="quiz-header-title" id="quizTitle">📝 Quiz</div>
+          <div class="quiz-header-sub">Adaptive Bloom&apos;s Taxonomy · ZPD</div>
         </div>
-        <button class="quiz-close-btn" id="quizCloseBtn" title="বন্ধ করুন" aria-label="বন্ধ করুন">✕</button>
+        <button class="quiz-close-btn" id="quizCloseBtn" title="Close" aria-label="Close">✕</button>
       </div>
 
       <div class="quiz-body">
 
         <div class="quiz-loading" id="quizLoading">
           <div class="quiz-spinner" aria-hidden="true"></div>
-          <p>NCTB প্রশ্নব্যাংক তৈরি হচ্ছে…</p>
+          <p>Preparing quiz questions…</p>
         </div>
 
         <div id="quizContent" class="hidden">
           <div class="quiz-progress-row">
-            <span class="quiz-progress-text" id="quizProgress">প্রশ্ন ১ / ১০</span>
-            <span class="bloom-badge bloom-remember" id="quizBloomBadge">স্মরণ</span>
+            <span class="quiz-progress-text" id="quizProgress">Question 1 / 10</span>
+            <span class="bloom-badge bloom-remember" id="quizBloomBadge">Remember</span>
           </div>
           <div class="quiz-progress-track">
             <div class="quiz-progress-fill" id="quizProgressFill" style="width:0%"></div>
           </div>
 
-          <div class="quiz-question" id="quizQuestion">প্রশ্ন লোড হচ্ছে…</div>
+          <div class="quiz-question" id="quizQuestion">Loading question…</div>
           <div class="quiz-options" id="quizOptions"></div>
 
-          <button class="quiz-hint-btn" id="quizHintBtn">💡 সংকেত</button>
+          <button class="quiz-hint-btn" id="quizHintBtn">💡 Hint</button>
           <div class="quiz-hint-text hidden" id="quizHintText"></div>
           <div class="quiz-feedback" id="quizFeedback"></div>
-          <button class="quiz-next-btn hidden" id="quizNextBtn">পরের প্রশ্ন →</button>
+          <button class="quiz-next-btn hidden" id="quizNextBtn">Next question →</button>
         </div>
 
         <div class="quiz-result hidden" id="quizResultPanel">
 
           <div class="quiz-score-row">
             <div class="quiz-score-num" id="quizScore">—</div>
-            <div class="quiz-score-label">সঠিক উত্তর</div>
+            <div class="quiz-score-label">Correct answers</div>
           </div>
 
-          <div class="quiz-section-title">Bloom&apos;s স্তর অনুযায়ী ফলাফল</div>
+          <div class="quiz-section-title">Results by Bloom&apos;s level</div>
           <div id="quizBloomChart"></div>
 
-          <div class="quiz-section-title">শিক্ষণ অঞ্চল (ZPD)</div>
+          <div class="quiz-section-title">Zone of Proximal Development (ZPD)</div>
           <div class="quiz-zpd-box" id="quizZpd"></div>
 
           <div class="quiz-result-actions">
             <button class="revise-btn hidden" id="reviseBtn">
-              🔁 দুর্বল বিষয় পুনরালোচনা
+              🔁 Review weak topics
             </button>
-            <button class="quiz-restart-btn" id="quizRestartBtn">আবার কুইজ</button>
+            <button class="quiz-restart-btn" id="quizRestartBtn">Restart quiz</button>
           </div>
 
         </div>
@@ -291,7 +292,7 @@
     </div>
   </div>
 
-  <script type="module" src="./src/classroom.js?v=2026-08-17-1"></script>
+  <script type="module" src="./src/classroom.js?v=2026-10-17-1"></script>
 
   <!-- Progress-fill bridge: patches showQuestion() after module loads -->
   <script type="module">
@@ -318,7 +319,7 @@
     });
   </script>
 
-  
+  <script type="module" src="/src/site-navigation.js"></script>
 </body>
 
 </html>

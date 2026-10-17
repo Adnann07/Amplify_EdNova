@@ -43,7 +43,7 @@ async function loadOpportunities() {
   const count = allOpportunities.length;
   document.getElementById('oppStatus').textContent = count > 0
     ? `Showing opportunities from live feed`
-    : 'Could not load live feeds — showing cached data';
+    : 'Showing opportunities';
   document.getElementById('oppCount').textContent = `${count} found`;
 
   // Fallback static data if live fetch fails

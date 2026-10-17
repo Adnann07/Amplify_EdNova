@@ -1293,15 +1293,35 @@ function startVoiceCommand() {
     speak("Speech recognition not supported in your browser. Please use a modern browser like Chrome.");
     return;
   }
+
+  if (window.__voiceCommandActive) {
+    return;
+  }
+
+  const voiceBtn = document.getElementById('voiceCommandBtn');
+  if (!voiceBtn) return;
+
+  window.__voiceCommandActive = true;
+  window.__voiceCommandReset = () => {
+    window.__voiceCommandActive = false;
+    voiceBtn.style.background = 'rgba(0,255,136,0.08)';
+    voiceBtn.style.borderColor = 'rgba(0,255,136,0.25)';
+    voiceBtn.innerHTML = '<span>🎙️</span><span>Speak Experiment</span>';
+  };
+
   const recognition = new SpeechRecognition();
   recognition.lang = 'en-US';
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
   
+  voiceBtn.style.background = 'rgba(0,255,136,0.25)';
+  voiceBtn.style.borderColor = '#00ff88';
+  voiceBtn.innerHTML = '<span>🔴</span><span>Listening...</span>';
   showToast("🎤 Listening... Say experiment name or category", 2000);
   speak("What experiment would you like to see?");
   
   recognition.onresult = (event) => {
+    if (window.__voiceCommandReset) window.__voiceCommandReset();
     const command = event.results[0][0].transcript.trim().toLowerCase();
     showToast(`💬 Recognized: "${command}"`, 2500);
     
@@ -1369,6 +1389,7 @@ function startVoiceCommand() {
   };
   
   recognition.onerror = (event) => {
+    if (window.__voiceCommandReset) window.__voiceCommandReset();
     console.error("Speech recognition error", event.error);
     let errorMsg = "Could not recognize speech. ";
     if (event.error === 'not-allowed') errorMsg = "Microphone access denied. Please allow microphone access.";
@@ -1376,8 +1397,19 @@ function startVoiceCommand() {
     showToast(`❌ ${errorMsg}`, 4000);
     speak(errorMsg + "Please check your microphone and try again.");
   };
-  
-  recognition.start();
+
+  recognition.onend = () => {
+    if (window.__voiceCommandReset) window.__voiceCommandReset();
+  };
+
+  try {
+    recognition.start();
+  } catch (err) {
+    if (window.__voiceCommandReset) window.__voiceCommandReset();
+    console.error('[VoiceCmd] recognition.start() failed:', err);
+    const msg = err && (err.message || err.name) ? `${err.name || 'Error'}: ${err.message || ''}`.trim() : 'Unknown browser error';
+    showToast(`⚠️ Mic couldn't start: ${msg}. Check mic permission, HTTPS, or if this page is inside an iframe.`, 5000);
+  }
 }
 
 // Attach voice button handler

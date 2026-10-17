@@ -465,9 +465,9 @@ function buildDashboard(r, isTeacher) {
     <div class="card" style="margin-top:20px;">
       <div class="card-title">📣 Send Notification</div>
       <div class="voice-row">
-        <button class="mic-btn" id="micBtn" onclick="toggleVoice()" title="Speak in Bangla">🎤</button>
+        <button class="mic-btn" id="micBtn" onclick="toggleVoice()" title="Speak in English">🎤</button>
         <div style="flex:1">
-          <textarea id="notifInput" placeholder="Type a message or press 🎤 to speak in Bangla..."></textarea>
+          <textarea id="notifInput" placeholder="Type a message or press 🎤 to speak in English..."></textarea>
         </div>
       </div>
       <div style="margin-top:10px;">
@@ -615,7 +615,7 @@ async function deleteClassroom(id) {
   }
 }
 
-// ─── Voice (Bangla speech → notification) ────────────────────────────────────
+// ─── Voice input → notification ──────────────────────────────────────────────
 let recognition = null;
 let isRecording = false;
 let voiceTranscript = '';
@@ -626,7 +626,7 @@ function initVoice() {
   recognition = new SR();
   recognition.continuous = true;
   recognition.interimResults = true;
-  recognition.lang = 'bn-BD';
+  recognition.lang = 'en-US';
 
   recognition.onresult = (e) => {
     let final = '', interim = '';

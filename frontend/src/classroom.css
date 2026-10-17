@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════════════════════════
-   AI ক্লাসরুম — Premium Stylesheet
+   AI Classroom — Premium Stylesheet
    Palette: warm cream + deep teal-black + saffron + soft greens
-   Typography: Hind Siliguri (body) + Tiro Bangla (display)
+   Typography: DM Sans (body) + Syne (display)
    ══════════════════════════════════════════════════════════════ */
 
 /* ── Design tokens ── */
@@ -70,8 +70,8 @@
   --dur-slow:   420ms;
 
   /* Typography */
-  --font-body:    'Hind Siliguri', system-ui, -apple-system, sans-serif;
-  --font-display: 'Tiro Bangla', Georgia, serif;
+  --font-body:    'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Syne', system-ui, sans-serif;
 }
 
 /* ── Reset ── */
@@ -165,6 +165,7 @@ button { font-family: inherit; }
   border: 1px solid var(--border);
   border-radius: 999px;
   background: rgba(255,255,255,0.6);
+  text-decoration: none;
 }
 
 .brand-dot {
@@ -449,6 +450,14 @@ button { font-family: inherit; }
   letter-spacing: -0.005em;
 }
 
+.stage-home-link {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+.stage-home-link:hover { color: var(--text); }
+
 .stage-area {
   flex: 1;
   display: flex;
@@ -543,6 +552,12 @@ button { font-family: inherit; }
   border-left: 3px solid var(--accent);
   padding: 4px 0 4px 22px;
   text-wrap: pretty;
+}
+
+.stage-message.teacher-speaking .stage-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* TTS bar */
@@ -807,6 +822,13 @@ button { font-family: inherit; }
   transition: transform var(--dur-fast) var(--ease);
 }
 
+.bubble-teacher .bubble-text {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .bubble-text:hover { transform: translateY(-1px); }
 
 /* Agent bubble colors */
@@ -930,7 +952,7 @@ button { font-family: inherit; }
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 
-.user-input { 
+.user-input {
   position: absolute;
   width: 1px;
   height: 1px;

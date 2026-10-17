@@ -566,7 +566,7 @@ body::before{
         <button class="ctrl-btn" onclick="zoomIn()">＋ Zoom</button>
         <button class="ctrl-btn" onclick="zoomOut()">－ Zoom</button>
         <button class="ctrl-btn" id="askAiBtn" onclick="openAiChat()">💬 Ask AI</button>
-        <button class="vo-btn" id="voBtn" onclick="toggleVoiceover()">🎙️ AI বাংলা ভয়েস</button>
+        <button class="vo-btn" id="voBtn" onclick="toggleVoiceover()">🎙️ English AI voiceover</button>
       </div>
     </div>
 
@@ -602,7 +602,7 @@ body::before{
       <!-- Voiceover HUD -->
       <div class="vo-hud" id="voHud">
         <div class="vo-hud-top">
-          <span class="vo-badge" id="voBadge">AI VOICE · বাংলা</span>
+          <span class="vo-badge" id="voBadge">AI VOICE · ENGLISH</span>
           <span class="vo-hud-name" id="voHudName">—</span>
           <button class="vo-stop-btn" onclick="stopVoiceover()" title="Stop">✕</button>
         </div>
@@ -614,7 +614,7 @@ body::before{
             <div class="vo-bar"></div><div class="vo-bar"></div>
           </div>
           <div class="vo-text-wrap">
-            <div class="vo-text" id="voText">প্রস্তুত হচ্ছে...</div>
+            <div class="vo-text" id="voText">Preparing…</div>
           </div>
         </div>
         <div class="vo-chips" id="voChips"></div>
@@ -633,7 +633,7 @@ body::before{
       <div class="hint-sep">·</div>
       <div class="hint"><span class="hint-key">Space</span> Auto-rotate</div>
       <div class="hint-sep">·</div>
-      <div class="hint"><span class="hint-key">🎙️</span> বাংলা AI ভয়েস</div>
+      <div class="hint"><span class="hint-key">🎙️</span> English AI voiceover</div>
     </div>
   </div>
 </div>
@@ -660,7 +660,7 @@ body::before{
 <!-- Three.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const MODEL_BASE_PATH = './public/models';
+const MODEL_BASE_PATH = '/models';
 const MODELS = [
   { id:'kidney',        file:`${MODEL_BASE_PATH}/human_kidney.glb`,                  name:'Human Kidney',                  category:'Urinary System',    icon:'🩸', color:'#c084fc', desc:'The kidneys filter blood, remove waste, regulate electrolytes, and produce urine. Essential for homeostasis.',                                                        tags:['Excretory','Homeostasis','Nephron'] },
   { id:'full_skeleton', file:`${MODEL_BASE_PATH}/skeleton.glb`,                       name:'Full Skeleton',                  category:'Skeletal System',   icon:'💀', color:'#e2e8f0', desc:'Complete human skeleton — 206 bones providing structure, protection, and movement. Includes axial and appendicular skeleton.',                                     tags:['Skeletal','Anatomy','Bones'] },
@@ -943,10 +943,7 @@ window.MODELS = MODELS;
 </script>
 
 <!-- AI Chat (Groq) -->
-<script src="/amplify-env-bootstrap.js"></script>
 <script type="module">
-// Config loaded from server via amplify-env-bootstrap.js
-const GROQ_API_KEY = window.AMPLIFY_ENV?.GROQ_KEY || '';
 const aiChatPanel   = document.getElementById('aiChatPanel');
 const aiChatOverlay = document.getElementById('aiChatOverlay');
 const aiMessages    = document.getElementById('aiMessages');
@@ -959,7 +956,15 @@ function closeAiChat() { aiChatPanel.classList.remove('open'); aiChatOverlay.cla
 
 function appendAiMessage(text,role='assistant') {
   const m=document.createElement('div'); m.className=`ai-message ${role}`;
-  m.innerHTML=role==='assistant'?`<strong>AI Tutor</strong>${text.replace(/\n/g,'<br/>')}`:`${text.replace(/\n/g,'<br/>')}`;
+  if (role === 'assistant') {
+    const label = document.createElement('strong');
+    label.textContent = 'AI Tutor';
+    m.appendChild(label);
+  }
+  const content = document.createElement('div');
+  content.textContent = text;
+  content.style.whiteSpace = 'pre-wrap';
+  m.appendChild(content);
   aiMessages.querySelector('.ai-chat-empty')?.remove();
   aiMessages.appendChild(m); aiMessages.scrollTop=aiMessages.scrollHeight;
 }
@@ -968,23 +973,20 @@ async function sendAiQuestion() {
   const question=aiPrompt.value.trim(); if (!question) return;
   appendAiMessage(question,'user'); aiPrompt.value=''; aiPrompt.disabled=true; aiSendBtn.disabled=true; aiStatus.textContent='Thinking...';
   try {
-    if (!GROQ_API_KEY) throw new Error('Missing GROQ API key.');
     const selectedModel=document.getElementById('viewerName')?.textContent?.trim()||'Biology model';
-    const prompt=`You are an expert biology tutor. The user is viewing the ${selectedModel} model. Answer clearly and concisely. Question: ${question}
-
-Important: If you respond in Bengali, use these spelling rules: spell "হল" as "হলো", "বল" as "বলো", "কর" as "করো".`;
-    const response=await fetch('https://api.cerebras.ai/v1/chat/completions',{
+    const response=await fetch('/api/biology/chat',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${GROQ_API_KEY}`},
-      body:JSON.stringify({ model:'openai/gpt-oss-120b', messages:[{role:'system',content:prompt}], temperature:0.4, max_tokens:1200 })
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({ model_name:selectedModel, question })
     });
-    const data=await response.json();
-    if (!response.ok) throw new Error(data.error?.message||`Groq API error ${response.status}`);
-    appendAiMessage(data.choices?.[0]?.message?.content||'Sorry, could not generate an answer.','assistant');
+    const data=await response.json().catch(()=>({}));
+    if (!response.ok) throw new Error(data.detail||`Groq API error ${response.status}`);
+    if (typeof data.answer !== 'string' || !data.answer.trim()) throw new Error('Groq returned an empty answer.');
+    appendAiMessage(data.answer,'assistant');
     aiStatus.textContent='Ready for another biology question.';
   } catch(err) {
     appendAiMessage(`Error: ${err.message||'Unable to ask AI.'}`, 'assistant');
-    aiStatus.textContent='Failed. Check your API key and network.';
+    aiStatus.textContent='Groq could not answer. Check the backend connection and try again.';
   } finally {
     aiPrompt.disabled=false; aiSendBtn.disabled=false; aiPrompt.focus();
   }
@@ -1053,15 +1055,8 @@ window.openAiChat=openAiChat; window.closeAiChat=closeAiChat; window.sendAiQuest
 })();
 </script>
 
-<!-- ══════════════════════════════════════════
-     AI BANGLA VOICEOVER SYSTEM
-     FIX: reads model id/name from window._currentModelData.idx
-          which is always kept in sync by selectModel()
-══════════════════════════════════════════ -->
+<!-- English voiceover text is generated by Groq; browser speech synthesis reads it aloud. -->
 <script type="module">
-// Config loaded from server via amplify-env-bootstrap.js
-const CEREBRAS_API_KEY_MODULE = window.AMPLIFY_ENV?.CEREBRAS_KEY || '';
-
 const btn       = document.getElementById('voBtn');
 const hud       = document.getElementById('voHud');
 const wave      = document.getElementById('voWave');
@@ -1077,154 +1072,96 @@ let _voActive   = false;
 let voSegments  = [];
 let voSegIdx    = 0;
 let voTimers    = [];
+let voRequestController = null;
 
 // CHANGE 1: UPDATED PREDEFINED SEGMENTS WITH 4 ENTRIES EACH (NO DASHES)
 const PREDEFINED_SEGMENTS = {
   kidney: [
-    { label:'পরিচিতি',        text:'কিডনি মানবদেহের একটি অত্যন্ত গুরুত্বপূর্ণ অঙ্গ। এটি রক্ত পরিশোধন করে এবং শরীরে পানি ও লবণের ভারসাম্য রক্ষা করে।',                                                         zoom:2.8, phi:Math.PI/2, theta:0.0 },
-    { label:'রেনাল কর্টেক্স', text:'কিডনির বাইরের স্তর হলো রেনাল কর্টেক্স। এখানে নেফ্রনের বেশিরভাগ অংশ থাকে এবং রক্ত ফিল্টারিং শুরু হয়।',                                                                    zoom:1.7, phi:1.4, theta:0.3 },
-    { label:'নেফ্রন',          text:'নেফ্রন হলো কিডনির মূল কার্যকরী একক। প্রতিটি কিডনিতে প্রায় দশ লক্ষ নেফ্রন থাকে যা রক্ত থেকে বর্জ্য পদার্থ আলাদা করে।',                                                  zoom:1.5, phi:1.2, theta:0.8 },
-    { label:'রেনাল পেলভিস',   text:'রেনাল পেলভিস হলো কিডনির ভেতরের ফাঁপা অংশ যেখানে প্রস্রাব জমা হয়। এখান থেকে মূত্রনালির মাধ্যমে প্রস্রাব মূত্রথলিতে যায়।',                                                zoom:1.6, phi:0.9, theta:1.1 },
+    { label:'Overview', text:'The kidneys filter waste from the blood and help regulate water and salts.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Renal cortex', text:'The renal cortex is the outer region of the kidney, where blood filtration begins.', zoom:1.7, phi:1.4, theta:0.3 },
+    { label:'Nephrons', text:"Nephrons are the kidney's functional units. Each kidney contains about one million nephrons.", zoom:1.5, phi:1.2, theta:0.8 },
+    { label:'Renal pelvis', text:'The renal pelvis collects urine and carries it into the ureter on its way to the bladder.', zoom:1.6, phi:0.9, theta:1.1 },
   ],
   full_skeleton: [
-    { label:'পরিচিতি',        text:'মানব কঙ্কাল ২০৬টি হাড় নিয়ে গঠিত। এটি শরীরকে কাঠামো দেয়, অঙ্গ রক্ষা করে এবং চলাচলে সাহায্য করে।',                                                                       zoom:2.8, phi:Math.PI/2, theta:0.0 },
-    { label:'মাথার খুলি',     text:'মাথার খুলি বা ক্র্যানিয়াম মস্তিষ্ককে সুরক্ষিত রাখে। এটি ২২টি হাড় দিয়ে তৈরি যা পরস্পর জোড়া লাগানো।',                                                                    zoom:1.4, phi:0.6, theta:0.0 },
-    { label:'মেরুদণ্ড',        text:'মেরুদণ্ডে ৩৩টি কশেরুকা রয়েছে। এটি শরীরের মূল কাঠামো এবং মেরুরজ্জুকে রক্ষা করে।',                                                                                         zoom:2.0, phi:Math.PI/2, theta:0.2 },
-    { label:'অ্যাপেন্ডিকুলার', text:'অ্যাপেন্ডিকুলার কঙ্কালে দুই হাত ও দুই পা সহ মোট ১২৬টি হাড় আছে। এই হাড়গুলো আমাদের নড়াচড়া এবং কাজ করার শক্তি দেয়।',                                                   zoom:1.5, phi:1.4, theta:0.6 },
+    { label:'Overview', text:'The adult human skeleton has 206 bones. It supports the body, protects organs, and enables movement.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Skull', text:'The skull protects the brain and is made of 22 bones joined together.', zoom:1.4, phi:0.6, theta:0.0 },
+    { label:'Spine', text:'The spine contains 33 vertebrae and protects the spinal cord.', zoom:2.0, phi:Math.PI/2, theta:0.2 },
+    { label:'Appendicular skeleton', text:'The appendicular skeleton includes the arms and legs and contains 126 bones.', zoom:1.5, phi:1.4, theta:0.6 },
   ],
   lungs: [
-    { label:'পরিচিতি',        text:'ফুসফুস শ্বাসতন্ত্রের প্রধান অঙ্গ। বাতাস থেকে অক্সিজেন রক্তে নেওয়া এবং কার্বন ডাইঅক্সাইড বের করে দেওয়াই এর কাজ।',                                                         zoom:2.8, phi:Math.PI/2, theta:0.0 },
-    { label:'ব্রংকাস',         text:'শ্বাসনালি দুটি প্রধান ব্রংকাসে বিভক্ত হয়ে প্রতিটি ফুসফুসে প্রবেশ করে। এরপর এগুলো ক্রমশ ছোট ছোট শাখায় ভাগ হয়।',                                                         zoom:1.8, phi:1.1, theta:0.3 },
-    { label:'অ্যালভিওলাই',     text:'অ্যালভিওলাই হলো ক্ষুদ্র বায়ু থলি যেখানে গ্যাস বিনিময় হয়। দুটি ফুসফুসে প্রায় ৩০ কোটি অ্যালভিওলাই আছে।',                                                                zoom:2.2, phi:1.4, theta:0.3 },
-    { label:'ফুসফুসের পর্দা',  text:'প্লুরা নামের দ্বিস্তরী পর্দা ফুসফুসকে ঘিরে রাখে। এই পর্দার মাঝখানে তরল থাকে যা শ্বাসের সময় ঘর্ষণ কমায়।',                                                                zoom:1.6, phi:0.8, theta:0.9 },
+    { label:'Overview', text:'The lungs bring oxygen into the blood and remove carbon dioxide from the body.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Bronchi', text:'The trachea divides into two main bronchi, one entering each lung before branching into smaller airways.', zoom:1.8, phi:1.1, theta:0.3 },
+    { label:'Alveoli', text:'Alveoli are tiny air sacs where gas exchange occurs. Both lungs contain roughly 300 million alveoli.', zoom:2.2, phi:1.4, theta:0.3 },
+    { label:'Pleura', text:'The pleura is a double-layered membrane around the lungs. A thin fluid layer reduces friction during breathing.', zoom:1.6, phi:0.8, theta:0.9 },
   ],
   digestive_system: [
-    { label:'পরিচিতি',        text:'পরিপাকতন্ত্র খাদ্যকে ক্ষুদ্র পুষ্টিতে ভেঙে রক্তে শোষণ করে। এটি মুখ থেকে মলদ্বার পর্যন্ত প্রায় ৯ মিটার দীর্ঘ।',                                                            zoom:2.8, phi:Math.PI/2, theta:0.0 },
-    { label:'পাকস্থলী',        text:'পাকস্থলীতে হাইড্রোক্লোরিক অ্যাসিড ও পাচকরস নিঃসৃত হয়। এটি খাবারকে তরল মিশ্রণে পরিণত করে।',                                                                               zoom:1.8, phi:1.1, theta:0.3 },
-    { label:'ক্ষুদ্রান্ত্র',   text:'ক্ষুদ্রান্ত্র প্রায় ছয় মিটার লম্বা। এখানে বেশিরভাগ পুষ্টি শোষণ হয় এবং ভিলাই নামের ক্ষুদ্র প্রবর্ধন শোষণ ক্ষমতা বাড়ায়।',                                            zoom:1.5, phi:1.3, theta:0.7 },
-    { label:'বৃহদান্ত্র',      text:'বৃহদান্ত্র পানি পুনরায় শোষণ করে এবং বর্জ্য পদার্থ ঘন করে। এখানে কোটি কোটি উপকারী ব্যাকটেরিয়া থাকে।',                                                                     zoom:1.6, phi:0.9, theta:1.1 },
+    { label:'Overview', text:'The digestive system breaks food into nutrients that can be absorbed into the blood.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Stomach', text:'The stomach releases acid and digestive enzymes, mixing food into a liquid mixture.', zoom:1.8, phi:1.1, theta:0.3 },
+    { label:'Small intestine', text:'Most nutrient absorption occurs in the small intestine. Tiny villi increase its absorptive surface area.', zoom:1.5, phi:1.3, theta:0.7 },
+    { label:'Large intestine', text:'The large intestine absorbs water and compacts waste. It also contains many beneficial bacteria.', zoom:1.6, phi:0.9, theta:1.1 },
   ],
   dna: [
-    { label:'পরিচিতি',        text:'ডিএনএ হলো জীবনের নীলনকশা যা প্রতিটি কোষের নিউক্লিয়াসে থাকে। একটি মানব কোষে প্রায় দুই মিটার লম্বা ডিএনএ ভাঁজ করা থাকে।',                                                  zoom:2.8, phi:Math.PI/2, theta:0.0 },
-    { label:'ডাবল হেলিক্স',   text:'ডিএনএর ডাবল হেলিক্স গঠন ১৯৫৩ সালে ওয়াটসন ও ক্রিক আবিষ্কার করেন। দুটি শিকল পরস্পর প্যাঁচানো সিঁড়ির মতো সাজানো।',                                                         zoom:1.6, phi:0.8, theta:0.5 },
-    { label:'বেস পেয়ার',      text:'অ্যাডেনিন সবসময় থাইমিনের সাথে এবং সাইটোসিন সবসময় গুয়ানিনের সাথে জোড়া বাঁধে। এই নির্দিষ্ট জোড়াবদ্ধতাই জেনেটিক তথ্য সংরক্ষণ করে।',                                    zoom:1.8, phi:1.3, theta:1.0 },
-    { label:'জিন ও কোড',      text:'মানব জিনোমে প্রায় তিন শত কোটি বেস পেয়ার আছে। এই বেস পেয়ারের ক্রম নির্ধারণ করে প্রোটিন তৈরির নির্দেশ।',                                                                   zoom:1.5, phi:1.0, theta:0.2 },
+    { label:'Overview', text:'DNA stores the instructions used to build and maintain an organism. A human cell contains about two metres of DNA.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Double helix', text:'DNA has a double-helix structure, with two strands arranged like a twisted ladder.', zoom:1.8, phi:0.8, theta:0.3 },
+    { label:'Base pairs', text:'Adenine pairs with thymine, while cytosine pairs with guanine. These pairs encode genetic information.', zoom:1.8, phi:1.3, theta:1.0 },
+    { label:'Genes and code', text:'The human genome contains about three billion base pairs. Their sequence provides instructions for making proteins.', zoom:1.5, phi:1.0, theta:0.2 },
   ],
   cerebellum: [
-    { label:'পরিচিতি',        text:'সেরিবেলাম মস্তিষ্কের পেছনের নিচের অংশে থাকে। এটি ঐচ্ছিক নড়াচড়া সমন্বয়, ভারসাম্য এবং সূক্ষ্ম মোটর দক্ষতা নিয়ন্ত্রণ করে।',                                              zoom:2.8, phi:Math.PI/2, theta:0.0 },
-    { label:'সেরিবেলার কর্টেক্স', text:'সেরিবেলামের বাইরের স্তরে পুরকিনজে কোষ থাকে যা আন্দোলন সমন্বয় নিয়ন্ত্রণ করে। এই কোষগুলো মস্তিষ্কের সবচেয়ে বড় নিউরনগুলোর মধ্যে একটি।',                              zoom:1.8, phi:0.9, theta:0.3 },
-    { label:'ডিপ নিউক্লিয়াই',  text:'সেরিবেলামের ভেতরে ডেন্টেট, ইন্টারপোজিটাস ও ফাস্টিগিয়াল নামের নিউক্লিয়াস আছে। এগুলো সেরিবেলামের আউটপুট তথ্য মস্তিষ্কের অন্যান্য অংশে পাঠায়।',                       zoom:1.5, phi:1.2, theta:0.8 },
-    { label:'ভার্মিস',         text:'ভার্মিস হলো সেরিবেলামের মধ্যবর্তী অংশ যা শরীরের মাঝখানের নড়াচড়া নিয়ন্ত্রণ করে। এটি হাঁটার ছন্দ এবং দাঁড়ানোর ভারসাম্যে গুরুত্বপূর্ণ ভূমিকা রাখে।',                    zoom:1.6, phi:0.7, theta:1.2 },
+    { label:'Overview', text:'The cerebellum sits at the lower back of the brain and helps coordinate movement, balance, and fine motor control.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Cerebellar cortex', text:'The outer layer contains Purkinje cells, which play a central role in coordinating movement.', zoom:1.8, phi:0.9, theta:0.3 },
+    { label:'Deep nuclei', text:'Deep cerebellar nuclei relay output from the cerebellum to other parts of the brain.', zoom:1.5, phi:1.2, theta:0.8 },
+    { label:'Vermis', text:'The vermis is the central region of the cerebellum and helps coordinate posture and movements around the body midline.', zoom:1.6, phi:0.7, theta:1.2 },
   ],
   humerus: [
-    { label:'পরিচিতি',        text:'হিউমারাস হলো উপরের বাহুর লম্বা হাড় যা কাঁধ থেকে কনুই পর্যন্ত বিস্তৃত। এটি কাঁধের বল-সকেট জয়েন্ট এবং কনুইয়ের হিঞ্জ জয়েন্ট তৈরিতে অংশ নেয়।',                            zoom:2.8, phi:Math.PI/2, theta:0.0 },
-    { label:'হিউমারাল হেড',   text:'হিউমারাসের গোলাকার মাথা স্কাপুলার গ্লেনয়েড ফোসার সাথে বল-সকেট জয়েন্ট তৈরি করে। এই জয়েন্ট শরীরের সবচেয়ে বেশি নড়াচড়ার সুবিধা দেয়।',                                    zoom:1.8, phi:0.7, theta:0.2 },
-    { label:'ডায়াফাইসিস',     text:'হিউমারাসের মধ্যবর্তী লম্বা অংশকে ডায়াফাইসিস বলে। এটি বাইরের দিক থেকে কম্প্যাক্ট হাড় এবং ভেতর থেকে ফাঁপা যা ওজন কমিয়ে শক্তি ধরে রাখে।',                              zoom:1.6, phi:1.0, theta:0.5 },
-    { label:'ডিস্টাল এন্ড',    text:'হিউমারাসের নিচের প্রান্তে ট্রকলিয়া ও ক্যাপিটুলাম থাকে। এগুলো রেডিয়াস ও আলনা হাড়ের সাথে মিলে কনুইয়ের জয়েন্ট তৈরি করে।',                                                  zoom:1.7, phi:1.3, theta:0.9 },
+    { label:'Overview', text:'The humerus is the long bone of the upper arm, extending from the shoulder to the elbow.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Humeral head', text:'The rounded head of the humerus meets the shoulder blade to form a ball-and-socket joint.', zoom:1.8, phi:0.7, theta:0.2 },
+    { label:'Shaft', text:'The humeral shaft has a strong compact outer layer and a hollow interior that reduces weight.', zoom:1.6, phi:1.0, theta:0.5 },
+    { label:'Distal end', text:'The lower end of the humerus meets the radius and ulna to form the elbow joint.', zoom:1.7, phi:1.3, theta:0.9 },
   ],
   ribs: [
-    { label:'পরিচিতি',        text:'পাঁজরের খাঁচা ১২ জোড়া পাঁজর নিয়ে গঠিত। এটি হৃদপিণ্ড ও ফুসফুসকে রক্ষা করে এবং শ্বাসের সময় বুকের আয়তন পরিবর্তনে সাহায্য করে।',                                           zoom:2.8, phi:Math.PI/2, theta:0.0 },
-    { label:'সত্যিকার পাঁজর', text:'প্রথম সাত জোড়া পাঁজরকে সত্যিকার পাঁজর বলে কারণ এগুলো সরাসরি স্টার্নামের সাথে যুক্ত। এগুলো বুকের খাঁচার সবচেয়ে মজবুত অংশ।',                                               zoom:1.8, phi:1.3, theta:0.4 },
-    { label:'মিথ্যা পাঁজর',   text:'অষ্টম থেকে দশম পাঁজর স্টার্নামের সাথে সরাসরি না লেগে কার্টিলেজের মাধ্যমে যুক্ত। এদের মিথ্যা পাঁজর বলা হয়।',                                                                   zoom:1.6, phi:1.1, theta:0.8 },
-    { label:'ভাসমান পাঁজর',   text:'একাদশ ও দ্বাদশ জোড়া পাঁজর সামনের দিকে কোনো হাড়ের সাথে যুক্ত নয়। তাই এদের ভাসমান পাঁজর বলে।',                                                                               zoom:1.5, phi:0.8, theta:1.2 },
+    { label:'Overview', text:'The rib cage has 12 pairs of ribs. It protects the heart and lungs and helps the chest expand during breathing.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'True ribs', text:'The first seven pairs attach directly to the sternum and form the most stable part of the rib cage.', zoom:1.8, phi:1.3, theta:0.4 },
+    { label:'False ribs', text:'The eighth through tenth pairs connect to the sternum indirectly through cartilage.', zoom:1.6, phi:1.1, theta:0.8 },
+    { label:'Floating ribs', text:'The eleventh and twelfth pairs do not attach to the sternum at the front; they are called floating ribs.', zoom:1.5, phi:0.8, theta:1.2 },
   ],
   phospholipid: [
-    { label:'পরিচিতি',        text:'ফসফোলিপিড বিলেয়ার সকল কোষের ঝিল্লির মূল গঠন। এই দ্বিস্তরী ঝিল্লি কোষের ভেতরের পরিবেশকে বাইরের থেকে আলাদা রাখে।',                                                            zoom:2.8, phi:Math.PI/2, theta:0.0 },
-    { label:'বিলেয়ার গঠন',   text:'ফসফোলিপিড বিলেয়ারে হাইড্রোফিলিক মাথা বাইরে থাকে এবং হাইড্রোফোবিক লেজ ভেতরে থাকে। এই সাজানো পানিকে বাধা দেয় এবং কোষকে সুরক্ষিত রাখে।',                                  zoom:1.8, phi:0.7, theta:0.4 },
-    { label:'ফসফেট মাথা',     text:'ফসফোলিপিডের মাথায় ফসফেট গ্রুপ থাকে যা পানির সাথে মেশে। এই হাইড্রোফিলিক বৈশিষ্ট্যই ঝিল্লির বাইরের স্তর তৈরিতে সাহায্য করে।',                                               zoom:1.7, phi:1.1, theta:0.7 },
-    { label:'চর্বির লেজ',     text:'দুটি ফ্যাটি অ্যাসিড লেজ পানি এড়িয়ে চলে তাই ভেতরমুখী থাকে। এই লেজের সম্পৃক্ততা ঝিল্লির তরলতা নিয়ন্ত্রণ করে।',                                                               zoom:1.6, phi:0.9, theta:1.1 },
+    { label:'Overview', text:'The phospholipid bilayer forms the basic structure of cell membranes and separates the cell interior from its surroundings.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Bilayer structure', text:'Hydrophilic heads face the watery environments while hydrophobic tails point inward.', zoom:1.8, phi:0.7, theta:0.4 },
+    { label:'Phosphate head', text:'The phosphate-containing head interacts with water and forms the outer surfaces of the membrane.', zoom:1.7, phi:1.1, theta:0.7 },
+    { label:'Fatty acid tails', text:'The water-repelling fatty acid tails face inward and help control membrane fluidity.', zoom:1.6, phi:1.0, theta:1.0 },
   ],
   rougher: [
-    { label:'পরিচিতি',        text:'রাফ এন্ডোপ্লাজমিক রেটিকুলাম কোষের প্রোটিন কারখানা। এর পৃষ্ঠে রাইবোসোম থাকে যা ঝিল্লি ও রপ্তানির জন্য প্রোটিন তৈরি করে।',                                                   zoom:2.8, phi:Math.PI/2, theta:0.0 },
-    { label:'রাইবোসোম',        text:'রাফ ইআরের গায়ে লেগে থাকা রাইবোসোম মেসেঞ্জার আরএনএর নির্দেশ পড়ে প্রোটিন তৈরি করে। তৈরি প্রোটিন সরাসরি ইআরের ভেতরে প্রবেশ করে প্রক্রিয়াজাত হয়।',                        zoom:2.0, phi:0.9, theta:0.6 },
-    { label:'সিস্টার্নি',      text:'রাফ ইআর চ্যাপ্টা থলির মতো সিস্টার্নি নামের কক্ষ নিয়ে গঠিত। এই কক্ষগুলোতে প্রোটিন ভাঁজ করা হয় এবং রাসায়নিকভাবে পরিবর্তিত করা হয়।',                                       zoom:1.7, phi:1.2, theta:0.3 },
-    { label:'গলজি সংযোগ',     text:'রাফ ইআর থেকে ভেসিকেলের মাধ্যমে প্রোটিন গলজি বডিতে পাঠানো হয়। গলজি বডি প্রোটিনকে চূড়ান্তভাবে প্রক্রিয়া করে গন্তব্যে পাঠায়।',                                              zoom:1.5, phi:0.7, theta:1.0 },
+    { label:'Overview', text:'The rough endoplasmic reticulum helps produce proteins, with ribosomes attached to its surface.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Ribosomes', text:'Ribosomes read messenger RNA instructions and build proteins that enter the endoplasmic reticulum.', zoom:1.8, phi:0.7, theta:0.3 },
+    { label:'Cisternae', text:'The rough endoplasmic reticulum consists of flattened membrane sacs called cisternae, where proteins fold and are modified.', zoom:1.6, phi:1.1, theta:0.7 },
+    { label:'Golgi connection', text:'Transport vesicles carry proteins from the endoplasmic reticulum to the Golgi apparatus for final processing and delivery.', zoom:1.7, phi:1.3, theta:1.0 },
   ],
 };
 
-async function fetchAiSegmentsForModel(modelName) {
-  const key = CEREBRAS_API_KEY_MODULE;
-  if (!key) return null;
-  try {
-    // CHANGE 2: Updated prompt with 4 sections and instruction to avoid hyphens/dashes
-    const r = await fetch('https://api.cerebras.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${key}` },
-      body: JSON.stringify({
-        model: 'llama3.1-8b',
-        max_completion_tokens: 1200,
-        temperature: 0.6,
-        messages: [{
-          role: 'user',
-          content: `তুমি একজন বাংলা জীববিজ্ঞান শিক্ষক। "${modelName}" সম্পর্কে নিচের চারটি বিষয়ে আলাদা আলাদাভাবে দুই বাক্য করে বাংলায় লেখো।
-
-লেখার নিয়ম (অবশ্যই মানতে হবে):
-- কোনো হাইফেন বা ড্যাশ চিহ্ন ব্যবহার করবে না
-- সংক্ষিপ্ত রূপ ব্যবহার করবে না, সবসময় পূর্ণ শব্দ লিখবে
-- "বড়" লিখবে না, "বড়ো" লিখবে। "ছোট" লিখবে না, "ছোটো" লিখবে
-- "হলো" লিখবে, "হল" লিখবে না। "করো" লিখবে, "কর" লিখবে না। "বলো" লিখবে, "বল" লিখবে না।
-- সংখ্যা সবসময় বাংলা অক্ষরে লিখবে (যেমন: ১০ লক্ষ, ৩০ কোটি)
-- বাক্য সহজ, স্পষ্ট এবং বাংলা TTS-এ সঠিকভাবে উচ্চারণযোগ্য হতে হবে
-- কোনো ইংরেজি শব্দ বা বর্ণ ব্যবহার করবে না, সম্পূর্ণ বাংলায় লিখবে
-
-JSON ফরম্যাটে উত্তর দাও, অন্য কিছু লিখবে না:
-{
-  "পরিচিতি": "এই অঙ্গ বা কাঠামোর সাধারণ পরিচয় ও অবস্থান নিয়ে দুটি বাক্য",
-  "গঠন": "এর শারীরিক ও আণবিক গঠন সম্পর্কে দুটি নির্দিষ্ট তথ্যসমৃদ্ধ বাক্য",
-  "বৈশিষ্ট্য": "এর সবচেয়ে গুরুত্বপূর্ণ জৈবিক বৈশিষ্ট্য ও বিশেষত্ব নিয়ে দুটি বাক্য",
-  "কার্যকারিতা": "শরীরে এর মূল ভূমিকা ও কাজ নিয়ে দুটি বাক্য, একটি সংখ্যাগত তথ্য অন্তর্ভুক্ত করো"
-}`
-        }]
-      })
-    });
-    const d = await r.json();
-    const raw = d.choices?.[0]?.message?.content?.trim();
-    if (!raw) return null;
-    const clean = raw.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
-  } catch { return null; }
-}
-
-async function fetchBanglaIntro(modelName) {
-  const key = CEREBRAS_API_KEY_MODULE;
-  if (!key) return null;
-  try {
-    // CHANGE 3: Updated intro prompt to avoid hyphens/dashes
-    const r = await fetch('https://api.cerebras.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${key}` },
-      body: JSON.stringify({
-        model: 'llama3.1-8b',
-        max_completion_tokens: 600,
-        temperature: 0.6,
-        messages: [{
-          role: 'user',
-          content: `তুমি একজন অভিজ্ঞ বাংলা জীববিজ্ঞান শিক্ষক। একজন শিক্ষার্থী এখন "${modelName}" এর ইন্টারেক্টিভ থ্রিডি মডেল দেখছে।
-
-এই অঙ্গ বা কাঠামো সম্পর্কে ঠিক দুটি বাংলা বাক্য লেখো যেখানে প্রথম বাক্যে এর সবচেয়ে গুরুত্বপূর্ণ জৈবিক কাজটি স্পষ্টভাবে বলো এবং দ্বিতীয় বাক্যে একটি চমকপ্রদ বৈজ্ঞানিক তথ্য বা সংখ্যা উল্লেখ করো।
-
-অবশ্যই মানতে হবে:
-- কোনো হাইফেন বা ড্যাশ চিহ্ন ব্যবহার করবে না
-- "বড়" লিখবে না, "বড়ো" লিখবে। "ছোট" লিখবে না, "ছোটো" লিখবে
-- "হলো" লিখবে, "হল" লিখবে না
-- সংখ্যা বাংলা অক্ষরে লিখবে (যেমন: ত্রিশ কোটি, দশ লক্ষ)
-- কোনো ইংরেজি শব্দ বা বর্ণ ব্যবহার করবে না
-- বাক্য বাংলা TTS-এ সঠিকভাবে উচ্চারণযোগ্য হতে হবে
-- কোনো ভূমিকা বা শিরোনাম ছাড়াই শুধু দুটি বাক্য দাও`
-        }]
-      })
-    });
-    const d = await r.json();
-    return d.choices?.[0]?.message?.content?.trim() || null;
-  } catch { return null; }
+async function fetchGroqVoiceover(modelName, signal) {
+  const response = await fetch('/api/biology/voiceover', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ model_name: modelName }),
+    signal,
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.detail || `Voiceover request failed (${response.status}).`);
+  }
+  if (!Array.isArray(data.segments) || data.segments.length !== 4
+      || data.segments.some(segment => !segment.label || !segment.text)) {
+    throw new Error('Groq returned an invalid voiceover. Please try again.');
+  }
+  return data.segments;
 }
 
 function speak(text, onEnd) {
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'bn-BD';
+  u.lang = 'en-US';
   const voices = window.speechSynthesis.getVoices();
-  const v = voices.find(v=>v.lang.startsWith('bn')) || voices.find(v=>v.lang.startsWith('hi')) || voices[0];
+  const v = voices.find(v=>v.lang.startsWith('en')) || voices[0];
   if (v) u.voice = v;
   u.rate = 0.88; u.pitch = 1.05; u.volume = 1.0;
   u.onend  = onEnd;
@@ -1258,7 +1195,7 @@ function speakSeg(idx) {
   textEl.classList.add('fade');
   setTimeout(() => { textEl.textContent = seg.text; textEl.classList.remove('fade'); }, 220);
   wave.classList.add('live'); badge.classList.add('live');
-  btn.classList.add('speaking'); btn.innerHTML = '⏹ থামাও';
+  btn.classList.add('speaking'); btn.innerHTML = '⏹ Stop voiceover';
   speak(seg.text, () => {
     if (!_voActive) return;
     wave.classList.remove('live');
@@ -1273,36 +1210,39 @@ async function startVO() {
   hud.classList.add('active');
   requestAnimationFrame(()=>requestAnimationFrame(()=>hud.classList.add('visible')));
   hudName.textContent = name;
-  btn.classList.add('loading'); btn.innerHTML = '⏳ লোড হচ্ছে...';
-  textEl.textContent = 'Collecting information';
+  btn.classList.add('loading'); btn.innerHTML = '⏳ Loading…';
+  textEl.textContent = 'Generating an English explanation with Groq…';
 
-  const predefined = id ? PREDEFINED_SEGMENTS[id] : null;
-  let aiFallback = null;
-
-  if (!predefined) {
-    aiFallback = await fetchAiSegmentsForModel(name);
+  const controller = new AbortController();
+  voRequestController = controller;
+  try {
+    const generatedSegments = await fetchGroqVoiceover(name, controller.signal);
+    if (!_voActive) return;
+    const layout = (id && PREDEFINED_SEGMENTS[id]) || [];
+    const defaults = [
+      { zoom:2.8, phi:Math.PI/2, theta:0.0 },
+      { zoom:2.0, phi:Math.PI/2, theta:0.3 },
+      { zoom:1.7, phi:1.1, theta:-0.5 },
+      { zoom:1.5, phi:0.8, theta:0.8 },
+    ];
+    voSegments = generatedSegments.map((segment, index) => ({
+      ...defaults[index],
+      ...(layout[index] || {}),
+      label: segment.label,
+      text: segment.text,
+    }));
+  } catch (error) {
+    if (controller.signal.aborted) return;
+    console.error('[Biology voiceover] Groq request failed:', error);
+    _voActive = false;
+    btn.classList.remove('loading');
+    btn.innerHTML = '🎙️ English AI voiceover';
+    textEl.textContent = `Could not generate the Groq voiceover. ${error.message}`;
+    return;
   }
-
-  const intro = await fetchBanglaIntro(name);
 
   if (!_voActive) return;
   btn.classList.remove('loading');
-
-  if (predefined) {
-    voSegments = [...predefined];
-  } else if (aiFallback) {
-    // CHANGE 2B: Updated fallback segments to use 4 entries (matched to new JSON keys)
-    voSegments = [
-      { label:'পরিচিতি',         text: aiFallback.পরিচিতি,      zoom:2.8, phi:Math.PI/2, theta:0.0 },
-      { label:'শারীরিক গঠন',     text: aiFallback.গঠন,          zoom:2.0, phi:Math.PI/2, theta:0.3 },
-      { label:'জৈবিক বৈশিষ্ট্য', text: aiFallback.বৈশিষ্ট্য,   zoom:1.7, phi:1.1,       theta:-0.5 },
-      { label:'মূল কার্যকারিতা', text: aiFallback.কার্যকারিতা, zoom:1.5, phi:0.8,       theta:0.8 },
-    ];
-  } else {
-    voSegments = [{ label:'বিবরণ', text:`${name} একটি গুরুত্বপূর্ণ জৈবিক কাঠামো যা শরীরের স্বাভাবিক কার্যক্রম বজায় রাখতে সাহায্য করে।`, zoom:2.0, phi:Math.PI/2, theta:0.3 }];
-  }
-
-  if (intro) voSegments.unshift({ label:'AI পরিচিতি', text: intro, zoom:2.8, phi:Math.PI/2, theta:0.0 });
 
   chipsEl.innerHTML = voSegments.map((s,i)=>`<span class="vo-chip" data-i="${i}">${s.label}</span>`).join('');
   chipsEl.querySelectorAll('.vo-chip').forEach(c=>c.addEventListener('click',()=>{
@@ -1315,12 +1255,14 @@ async function startVO() {
 
 function endVO() {
   _voActive = false;
+  voRequestController?.abort();
+  voRequestController = null;
   window.speechSynthesis.cancel();
   voTimers.forEach(clearTimeout); voTimers = [];
   wave.classList.remove('live'); badge.classList.remove('live');
   spotlight.classList.remove('show');
   btn.classList.remove('speaking','loading');
-  btn.innerHTML = '🎙️ AI বাংলা ভয়েস';
+  btn.innerHTML = '🎙️ English AI voiceover';
   if (typeof window.targetDistance !== 'undefined') window.targetDistance = 3;
   if (typeof window.targetSpherical !== 'undefined') { window.targetSpherical.phi=Math.PI/2; window.targetSpherical.theta=0; }
 }
@@ -1331,7 +1273,7 @@ function getCurrentModelInfo() {
   if (models && models[idx]) {
     return { id: models[idx].id, name: models[idx].name };
   }
-  const name = document.getElementById('viewerName')?.textContent?.trim() || 'এই মডেল';
+  const name = document.getElementById('viewerName')?.textContent?.trim() || 'this model';
   if (models) {
     const found = models.find(m => m.name === name);
     if (found) return { id: found.id, name: found.name };
@@ -1351,5 +1293,6 @@ window.toggleVoiceover = function() {
 window.speechSynthesis.getVoices();
 if ('onvoiceschanged' in window.speechSynthesis) window.speechSynthesis.onvoiceschanged = ()=>window.speechSynthesis.getVoices();
 </script>
+<script type="module" src="/src/site-navigation.js"></script>
 </body>
 </html>

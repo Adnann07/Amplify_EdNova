@@ -1,8 +1,8 @@
 // ══════════════════════════════════════════════
-//  AI ক্লাসরুম — classroom.js
+//  AI Classroom — classroom.js
 //  4 agents · Groq ONLY (all AI + Whisper)
 //  PDF pipeline: pdf.js + TF-IDF VectorStore
-//  Generative UI slides · laser pointer · Bangla
+//  Generative UI slides · laser pointer
 // ══════════════════════════════════════════════
 
 import { loadEnvConfig, getGroqKeys, getOpenRouterKeys, getGroqBase, getOpenRouterBase, getViteEnv } from './env-config.js';
@@ -40,75 +40,70 @@ const IMG_QUALITY   = 0.85;
 const AGENTS = {
   teacher: {
     id:    'teacher',
-    name:  'শিক্ষক',
-    role:  'পাঠ পরিচালক',
+    name:  'Teacher',
+    role:  'Lesson guide',
     color: '#1e2a2b',
-    system: `তুমি একজন অভিজ্ঞ বাংলাদেশি স্কুল শিক্ষক — উষ্ণ, স্পষ্ট, শিক্ষার্থীদের ভালোবাসো।
+    system: `You are a warm, experienced school teacher. Teach clearly in the first person, as if speaking to a student in class.
 
-তোমার কণ্ঠস্বর: সরাসরি প্রথম পুরুষে। যেন ক্লাসরুমে দাঁড়িয়ে পড়াচ্ছ।
-
-
-কঠোর নিয়ম:
-✗ "শিক্ষক বলেছেন", "তিনি বললেন" — তৃতীয় পুরুষ নিষিদ্ধ
-✗ "আমি কি জানি", "আমি কি বুঝতে পারছি", "আমি কি সঠিকভাবে" — নিজেকে প্রশ্ন করা সম্পূর্ণ নিষিদ্ধ
-✗ সালাম, ধন্যবাদ, "খুব ভালো প্রশ্ন" — চাটুকারিতা নয়
-✗ অন্য চরিত্রের কথা লেখা নিষিদ্ধ
-✓ কঠিন ধারণা সহজ উদাহরণ দিয়ে বোঝাও
-✓ বাংলা বানান: "হল" লিখতে হবে "হলো" হিসেবে, "বল" লিখতে হবে "বলো" হিসেবে, "কর" লিখতে হবে "করো" হিসেবে।`,
+Rules:
+✗ Never refer to yourself in the third person or narrate another character.
+✗ Avoid greetings, flattery, and filler praise.
+✓ If a student just asked a question or shared confusion, answer that exact point with a simple example.
+✓ When starting a topic, give one clear, useful idea that invites students to respond.
+✓ Use one short sentence of no more than 12 words.
+✓ Respond only in English.`,
   },
   curious: {
     id:    'curious',
-    name:  'রাফি',
-    role:  'কৌতূহলী শিক্ষার্থী',
+    name:  'Alex',
+    role:  'Curious student',
     color: '#2563eb',
-    system: `তুমি রাফি — ৯ম শ্রেণির উৎসাহী ছাত্র।
+    system: `You are Alex, an enthusiastic ninth-grade student.
 
-কঠোর নিয়ম:
-✗ তৃতীয় পুরুষ, ধন্যবাদ, প্রশংসা নিষিদ্ধ
-✗ আগে যা বলা হয়েছে তা আবার বলা নিষিদ্ধ
-✗ "ডকুমেন্টে বলা আছে" জাতীয় বাক্যাংশ নিষিদ্ধ
-✓ ঠিক ১টি বাক্য
-✓ বাংলা বানান: "হল" লিখতে হবে "হলো" হিসেবে, "বল" লিখতে হবে "বলো" হিসেবে, "কর" লিখতে হবে "করো" হিসেবে।`,
+Rules:
+✗ Do not use third person, thanks, or praise.
+✗ Do not repeat information already covered.
+✗ Do not refer to a document; respond naturally.
+✓ Ask the teacher one specific, sincere question about something confusing or unclear.
+✓ Respond in one short English sentence.`,
   },
   skeptic: {
     id:    'skeptic',
-    name:  'ইতি',
-    role:  'চিন্তাশীল শিক্ষার্থী',
+    name:  'Jordan',
+    role:  'Thoughtful student',
     color: '#dc2626',
-    system: `তুমি ইতি — ৯ম শ্রেণির তীক্ষ্ণবুদ্ধি ছাত্রী।
+    system: `You are Jordan, a thoughtful ninth-grade student.
 
-কঠোর নিয়ম:
-✗ তৃতীয় পুরুষ, ধন্যবাদ, প্রশংসা নিষিদ্ধ
-✗ আগে যা বলা হয়েছে তা আবার বলা নিষিদ্ধ
-✗ "ডকুমেন্টে বলা আছে" জাতীয় বাক্যাংশ নিষিদ্ধ
-✓ ঠিক ১টি বাক্য 
-✓ "কিন্তু", "তাহলে কি", "ধরি যদি" দিয়ে শুরু করো
-✓ বাংলা বানান: "হল" লিখতে হবে "হলো" হিসেবে, "বল" লিখতে হবে "বলো" হিসেবে, "কর" লিখতে হবে "করো" হিসেবে।`,
+Rules:
+✗ Do not use third person, thanks, or praise.
+✗ Do not repeat information already covered.
+✗ Do not refer to a document; respond naturally.
+✓ Ask the teacher a thoughtful "why" or "how" question about a confusing point.
+✓ Respond in one short English sentence.`,
   },
   achiever: {
     id:    'achiever',
-    name:  'মেধা',
-    role:  'মেধাবী শিক্ষার্থী',
+    name:  'Sam',
+    role:  'Advanced student',
     color: '#16a34a',
-    system: `তুমি মেধা — ৯ম শ্রেণির মেধাবী ছাত্রী।
+    system: `You are Sam, an advanced ninth-grade student.
 
-কঠোর নিয়ম:
-✗ তৃতীয় পুরুষ, ধন্যবাদ, প্রশংসা নিষিদ্ধ
-✗ আগে যা বলা হয়েছে তা আবার বলা নিষিদ্ধ
-✗ "ডকুমেন্টে বলা আছে" জাতীয় বাক্যাংশ নিষিদ্ধ
-✓ ঠিক ১টি বাক্য — আগের আলোচনায় নতুন কিছু যোগ করো
-✓ "এটা আসলে", "বাস্তবে", "এর সাথে যোগ করলে" দিয়ে শুরু করো
-✓ বাংলা বানান: "হল" লিখতে হবে "হলো" হিসেবে, "বল" লিখতে হবে "বলো" হিসেবে, "কর" লিখতে হবে "করো" হিসেবে।`,
+Rules:
+✗ Do not use third person, thanks, or praise.
+✗ Do not repeat information already covered.
+✗ Do not refer to a document; respond naturally.
+✓ Ask the teacher one concise question connecting the idea to a new example.
+✓ Respond in one short English sentence.`,
   },
 };
 
-const TURN_ORDER = ['teacher', 'curious', 'skeptic', 'achiever'];
+const TURN_ORDER = ['teacher', 'curious', 'teacher', 'skeptic', 'teacher', 'achiever'];
 
 const ALL_NAME_PREFIXES = [
-  'শিক্ষক', 'Teacher', 'teacher',
-  'রাফি', 'Rafi', 'rafi',
-  'ইতি', 'Iti', 'iti', 'Eity', 'eity',
-  'মেধা', 'Medha', 'medha',
+  'Teacher', 'teacher',
+  'Alex', 'alex',
+  'Jordan', 'jordan',
+  'Sam', 'sam',
 ];
 
 const AGENT_TTS = {
@@ -122,12 +117,16 @@ const AGENT_TTS = {
 let sessionTopic       = '';
 let isRunning          = false;
 let isPaused           = false;
+const pauseReasons     = new Set();
 let ttsEnabled         = true;
 let userInterrupted    = false;
 let pendingUserMessage = null;
 let sessionSeconds     = 0;
 let timerInterval      = null;
 let currentUtterance   = null;
+let currentSpeaker     = null;
+let ttsWatchdogControl = null;
+let currentTtsFinish   = null;
 let currentTurnIndex   = 0;
 let dialogueLog        = [];
 let agentVoiceMap      = { teacher: null, curious: null, skeptic: null, achiever: null };
@@ -252,7 +251,7 @@ class VectorStore {
 
   tokenize(text) {
     return text.toLowerCase()
-      .replace(/[।,!?;:()\[\]{}"'\/\\]/g, ' ')
+      .replace(/[.,!?;:()\[\]{}"'\/\\]/g, ' ')
       .split(/\s+/).filter(t => t.length > 1);
   }
 
@@ -325,7 +324,7 @@ const store = new VectorStore();
 let pdfPages = [];
 
 function chunkText(text, pageNum) {
-  const sentences = text.replace(/([।.!?])\s+/g, '$1\n').split('\n').map(s => s.trim()).filter(s => s.length > 4);
+  const sentences = text.replace(/([..!?])\s+/g, '$1\n').split('\n').map(s => s.trim()).filter(s => s.length > 4);
   const chunks = []; let buf = [], wc = 0;
   for (const sent of sentences) {
     const sw = sent.split(/\s+/).length;
@@ -343,13 +342,13 @@ function chunkText(text, pageNum) {
 
 function getRelevantContext(query, maxChars = 5000) {
   if (!store.ready || !store.chunks.length) {
-    return pdfPages.map(p => `[পৃষ্ঠা ${p.page}]\n${p.text}`).join('\n\n').slice(0, maxChars);
+    return pdfPages.map(p => `[Page ${p.page}]\n${p.text}`).join('\n\n').slice(0, maxChars);
   }
   const results = store.retrieve(query, TOP_K);
   if (!results.length) return '';
   let out = '', chars = 0;
   for (const r of results) {
-    const block = `[পৃষ্ঠা ${r.pageNum}]\n${r.text}`;
+    const block = `[Page ${r.pageNum}]\n${r.text}`;
     if (chars + block.length > maxChars) break;
     out += block + '\n\n'; chars += block.length;
   }
@@ -454,7 +453,7 @@ async function groqChat(messages, system, maxTokens = 500, temp = 0.78, agentId 
     console.warn('[groqChat] OpenRouter also failed:', e.message);
   }
 
-  throw new Error('সব Groq ও OpenRouter কী ব্যর্থ।');
+  throw new Error('All configured AI providers failed.');
 }
 
 /**
@@ -584,22 +583,10 @@ async function groqVisionOCR(base64Img, pageNum) {
 
 function _stripThinking(text) {
   if (!text) return text;
-  let s = text
+  return text
     .replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '')
     .replace(/<thinking[^>]*>[\s\S]*?<\/thinking>/gi, '')
     .trim();
-  const banglaCount  = (s.match(/[\u0980-\u09FF]/g) || []).length;
-  const englishCount = (s.match(/[a-zA-Z]/g) || []).length;
-  if (englishCount > 60 && englishCount > banglaCount) {
-    const lines = s.split(/\n+/);
-    const banglaLines = lines.filter(line => {
-      const b = (line.match(/[\u0980-\u09FF]/g) || []).length;
-      const e = (line.match(/[a-zA-Z]/g) || []).length;
-      return line.replace(/\s/g, '').length > 4 && b > e;
-    });
-    if (banglaLines.length > 0) s = banglaLines.join(' ').trim();
-  }
-  return s;
 }
 
 function cleanReply(text) {
@@ -611,16 +598,16 @@ function cleanReply(text) {
   const midPat = new RegExp(`(?:\\n|\\r)+(?:\\*{0,2})(?:\\[)?(?:${escaped})(?:\\])?(?:\\*{0,2})[\\s]*:`, 'i');
   const cut = s.search(midPat);
   if (cut > 0) s = s.slice(0, cut).trim();
-  
+
 
   // Strip if model hallucinated a second speaker mid-response
-  const speakerMidPattern = /[\n\r।]+[\s]*(?:শিক্ষক|রাফি|ইতি|মেধা)[\s]*:/i;
+  const speakerMidPattern = /[\n\r.!?]+[\s]*(?:Teacher|Alex|Jordan|Sam)[\s]*:/i;
   const midCut = s.search(speakerMidPattern);
   if (midCut > 10) s = s.slice(0, midCut).trim();
 
   // Strip incomplete sentences ending mid-word (no punctuation at end)
-  if (!/[।?!]$/.test(s)) {
-    const lastPunct = Math.max(s.lastIndexOf('।'), s.lastIndexOf('?'), s.lastIndexOf('!'));
+  if (!/[.?!]$/.test(s)) {
+    const lastPunct = Math.max(s.lastIndexOf('.'), s.lastIndexOf('?'), s.lastIndexOf('!'));
     if (lastPunct > 30) s = s.slice(0, lastPunct + 1).trim();
   }
 
@@ -665,20 +652,20 @@ async function detectPDFMode(doc) {
 async function loadAndIndexPDF(file, onProgress) {
   store.reset();
   pdfPages = [];
-  onProgress?.(0, 'PDF খোলা হচ্ছে…');
+  onProgress?.(0, 'Opening PDF…');
 
   const buf    = await file.arrayBuffer();
   const pdfDoc = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
   const pages  = Math.min(pdfDoc.numPages, MAX_PAGES);
 
-  onProgress?.(5, 'PDF ধরন শনাক্ত হচ্ছে…');
+  onProgress?.(5, 'Detecting PDF type…');
   const mode = await detectPDFMode(pdfDoc);
   console.log(`[PDF] mode: ${mode}, pages: ${pages}`);
 
   for (let i = 1; i <= pages; i++) {
     onProgress?.(
       Math.round((i / pages) * 80) + 5,
-      `পৃষ্ঠা ${i}/${pages}${mode === 'image' ? ' (OCR)' : ''} পড়া হচ্ছে…`
+      `Page ${i}/${pages}${mode === 'image' ? ' (OCR)' : ''} reading…`
     );
 
     const pg = await pdfDoc.getPage(i);
@@ -712,17 +699,17 @@ async function loadAndIndexPDF(file, onProgress) {
     }
   }
 
-  onProgress?.(90, `ইন্ডেক্স তৈরি হচ্ছে (${store.chunks.length}টি অংশ)…`);
+  onProgress?.(90, `Building index (${store.chunks.length} chunks)…`);
   await new Promise(r => setTimeout(r, 0));
 
   if (store.chunks.length === 0) {
     console.error('[PDF] No chunks indexed! PDF may be image-only and OCR failed.');
-    onProgress?.(100, '⚠️ কোনো পাঠ্য পাওয়া যায়নি।');
+    onProgress?.(100, '⚠️ No text was found.');
     return;
   }
 
   store.build();
-  onProgress?.(100, `প্রস্তুত! (${store.chunks.length} অংশ)`);
+  onProgress?.(100, `Ready! (${store.chunks.length} chunks)`);
 }
 
 // ══════════════════════════════════════════════
@@ -732,20 +719,13 @@ async function loadAndIndexPDF(file, onProgress) {
 function loadAgentVoices() {
   const assign = () => {
     const all   = speechSynthesis.getVoices();
-    const bnAll = [
-      ...all.filter(v => v.lang === 'bn-BD'),
-      ...all.filter(v => v.lang === 'bn-IN'),
-    ];
-    if (!bnAll.length) return;
+    const enAll = all.filter(v => /^en(?:-|$)/i.test(v.lang));
+    if (!enAll.length) return;
 
-    // Try to find Nabonita specifically for iti and achiever
-    const nabonita = bnAll.find(v => v.name.toLowerCase().includes('nabonita'))
-                  || bnAll.find(v => v.name.toLowerCase().includes('নবনীতা'));
-
-    agentVoiceMap.teacher  = bnAll[0];
-    agentVoiceMap.curious  = bnAll[1] || bnAll[0];
-    agentVoiceMap.skeptic  = nabonita || bnAll[2] || bnAll[0];
-    agentVoiceMap.achiever = nabonita || bnAll[3] || bnAll[1] || bnAll[0];
+    agentVoiceMap.teacher  = enAll[0];
+    agentVoiceMap.curious  = enAll[1] || enAll[0];
+    agentVoiceMap.skeptic  = enAll[2] || enAll[0];
+    agentVoiceMap.achiever = enAll[3] || enAll[1] || enAll[0];
 
     console.log('[TTS] voices:', Object.entries(agentVoiceMap)
       .map(([k, v]) => `${k}:${v?.name}`).join(' | '));
@@ -758,6 +738,7 @@ function loadAgentVoices() {
 // Every speak() call queues itself and waits for the lock before starting.
 let _ttsLockResolve = null;
 let _ttsLocked      = false;
+let speechGeneration = 0;
 
 function _acquireTtsLock() {
   if (!_ttsLocked) { _ttsLocked = true; return Promise.resolve(); }
@@ -772,6 +753,65 @@ function _releaseTtsLock() {
   if (_ttsLockResolve) { const cb = _ttsLockResolve; _ttsLockResolve = null; cb(); }
 }
 
+function setPauseReason(reason, paused) {
+  const wasPaused = isPaused;
+  if (paused) pauseReasons.add(reason);
+  else pauseReasons.delete(reason);
+  isPaused = pauseReasons.size > 0;
+  if (pauseBtn) pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+  if (isPaused) {
+    if (ttsLabel) {
+      ttsLabel.textContent = pauseReasons.has('quiz') ? 'Quiz in progress…'
+        : pauseReasons.has('raise-hand') ? 'Paused — your turn'
+          : 'Paused';
+    }
+  }
+  if (isPaused === wasPaused) return;
+
+  if (isPaused) {
+    speechSynthesis.pause();
+    ttsWatchdogControl?.pause();
+    clearInterval(timerInterval);
+    timerInterval = null;
+    if (ttsWave) ttsWave.classList.remove('speaking');
+    if (ttsLabel) ttsLabel.textContent = 'Paused';
+    hideLaser();
+  } else {
+    speechSynthesis.resume();
+    ttsWatchdogControl?.resume();
+    if (isRunning) runSessionTimer();
+    if (currentSpeaker && currentUtterance) {
+      if (ttsWave) ttsWave.classList.add('speaking');
+      if (ttsLabel) ttsLabel.textContent = `${AGENTS[currentSpeaker].name} speaking…`;
+    } else if (ttsLabel) {
+      ttsLabel.textContent = 'Muted';
+    }
+  }
+}
+
+function cancelCurrentSpeech() {
+  speechGeneration++;
+  speechSynthesis.cancel();
+  currentTtsFinish?.();
+}
+
+async function waitWhilePaused() {
+  while (isPaused && isRunning) await sleep(100);
+}
+
+async function waitForActiveTime(ms, generation) {
+  let remaining = ms;
+  while (remaining > 0 && isRunning && generation === speechGeneration) {
+    if (isPaused) {
+      await sleep(100);
+      continue;
+    }
+    const slice = Math.min(100, remaining);
+    await sleep(slice);
+    remaining -= slice;
+  }
+}
+
 /**
  * speak() — fully blocking. The Promise does NOT resolve until the browser
  * confirms the utterance has actually finished playing (onend).
@@ -781,11 +821,13 @@ function _releaseTtsLock() {
  */
 async function speak(text, agentId, useLaser = false) {
   await _acquireTtsLock();
+  const generation = speechGeneration;
+  const wasCanceled = () => generation !== speechGeneration || !isRunning;
 
   if (!ttsEnabled || !text?.trim()) {
     const wc = text ? text.trim().split(/\s+/).length : 0;
     const silentMs = Math.max(800, wc * 220);
-    await sleep(silentMs);
+    await waitForActiveTime(silentMs, generation);
     _releaseTtsLock();
     return;
   }
@@ -793,21 +835,28 @@ async function speak(text, agentId, useLaser = false) {
   let voice = agentVoiceMap[agentId];
   if (!voice) {
     const deadline = Date.now() + 3000;
-    while (!voice && Date.now() < deadline) {
+    while (!voice && Date.now() < deadline && !wasCanceled()) {
       await sleep(150);
       voice = agentVoiceMap[agentId];
     }
   }
 
   if (!voice) {
+    await waitWhilePaused();
+    if (wasCanceled()) { _releaseTtsLock(); return; }
     const wc = text.trim().split(/\s+/).length;
-    await sleep(Math.max(800, wc * 220));
+    await waitForActiveTime(Math.max(800, wc * 220), generation);
     _releaseTtsLock();
     return;
   }
 
+  await waitWhilePaused();
+  if (wasCanceled()) { _releaseTtsLock(); return; }
+
   speechSynthesis.cancel();
   await sleep(100);
+  await waitWhilePaused();
+  if (wasCanceled()) { _releaseTtsLock(); return; }
 
   return new Promise(resolve => {
     const tts = AGENT_TTS[agentId];
@@ -815,12 +864,13 @@ async function speak(text, agentId, useLaser = false) {
     utt.rate   = tts.rate;
     utt.pitch  = tts.pitch;
     utt.volume = 1;
-    utt.lang   = 'bn-BD';
+    utt.lang   = voice.lang || 'en-US';
     utt.voice  = voice;
     currentUtterance = utt;
+    currentSpeaker = agentId;
 
     if (ttsWave)  ttsWave.classList.add('speaking');
-    if (ttsLabel) ttsLabel.textContent = AGENTS[agentId].name + ' বলছেন...';
+    if (ttsLabel) ttsLabel.textContent = AGENTS[agentId].name + ' speaking…';
 
     if (useLaser && laserWordSpans.length > 0) {
       laserActive = true;
@@ -842,25 +892,48 @@ async function speak(text, agentId, useLaser = false) {
       clearInterval(pollInterval);
       clearTimeout(watchdog);
       if (ttsWave)  ttsWave.classList.remove('speaking');
-      if (ttsLabel) ttsLabel.textContent = 'নীরব';
+      if (ttsLabel) ttsLabel.textContent = isPaused ? 'Paused' : 'Muted';
       if (useLaser) hideLaser();
       currentUtterance = null;
+      currentSpeaker = null;
+      ttsWatchdogControl = null;
+      if (currentTtsFinish === finish) currentTtsFinish = null;
       _releaseTtsLock();
       resolve();
     };
+    currentTtsFinish = finish;
 
     const wc      = text.trim().split(/\s+/).length;
     const watchMs = Math.max(6000, Math.ceil((wc / tts.rate) * 700) + 3000);
 
-    const watchdog = setTimeout(() => {
-      console.warn(`[TTS] watchdog fired for ${agentId} after ${watchMs}ms`);
-      finish();
-    }, watchMs);
+    let watchdog = null;
+    let watchdogRemaining = watchMs;
+    let watchdogStartedAt = 0;
+    const startWatchdog = () => {
+      watchdogStartedAt = Date.now();
+      watchdog = setTimeout(() => {
+        watchdog = null;
+        console.warn(`[TTS] watchdog fired for ${agentId} after ${watchMs}ms`);
+        finish();
+      }, watchdogRemaining);
+    };
+    ttsWatchdogControl = {
+      pause() {
+        if (watchdog === null) return;
+        clearTimeout(watchdog);
+        watchdog = null;
+        watchdogRemaining = Math.max(0, watchdogRemaining - (Date.now() - watchdogStartedAt));
+      },
+      resume() {
+        if (!finished && watchdog === null) startWatchdog();
+      },
+    };
+    startWatchdog();
 
     // Poll every 200ms as backup — Chrome onend is unreliable
     const pollInterval = setInterval(() => {
       if (finished) { clearInterval(pollInterval); return; }
-      if (!speechSynthesis.speaking && !speechSynthesis.pending) {
+      if (!isPaused && !speechSynthesis.speaking && !speechSynthesis.pending) {
         console.log(`[TTS] poll detected end for ${agentId}`);
         finish();
       }
@@ -883,7 +956,7 @@ async function speak(text, agentId, useLaser = false) {
 
     // Chrome sometimes needs a kick if speaking hasn't started after 600ms
     setTimeout(() => {
-      if (!finished && !speechSynthesis.speaking) {
+      if (!finished && !isPaused && !speechSynthesis.speaking) {
         console.warn('[TTS] not speaking after 600ms, retrying');
         speechSynthesis.cancel();
         setTimeout(() => {
@@ -960,7 +1033,7 @@ function ensureMermaid() {
     s.onload = () => {
       window.mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: {
         primaryColor: '#dbeafe', primaryTextColor: '#1e293b', primaryBorderColor: '#2563eb',
-        lineColor: '#64748b', fontFamily: "'Hind Siliguri', sans-serif", fontSize: '14px' }});
+        lineColor: '#64748b', fontFamily: "'DM Sans', sans-serif", fontSize: '14px' }});
       mermaidReady = true; resolve();
     };
     document.head.appendChild(s);
@@ -975,10 +1048,10 @@ function ensureMermaid() {
     @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
     #teacherSlide{margin-top:16px;border-radius:12px;overflow:hidden;border:1.5px solid #e2e8f0;background:#fff;animation:slideIn .35s ease forwards;}
     #teacherSlide.hiding{animation:slideOut .25s ease forwards;}
-    .slide-caption{font-family:'Hind Siliguri',sans-serif;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;padding:8px 14px 0;}
-    .slide-loading{display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(90deg,#f8fafc 25%,#f0f5ff 50%,#f8fafc 75%);background-size:400px 100%;animation:shimmer 1.4s ease infinite;font-family:'Hind Siliguri',sans-serif;font-size:13px;color:#94a3b8;}
+    .slide-caption{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;padding:8px 14px 0;}
+    .slide-loading{display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(90deg,#f8fafc 25%,#f0f5ff 50%,#f8fafc 75%);background-size:400px 100%;animation:shimmer 1.4s ease infinite;font-family:'DM Sans',sans-serif;font-size:13px;color:#94a3b8;}
     .slide-table-wrap{overflow-x:auto;padding:12px 14px 14px;}
-    .slide-table{width:100%;border-collapse:collapse;font-family:'Hind Siliguri',sans-serif;font-size:13.5px;}
+    .slide-table{width:100%;border-collapse:collapse;font-family:'DM Sans',sans-serif;font-size:13.5px;}
     .slide-table th{background:#1e40af;color:#fff;padding:9px 13px;text-align:left;font-weight:600;white-space:nowrap;}
     .slide-table th:first-child{border-radius:6px 0 0 0}.slide-table th:last-child{border-radius:0 6px 0 0}
     .slide-table td{padding:8px 13px;color:#1e293b;border-bottom:1px solid #e8edf3;line-height:1.45;}
@@ -987,8 +1060,8 @@ function ensureMermaid() {
     .slide-diagram-wrap svg{max-width:100%;height:auto;}
     .slide-cards-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;padding:12px 14px 14px;}
     .slide-card{background:#f0f6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;}
-    .slide-card-term{font-family:'Hind Siliguri',sans-serif;font-size:12px;font-weight:700;color:#1e40af;margin-bottom:4px;}
-    .slide-card-def{font-family:'Hind Siliguri',sans-serif;font-size:12.5px;color:#334155;line-height:1.4;}`;
+    .slide-card-term{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;color:#1e40af;margin-bottom:4px;}
+    .slide-card-def{font-family:'DM Sans',sans-serif;font-size:12.5px;color:#334155;line-height:1.4;}`;
   document.head.appendChild(s);
 })();
 
@@ -1009,7 +1082,7 @@ function hideSlide() {
 
 function showSlideLoading() {
   const el = getSlideEl(); el.classList.remove('hiding');
-  el.innerHTML = `<div class="slide-loading"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>স্লাইড তৈরি হচ্ছে...</div>`;
+  el.innerHTML = `<div class="slide-loading"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Creating slide...</div>`;
 }
 
 function renderTable(data, caption) {
@@ -1053,17 +1126,9 @@ async function renderSlideSpec(spec) {
 }
 
 async function fetchTeacherSlide(teacherText, topic) {
-  const prompt = `A Bangladeshi classroom teacher just said: "${teacherText}"
-Topic: ${topic}
-
-Choose ONE visual: "table" (compare/list), "mermaid" (process/flow), "cards" (define 2-5 terms), "none" (conversational).
-
-Return ONLY valid JSON:
-table:   {"type":"table","caption":"বাংলা","data":[["Col1","Col2"],["v1","v2"]]}
-mermaid: {"type":"mermaid","caption":"বাংলা","code":"graph TD\\n  A[বাংলা] --> B[বাংলা]"}
-cards:   {"type":"cards","caption":"বাংলা","items":[{"term":"শব্দ","definition":"সংজ্ঞা"}]}
-none:    {"type":"none"}
-All visible text in Bangla. mermaid: graph TD/LR only, ≤8 nodes.`;
+  const prompt = `A classroom teacher just said: "${teacherText}". Topic: ${topic}.
+Choose one visual: "table" for comparisons or lists, "mermaid" for a process or flow, "cards" for 2–5 terms, or "none" for conversation.
+Return only valid JSON with the selected type. All visible text must be in English. Mermaid diagrams must use graph TD or LR and contain no more than 8 nodes.`;
 
   try { return await groqJsonChat([{ role: 'user', content: prompt }], 'Return only valid JSON. No markdown.', 500, 0.3); }
   catch (e) { console.warn('Slide fetch error:', e); return { type: 'none' }; }
@@ -1071,37 +1136,29 @@ All visible text in Bangla. mermaid: graph TD/LR only, ≤8 nodes.`;
 
 async function fetchTeacherQuestion(context, topic) {
   const docCtx = getRelevantContext(context + ' ' + topic, 1500);
-  const doc    = docCtx ? `\nডকুমেন্ট:\n${docCtx}` : '';
-  const prompt = `বিষয়: ${topic}${doc}
-
-এইমাত্র শিক্ষক বলেছেন: "${context}"
-
-এখন শিক্ষক রাফি, ইতি বা মেধার উদ্দেশ্যে একটি প্রশ্ন করবেন।
-নিয়ম:
-- "রাফি, তুমি কি..." বা "ইতি, তুমি কি..." বা "মেধা, তুমি কি..." দিয়ে শুরু করো
-- শিক্ষক নিজেকে কখনো প্রশ্ন করবেন না
-- "আমি কি জানি", "আমি কি বুঝতে পারছি" — এগুলো সম্পূর্ণ নিষিদ্ধ
-- ঠিক ১টি বাক্য
-- বাংলা বানান: "হল" লিখতে হবে "হলো" হিসেবে, "বল" লিখতে হবে "বলো" হিসেবে, "কর" লিখতে হবে "করো" হিসেবে।`;
+  const doc    = docCtx ? `\nMaterial:\n${docCtx}` : '';
+  const prompt = `Topic: ${topic}${doc}
+The teacher just said: "${context}"
+Write exactly one concise English question addressed to one of the students, Alex, Jordan, or Sam. Never have the teacher ask a question about themself. Do not repeat prior discussion.`;
 
   try {
     const raw = await groqChat(
       [{ role: 'user', content: prompt }],
-      'তুমি একজন বাংলাদেশি শিক্ষক। শুধুমাত্র ছাত্রছাত্রীদের উদ্দেশ্যে প্রশ্ন করো। নিজেকে প্রশ্ন করা সম্পূর্ণ নিষিদ্ধ। বাংলা বানান: "হল" লিখতে হবে "হলো" হিসেবে, "বল" লিখতে হবে "বলো" হিসেবে, "কর" লিখতে হবে "করো" হিসেবে।',
+      'You are a classroom teacher. Ask questions only to students, never to yourself. Respond only in English.',
       120, 0.7,
       'teacher'   // ← add this
     );
     const cleaned = cleanReply(raw);
     // Hard reject if teacher is asking herself
-    if (/^আমি কি|^আমার কি|^আমি কি/.test(cleaned)) {
-      const names = ['রাফি', 'ইতি', 'মেধা'];
+    if (/^(?:Do I|Am I)\b/i.test(cleaned)) {
+      const names = ['Alex', 'Jordan', 'Sam'];
       const name  = names[Math.floor(Math.random() * names.length)];
-      return `${name}, তুমি কি এই বিষয়টি বুঝতে পেরেছ?`;
+      return `${name}, did you understand this idea?`;
     }
     return cleaned;
   } catch (e) {
     console.warn('Teacher question error:', e);
-    return 'রাফি, তুমি কি এই বিষয়টি বুঝতে পেরেছ?';
+    return 'Alex, did you understand this idea?';
   }
 }
 
@@ -1149,16 +1206,16 @@ let _handlingFiles = false;
 uploadZone.addEventListener('click', () => fileInput.click());
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
 uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-uploadZone.addEventListener('drop', e => { 
-  e.preventDefault(); 
-  uploadZone.classList.remove('dragover'); 
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
   _handlingFiles = true;
   handleFiles(Array.from(e.dataTransfer.files));
   setTimeout(() => { _handlingFiles = false; }, 500);
 });
-fileInput.addEventListener('change', () => { 
+fileInput.addEventListener('change', () => {
   if (_handlingFiles) return;
-  handleFiles(Array.from(fileInput.files)); 
+  handleFiles(Array.from(fileInput.files));
 });
 
 function handleFiles(files) {
@@ -1190,7 +1247,7 @@ startBtn?.addEventListener('click', async () => {
   if (_lessonStarted) return;
   const topic = topicInput?.value.trim();
   if (!topic && uploadedFiles.length === 0) {
-    alert('অনুগ্রহ করে একটি বিষয় লিখুন অথবা ফাইল আপলোড করুন।');
+    alert('Please enter a topic or upload a file.');
     return;
   }
   _lessonStarted = true;
@@ -1216,7 +1273,7 @@ function getInitialDocContext(maxChars = 3000) {
   if (!pdfPages.length) return '';
   let out = '', chars = 0;
   for (const p of pdfPages) {
-    const block = `[পৃষ্ঠা ${p.page}]\n${p.text}`;
+    const block = `[Page ${p.page}]\n${p.text}`;
     if (chars + block.length > maxChars) break;
     out += block + '\n\n';
     chars += block.length;
@@ -1239,60 +1296,77 @@ function buildMessages(agentId) {
   }
 
   const docBlock = ctx
-    ? `--- প্রসঙ্গ (এই তথ্যের বাইরে কিছু বলবে না, কিন্তু এটাকে "ডকুমেন্ট" বলে উল্লেখ করবে না — নিজের জ্ঞান হিসেবে সরাসরি শেখাও) ---\n${ctx}\n---\n\n`
+    ? `--- Source material (use only this information, but do not refer to it as a document; teach it naturally) ---\n${ctx}\n---\n\n`
     : '';
 
   if (dialogueLog.length === 0) {
     return [{
       role: 'user',
       content: docBlock +
-        `বিষয়: ${sessionTopic}\n\n` +
-        `উপরের প্রসঙ্গ থেকে পাঠ শুরু করো। প্রথম বাক্য দিয়ে সরাসরি পড়ানো শুরু করো।`
+        `Topic: ${sessionTopic}\n\n` +
+        `Start teaching directly from the provided source material.`
     }];
   }
 
   const transcript = recentLog.map(e => `[${e.name}]: ${e.text}`).join('\n');
 
-  const depthNote = agentId === 'teacher' ? '\nগভীরতা: ' + ({
-    shallow: 'সহজ ভাষায়।',
-    medium:  'স্বাভাবিক গভীরতায়।',
-    deep:    'গভীরভাবে বিশ্লেষণ করো।',
+  const depthNote = agentId === 'teacher' ? '\nDepth: ' + ({
+    shallow: 'Use simple language.',
+    medium:  'Use a moderate level of detail.',
+    deep:    'Analyze the topic in depth.',
   }[difficultyLevel]) : '';
 
   return [{
     role: 'user',
     content: docBlock +
-      `বিষয়: ${sessionTopic}\n\n` +
-      `সর্বশেষ কথোপকথন:\n${transcript}\n\n` +
-      `নির্দেশ: শুধুমাত্র উপরের প্রসঙ্গের তথ্য ব্যবহার করো, এর বাইরে কিছু বলা নিষিদ্ধ। কিন্তু "ডকুমেন্টে" শব্দটি বা এই ধরনের কোনো উল্লেখ কখনো করবে না — এটা যেন তোমার নিজের পাঠদান, প্রাকৃতিক ক্লাসরুম কথোপকথনের মতো শোনায়।` +
+      `Topic: ${sessionTopic}\n\n` +
+      `Recent discussion:\n${transcript}\n\n` +
+      `Use only the provided source material. Never refer to it as a document; explain it naturally as a teacher would.` +
       depthNote,
   }];
 }
 
 
-// increase max tokens for teacher so responses don't get cut mid-sentence
-// find this line in groqChat call inside callAgent:
+function limitTeacherLine(text) {
+  const reply = cleanReply(text);
+  const firstSentence = reply.match(/^.*?[.!?](?=\s|$)/)?.[0] || reply;
+  const words = firstSentence.trim().split(/\s+/).filter(Boolean);
+  let line = '';
+
+  for (const word of words.slice(0, 12)) {
+    const next = line ? `${line} ${word}` : word;
+    if (next.length > 88) break;
+    line = next;
+  }
+
+  if (!line) return 'Let’s look at that idea together.';
+  if (line.length < firstSentence.trim().length) {
+    return `${line.replace(/[,:;.!?]+$/, '')}…`;
+  }
+  return line;
+}
+
 async function callAgent(agentId) {
   const agent     = AGENTS[agentId];
   const isTeacher = agentId === 'teacher';
-  const maxTok    = isTeacher ? 220 : 180;
+  const maxTok    = isTeacher ? 100 : 120;
 
   const pdfRule = store.chunks.length > 0
-    ? '\n\nকঠোর নিয়ম: শুধুমাত্র প্রদত্ত তথ্য ব্যবহার করো, এর বাইরে কোনো তথ্য বা উদাহরণ দেওয়া নিষিদ্ধ। কিন্তু কখনো "ডকুমেন্টে বলা আছে", "ডকুমেন্ট অনুযায়ী", "ডকুমেন্টে উল্লেখ আছে", "উপকরণে দেখা যায়" — এই ধরনের বাক্যাংশ ব্যবহার করবে না। এই তথ্য যেন তোমার নিজের জ্ঞান, সরাসরি বিষয়টি ব্যাখ্যা করো — যেমন একজন শিক্ষক ক্লাসে নিজের ভাষায় পড়ান। বাংলা বানান: "হল" লিখতে হবে "হলো" হিসেবে, "বল" লিখতে হবে "বলো" হিসেবে, "কর" লিখতে হবে "করো" হিসেবে।'
-    : '\n\nবাংলা বানান: "হল" লিখতে হবে "হলো" হিসেবে, "বল" লিখতে হবে "বলো" হিসেবে, "কর" লিখতে হবে "করো" হিসেবে।';
+    ? '\n\nUse only the provided source material. Do not refer to a document or source; teach the information naturally and directly.'
+    : '';
 
   const system = agent.system + pdfRule +
-  '\n\nCRITICAL: Output ONLY your final Bangla response. No reasoning, no English, no meta-commentary, no repeating instructions. Start teaching immediately.' + '\n\nYou HAVE been given the document content above in the user message. It is there. Read it and teach from it. Never say you cannot access it.' +
+  '\n\nCRITICAL: Respond only in English. Do not include reasoning or meta-commentary. Start teaching immediately. The source material is included above; use it and never claim it is unavailable.' +
   (isTeacher
-    ? '\n\nHARD LIMIT: Maximum TWO short sentences only. Stop after the second । or ?. This is a fast-paced group discussion — keep it brief so students can jump in.'
-    : '\n\nHARD LIMIT: Exactly ONE sentence only. Stop after first । or ?');
+    ? '\n\nHARD LIMIT: Reply in one short sentence of 12 words or fewer. If a student asked something, answer that question directly.'
+    : '\n\nHARD LIMIT: Ask the teacher one specific question in one short sentence.');
 
   const raw  = await groqChat(buildMessages(agentId), system, maxTok, 0.78, agentId);
-  let reply  = cleanReply(raw);
+  let reply  = isTeacher ? limitTeacherLine(raw) : cleanReply(raw);
 
   if (!isTeacher) {
-    const match = reply.match(/^[^।?!]+[।?!]/);
-    reply = match ? match[0].trim() : reply.split(/[।?!]/)[0].trim() + '।';
+    const match = reply.match(/^[^.?!]+[.?!]/);
+    reply = match ? match[0].trim() : reply.split(/[.?!]/)[0].trim() + '.';
   }
 
   return reply;
@@ -1346,7 +1420,7 @@ async function startLesson() {
   // Process PDF files FIRST
   for (const file of uploadedFiles) {
     if (file.type === 'application/pdf') {
-      if (idleP) idleP.textContent = `"${file.name}" পড়া হচ্ছে…`;
+      if (idleP) idleP.textContent = `"${file.name}" reading…`;
       try {
         await loadAndIndexPDF(file, (pct, label) => { if (idleP) idleP.textContent = label; });
         console.log(`[PDF] indexed ${store.chunks.length} chunks from ${file.name}`);
@@ -1355,7 +1429,7 @@ async function startLesson() {
   }
   console.log(`[PDF] store.ready:${store.ready} chunks:${store.chunks.length} pages:${pdfPages.length}`);
   if (store.chunks.length === 0) {
-    if (idleP) idleP.textContent = '⚠️ PDF পড়া যায়নি। বিষয়ভিত্তিক পাঠ চলবে।';
+    if (idleP) idleP.textContent = '⚠️ PDF could not be read. The topic-based lesson will continue.';
     await sleep(2000);
   }
 
@@ -1366,10 +1440,10 @@ async function startLesson() {
   }
 
   if (idleP) idleP.textContent = store.chunks.length > 0
-    ? `${store.chunks.length}টি অংশ ইন্ডেক্স হয়েছে। পাঠ শুরু হচ্ছে…`
-    : 'পাঠ শুরু হচ্ছে…';
-    
-    
+    ? `${store.chunks.length} chunks indexed. Starting the lesson…`
+    : 'Starting the lesson…';
+
+
 
   lessonStarting = false;
   if (!turnLoopRunning) runTurnLoop();
@@ -1448,12 +1522,12 @@ async function runTeacherTurn() {
   turnsSinceCheckin++;
   if (turnsSinceCheckin >= CHECKIN_EVERY_N) {
     turnsSinceCheckin = 0;
-    isPaused = true; speechSynthesis.cancel();
+    setPauseReason('checkin', true);
     const choice = await showCheckinPrompt();
     humanLog.checkins.push(choice);
-    isPaused = false;
+    setPauseReason('checkin', false);
     if (choice === 'repeat') {
-      dialogueLog.push({ name: 'সিস্টেম', text: 'শিক্ষার্থী বুঝতে পারেনি। সহজ করো।' });
+      dialogueLog.push({ name: 'System', text: 'The student did not understand. Explain it more simply.' });
       difficultyLevel = 'shallow';
     }
     runAssessor(choice);
@@ -1513,7 +1587,7 @@ async function runAgentTurn(agentId) {
 
 async function handleUserTurn() {
   const msg = pendingUserMessage; pendingUserMessage = null; userInterrupted = false;
-  dialogueLog.push({ name: 'ছাত্র/ছাত্রী', text: msg });
+  dialogueLog.push({ name: 'Student', text: msg });
   await runAgentTurn('teacher');
   currentTurnIndex = 1;
 }
@@ -1529,24 +1603,23 @@ async function runAssessor(trigger, extraData = {}) {
   const avgMs       = totalMCQ > 0 ? Math.round(humanLog.mcqResults.reduce((a, r) => a + r.responseMs, 0) / totalMCQ) : null;
   const repeatCount = humanLog.checkins.filter(c => c === 'repeat').length;
   const okCount     = humanLog.checkins.filter(c => c === 'understood').length;
-  const recentTyped = humanLog.typedMessages.slice(-4).join(' | ') || 'কোনো বার্তা নেই';
+  const recentTyped = humanLog.typedMessages.slice(-4).join(' | ') || 'No messages yet';
 
-  const prompt = `তুমি একজন AI শিক্ষা-বিশ্লেষক।
-শিক্ষার্থীর ডেটা:
-- ট্রিগার: ${trigger}
-- MCQ: ${totalMCQ > 0 ? `${correctMCQ}/${totalMCQ} সঠিক, ${hintedMCQ} হিন্ট` : 'এখনো হয়নি'}
-- গড় সময়: ${avgMs ? `${(avgMs / 1000).toFixed(1)}s` : 'N/A'}
-- বুঝেছি: ${okCount} | আরেকবার: ${repeatCount}
-- প্রশ্ন: "${recentTyped}"
-${extraData.lastMCQ ? `- শেষ MCQ: ${extraData.lastMCQ.correct ? 'সঠিক' : 'ভুল'}, সময়: ${(extraData.lastMCQ.responseMs / 1000).toFixed(1)}s` : ''}
+  const prompt = `You are an AI learning assessor. Evaluate the student data below and return only valid JSON with level (shallow, medium, or deep), a one-sentence reason, and one instruction for the teacher.
+Trigger: ${trigger}
+MCQ results: ${totalMCQ > 0 ? `${correctMCQ}/${totalMCQ} correct, ${hintedMCQ} used a hint` : 'none yet'}
+Average response time: ${avgMs ? `${(avgMs / 1000).toFixed(1)} seconds` : 'N/A'}
+Understood: ${okCount}; asked for repetition: ${repeatCount}
+Recent questions: "${recentTyped}"
+${extraData.lastMCQ ? `Last MCQ: ${extraData.lastMCQ.correct ? 'correct' : 'incorrect'}, response time: ${(extraData.lastMCQ.responseMs / 1000).toFixed(1)} seconds` : ''}
 
-শুধু JSON: {"level":"shallow"|"medium"|"deep","reason":"১ বাক্য","teacher_instruction":"১টি নির্দেশ"}`;
+Return only JSON: {"level":"shallow"|"medium"|"deep","reason":"one sentence","teacher_instruction":"one instruction"}`;
 
   try {
     const json = await groqJsonChat([{ role: 'user', content: prompt }], 'Return only valid JSON. No markdown.', 250, 0.2);
     if (['shallow', 'medium', 'deep'].includes(json.level)) {
       difficultyLevel = json.level;
-      if (json.teacher_instruction) { dialogueLog.push({ name: 'সিস্টেম', text: `[অ্যাসেসর]: ${json.teacher_instruction}` }); trimDialogueLog(); }
+      if (json.teacher_instruction) { dialogueLog.push({ name: 'System', text: `[Assessor]: ${json.teacher_instruction}` }); trimDialogueLog(); }
       console.log(`[Assessor] → ${json.level}`);
     }
   } catch (e) {
@@ -1566,24 +1639,24 @@ function showCheckinPrompt() {
     document.getElementById('checkin-overlay')?.remove();
     const overlay = document.createElement('div');
     overlay.id = 'checkin-overlay';
-    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px;font-family:'Hind Siliguri',sans-serif;`;
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px;font-family:'DM Sans',sans-serif;`;
     overlay.innerHTML = `
       <div style="background:#fff;border-radius:18px;padding:28px 24px;max-width:380px;width:100%;border:2px solid #e2e8f0;color:#1e293b;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,0.18);">
         <div style="font-size:2rem;margin-bottom:10px;">🙋</div>
-        <div style="font-size:1.05rem;font-weight:600;line-height:1.6;margin-bottom:22px;">তোমরা কি বুঝতে পেরেছ?<br/>না বুঝলে বলো আমাকে!</div>
+        <div style="font-size:1.05rem;font-weight:600;line-height:1.6;margin-bottom:22px;">Did you understand?<br/>Let me know if anything was unclear.</div>
         <div style="display:flex;gap:10px;">
-          <button id="ci-yes" style="flex:1;padding:12px;background:#f0fdf4;border:2px solid #4ade80;border-radius:12px;color:#166534;font-size:.97rem;font-weight:700;cursor:pointer;">✅ বুঝতে পেরেছি</button>
-          <button id="ci-no"  style="flex:1;padding:12px;background:#fef2f2;border:2px solid #f87171;border-radius:12px;color:#991b1b;font-size:.97rem;font-weight:700;cursor:pointer;">🔁 আরেকবার বলুন</button>
+          <button id="ci-yes" style="flex:1;padding:12px;background:#f0fdf4;border:2px solid #4ade80;border-radius:12px;color:#166534;font-size:.97rem;font-weight:700;cursor:pointer;">✅ I understood</button>
+          <button id="ci-no"  style="flex:1;padding:12px;background:#fef2f2;border:2px solid #f87171;border-radius:12px;color:#991b1b;font-size:.97rem;font-weight:700;cursor:pointer;">🔁 Please repeat</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
-    overlay.querySelector('#ci-yes').onclick = () => { 
-      overlay.remove(); 
+    overlay.querySelector('#ci-yes').onclick = () => {
+      overlay.remove();
       resolve('understood');
       dbLog('checkins', { session_id: SESSION_ID, choice: 'understood', ts: 'NOW()' }); // ← ADD HERE
     };
-    overlay.querySelector('#ci-no').onclick  = () => { 
-      overlay.remove(); 
+    overlay.querySelector('#ci-no').onclick  = () => {
+      overlay.remove();
       resolve('repeat');
       dbLog('checkins', { session_id: SESSION_ID, choice: 'repeat', ts: 'NOW()' }); // ← ADD HERE
     };
@@ -1597,8 +1670,10 @@ function showCheckinPrompt() {
 function showOnStage(agentId, text, wrapForLaser = false) {
   const agent = AGENTS[agentId];
   stageIdle.classList.add('hidden'); stageMessage.classList.remove('hidden');
+  stageMessage.classList.toggle('teacher-speaking', agentId === 'teacher');
   stageSpeakerName.textContent = agent.name; stageSpeakerRole.textContent = agent.role;
   stageText.style.borderLeftColor = agent.color;
+  stageText.title = text;
   stageMessage.style.animation = 'none'; stageMessage.offsetHeight; stageMessage.style.animation = '';
   if (wrapForLaser && agentId === 'teacher') { wrapWordsInSpans(text); }
   else { stageText.textContent = text; laserWordSpans = []; }
@@ -1616,7 +1691,7 @@ function showTyping(agentId) {
   typingBubbleEl = document.createElement('div');
   typingBubbleEl.className = `chat-bubble typing-bubble bubble-${agentId}`;
   typingBubbleEl.innerHTML = `
-    <div class="bubble-meta"><span class="bubble-dot" style="background:${agent.color}"></span>${agent.name} লিখছেন...</div>
+    <div class="bubble-meta"><span class="bubble-dot" style="background:${agent.color}"></span>${agent.name} typing…</div>
     <div class="bubble-text"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>`;
   chatMessages.appendChild(typingBubbleEl); scrollChat();
 }
@@ -1624,14 +1699,15 @@ function hideTyping() { typingBubbleEl?.remove(); typingBubbleEl = null; }
 
 function addChatBubble(agentId, text, isUser = false) {
   if (!text?.trim()) return;
-  const banglaChars = (text.match(/[\u0980-\u09FF]/g) || []).length;
-  if (text.replace(/\s/g, '').length > 30 && (banglaChars / text.replace(/\s/g, '').length) < 0.25 && !isUser) return;
   const agent  = isUser ? null : AGENTS[agentId];
   const bubble = document.createElement('div');
   bubble.className = isUser ? 'chat-bubble user-bubble bubble-user' : `chat-bubble bubble-${agentId}`;
   bubble.innerHTML = isUser
-    ? `<div class="bubble-meta" style="justify-content:flex-end">আপনি</div><div class="bubble-text">${escapeHtml(text)}</div>`
+    ? `<div class="bubble-meta" style="justify-content:flex-end">You</div><div class="bubble-text">${escapeHtml(text)}</div>`
     : `<div class="bubble-meta"><span class="bubble-dot" style="background:${agent.color}"></span>${agent.name}</div><div class="bubble-text">${escapeHtml(text)}</div>`;
+  if (!isUser && agentId === 'teacher') {
+    bubble.querySelector('.bubble-text').title = text;
+  }
   chatMessages.appendChild(bubble); scrollChat();
 }
 
@@ -1644,20 +1720,15 @@ function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 
 raiseHandBtn.addEventListener('click', () => {
   const active = raiseHandBtn.classList.toggle('active');
+  setPauseReason('raise-hand', active);
   if (active) {
-    isPaused = true;
-    speechSynthesis.cancel();
-    // Release TTS lock so speak() doesn't deadlock when user sends a message
-    _ttsLocked = false; _ttsLockResolve = null;
-    currentUtterance = null; laserActive = false; hideLaser();
-    if (ttsWave)  ttsWave.classList.remove('speaking');
-    if (ttsLabel) ttsLabel.textContent = 'বিরতি — আপনার পালা';
+    if (ttsLabel) ttsLabel.textContent = 'Paused — your turn';
     userInput.disabled = false; sendBtn.disabled = false;
     if (micBtn) micBtn.disabled = false; userInput.focus();
   } else {
-    isPaused = false; if (ttsLabel) ttsLabel.textContent = 'নীরব';
     userInput.disabled = true; sendBtn.disabled = true;
     if (micBtn) micBtn.disabled = true; stopMic();
+    if (ttsLabel) ttsLabel.textContent = isPaused ? 'Paused' : 'Muted';
   }
 });
 
@@ -1672,9 +1743,8 @@ function submitUserMessage() {
   userInput.disabled = true; sendBtn.disabled = true;
   if (micBtn) micBtn.disabled = true;
   raiseHandBtn.classList.remove('active'); stopMic();
-  isPaused = false; if (ttsLabel) ttsLabel.textContent = 'নীরব';
-  speechSynthesis.cancel();
-  _ttsLocked = false; _ttsLockResolve = null;
+  cancelCurrentSpeech();
+  setPauseReason('raise-hand', false);
   hideLaser();
 }
 
@@ -1705,23 +1775,23 @@ function setMicState(state) {
   micState = state; if (!micBtn) return;
   micBtn.classList.toggle('mic-active',     state === 'recording');
   micBtn.classList.toggle('mic-processing', state === 'processing');
-  setMicLabel(state === 'recording' ? 'থামান' : state === 'processing' ? 'বুঝছে…' : 'বলুন');
+  setMicLabel(state === 'recording' ? 'Stop' : state === 'processing' ? 'Processing…' : 'Speak');
 }
 
 async function startRecording() {
-  if (!navigator.mediaDevices?.getUserMedia) { alert('আপনার ব্রাউজার মাইক্রোফোন সমর্থন করে না।'); return; }
+  if (!navigator.mediaDevices?.getUserMedia) { alert('Your browser does not support microphone input.'); return; }
   try {
     mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: 16000 } });
   } catch (err) {
-    if (err.name === 'NotAllowedError') alert('মাইক্রোফোনের অনুমতি দিন।');
-    else if (err.name === 'NotFoundError') alert('কোনো মাইক্রোফোন পাওয়া যায়নি।');
-    else alert('মাইক্রোফোন চালু করা যায়নি।');
+    if (err.name === 'NotAllowedError') alert('Please allow microphone access.');
+    else if (err.name === 'NotFoundError') alert('No microphone was found.');
+    else alert('Could not start the microphone.');
     return;
   }
   audioChunks = [];
   const mime = pickMime();
   try { mediaRecorder = mime ? new MediaRecorder(mediaStream, { mimeType: mime }) : new MediaRecorder(mediaStream); }
-  catch (err) { alert('রেকর্ডার তৈরি করা যায়নি।'); _releaseStream(); return; }
+  catch (err) { alert('Could not create the audio recorder.'); _releaseStream(); return; }
 
   mediaRecorder.ondataavailable = e => { if (e.data?.size > 0) audioChunks.push(e.data); };
   mediaRecorder.onstop = async () => {
@@ -1730,7 +1800,7 @@ async function startRecording() {
     setMicState('processing');
     const blob = new Blob(audioChunks, { type: mediaRecorder?.mimeType || 'audio/webm' });
     try { _appendTranscript(await transcribeWithWhisper(blob)); }
-    catch (err) { console.warn('[mic] transcription failed:', err); alert('ট্রান্সক্রিপশনে সমস্যা।'); }
+    catch (err) { console.warn('[mic] transcription failed:', err); alert('Transcription failed.'); }
     finally { setMicState('idle'); }
   };
 
@@ -1757,7 +1827,7 @@ async function transcribeWithWhisper(blob) {
   const fd  = new FormData();
   fd.append('file', blob, `voice.${ext}`);
   fd.append('model', GROQ_WHISPER_MODEL);
-  fd.append('language', 'bn');
+  fd.append('language', 'en');
   fd.append('response_format', 'json');
   fd.append('temperature', '0');
 
@@ -1788,29 +1858,24 @@ if (ttsToggle) {
   ttsToggle.addEventListener('click', () => {
     ttsEnabled = !ttsEnabled;
     ttsToggle.textContent = ttsEnabled ? '🔊' : '🔇';
-    if (!ttsEnabled) { speechSynthesis.cancel(); hideLaser(); }
+    if (!ttsEnabled) { cancelCurrentSpeech(); hideLaser(); }
   });
 }
 
 pauseBtn.addEventListener('click', () => {
-  isPaused = !isPaused; pauseBtn.textContent = isPaused ? 'চালিয়ে যান' : 'বিরতি';
-  if (isPaused) {
-    speechSynthesis.cancel();
-    // Release the TTS lock so the loop can resume cleanly when unpaused
-    _ttsLocked = false; _ttsLockResolve = null;
-    currentUtterance = null;
-    if (ttsWave)  ttsWave.classList.remove('speaking');
-    if (ttsLabel) ttsLabel.textContent = 'বিরতি';
-    hideLaser(); laserActive = false; stopMic();
-  } else {
-    if (ttsLabel) ttsLabel.textContent = 'নীরব';
+  const pausedByUser = pauseReasons.has('manual');
+  setPauseReason('manual', !pausedByUser);
+  if (!pausedByUser) {
+    stopMic();
+    laserActive = false;
+    hideLaser();
   }
 });
 
 exportBtn.addEventListener('click', () => {
   exportWarehouse();                    // ← ADD THIS LINE FIRST
   const lines = Array.from(chatMessages.querySelectorAll('.chat-bubble')).map(b => {
-    const name = b.querySelector('.bubble-meta')?.textContent?.trim() || 'অজানা';
+    const name = b.querySelector('.bubble-meta')?.textContent?.trim() || 'Unknown';
     const text = b.querySelector('.bubble-text')?.textContent?.trim() || '';
     return `${name}: ${text}`;
   });
@@ -1820,21 +1885,22 @@ exportBtn.addEventListener('click', () => {
 });
 
 resetBtn.addEventListener('click', () => {
-  if (!confirm('ক্লাস শেষ করতে চান?')) return;
-  isRunning = false; lessonStarting = false; isPaused = false;
-  _lessonStarted = false; 
-  stopMic(); speechSynthesis.cancel();
-  _ttsLocked = false; _ttsLockResolve = null;
-  clearInterval(timerInterval); hideLaser();
+  if (!confirm('End this class?')) return;
+  isRunning = false; lessonStarting = false;
+  pauseReasons.clear(); isPaused = false;
+  _lessonStarted = false;
+  stopMic(); cancelCurrentSpeech();
+  speechSynthesis.resume();
+  clearInterval(timerInterval); timerInterval = null; hideLaser();
   sessionSeconds = 0; dialogueLog = []; pdfPages = []; store.reset(); uploadedFiles = [];
   uploadPreviews.innerHTML = ''; uploadPreviews.classList.add('hidden');
   topicInput.value = ''; fileInput.value = '';
-  chatMessages.innerHTML = '<div class="chat-welcome">ক্লাস শুরু হলে এখানে কথোপকথন দেখা যাবে</div>';
+  chatMessages.innerHTML = '<div class="chat-welcome">The discussion will appear here when class begins.</div>';
   stageMessage.classList.add('hidden'); stageIdle.classList.remove('hidden');
   hideSlide(); clearAgentSpeaking();
   if (ttsWave)  ttsWave.classList.remove('speaking');
-  if (ttsLabel) ttsLabel.textContent = 'নীরব';
-  pauseBtn.textContent = 'বিরতি'; raiseHandBtn.classList.remove('active');
+  if (ttsLabel) ttsLabel.textContent = 'Muted';
+  pauseBtn.textContent = 'Pause'; raiseHandBtn.classList.remove('active');
   userInput.disabled = true; sendBtn.disabled = true;
   if (micBtn) micBtn.disabled = true;
   classroomScreen.classList.remove('active'); uploadScreen.classList.add('active');
@@ -1846,10 +1912,16 @@ resetBtn.addEventListener('click', () => {
 
 function startTimer() {
   sessionSeconds = 0; clearInterval(timerInterval);
+  timerInterval = null;
+  runSessionTimer();
+}
+
+function runSessionTimer() {
+  if (timerInterval !== null) return;
   timerInterval = setInterval(() => {
     sessionSeconds++;
-    const m = String(Math.floor(sessionSeconds / 60)).padStart(2, '০');
-    const s = String(sessionSeconds % 60).padStart(2, '০');
+    const m = String(Math.floor(sessionSeconds / 60)).padStart(2, '0');
+    const s = String(sessionSeconds % 60).padStart(2, '0');
     sessionTimer.textContent = `${m}:${s}`;
   }, 1000);
 }
@@ -1888,11 +1960,12 @@ const quizZpdEl       = document.getElementById('quizZpd');
 const reviseBtn       = document.getElementById('reviseBtn');
 const quizCloseBtn    = document.getElementById('quizCloseBtn');
 
-if (quizBtn) quizBtn.addEventListener('click', () => { if (!sessionTopic) { alert('আগে একটি ক্লাস শুরু করুন।'); return; } startQuiz(); });
+if (quizBtn) quizBtn.addEventListener('click', () => { if (!sessionTopic) { alert('Start a class first.'); return; } startQuiz(); });
 
 async function startQuiz() {
-  isPaused = true; speechSynthesis.cancel(); hideLaser(); pauseBtn.textContent = 'চালিয়ে যান';
-  if (ttsLabel) ttsLabel.textContent = 'কুইজ চলছে...';
+  setPauseReason('quiz', true);
+  hideLaser();
+  if (ttsLabel) ttsLabel.textContent = 'Quiz in progress…';
   quizQuestions = []; quizIndex = 0; quizActive = true; quizResults = []; weakTopics = [];
   BLOOM_LEVELS.forEach(l => { bloomPerf[l] = { correct: 0, total: 0 }; });
   zpd.unassisted = { correct: 0, total: 0 }; zpd.assisted = { correct: 0, total: 0 };
@@ -1902,7 +1975,7 @@ async function startQuiz() {
   quizQuestions = await fetchQuizQuestions(sessionTopic);
   quizLoading.classList.add('hidden');
   if (!quizQuestions.length) {
-    quizContent.innerHTML = '<p style="padding:16px;font-family:\'Hind Siliguri\',sans-serif;color:#dc2626;">প্রশ্ন লোড করতে সমস্যা। আবার চেষ্টা করুন।</p>';
+    quizContent.innerHTML = '<p style="padding:16px;font-family:\'DM Sans\',sans-serif;color:#dc2626;">Could not load questions. Please try again.</p>';
     quizContent.classList.remove('hidden'); return;
   }
   quizContent.classList.remove('hidden'); showQuestion();
@@ -1910,14 +1983,11 @@ async function startQuiz() {
 
 async function fetchQuizQuestions(topic) {
   const docCtx  = getRelevantContext(topic, 3000);
-  const docBlock = docCtx ? `\nডকুমেন্ট:\n${docCtx}\n` : '';
-  const prompt  = `তুমি বাংলাদেশের SSC/HSC বোর্ড পরীক্ষার MCQ বিশেষজ্ঞ।${docBlock}
-"${topic}" বিষয়ে NCTB মানের ১০টি MCQ তৈরি করো।
-Bloom's: ২টি Remember, ২টি Understand, ২টি Apply, ২টি Analyze, ১টি Evaluate, ১টি Create।
-
-শুধু JSON array:
-[{"bloom":"Remember","topic":"উপ-বিষয়","question":"প্রশ্ন","options":["ক) ...","খ) ...","গ) ...","ঘ) ..."],"answer":0,"hint":"হিন্ট","explanation":"ব্যাখ্যা"}]
-answer = সঠিক index (0-3).`;
+  const docBlock = docCtx ? `\nMaterial:\n${docCtx}\n` : '';
+  const prompt  = `You create multiple-choice questions for secondary and higher-secondary students. ${docBlock}
+Create 10 English questions about "${topic}" at an appropriate curriculum level.
+Bloom levels: 2 Remember, 2 Understand, 2 Apply, 2 Analyze, 1 Evaluate, and 1 Create.
+Return only a JSON array in this format: [{"bloom":"Remember","topic":"subtopic","question":"question","options":["A) ...","B) ...","C) ...","D) ..."],"answer":0,"hint":"hint","explanation":"explanation"}]. The answer is the correct option index from 0 to 3.`;
 
   try {
     let parsed = await groqJsonChat([{ role: 'user', content: prompt }], 'Return only a valid JSON array. No markdown.', 4000, 0.4);
@@ -1938,7 +2008,7 @@ function nextQuestionIndex() {
   return quizIndex < quizQuestions.length ? quizIndex : -1;
 }
 
-function bloomBangla(l) { return { Remember:'স্মরণ',Understand:'বোঝা',Apply:'প্রয়োগ',Analyze:'বিশ্লেষণ',Evaluate:'মূল্যায়ন',Create:'সৃজন' }[l] || l; }
+function formatBloomLevel(l) { return { Remember:'Remember',Understand:'Understand',Apply:'Apply',Analyze:'Analyze',Evaluate:'Evaluate',Create:'Create' }[l] || l; }
 
 function showQuestion() {
   adaptBloomLevel();
@@ -1946,8 +2016,8 @@ function showQuestion() {
   if (idx === -1 || quizIndex >= quizQuestions.length) { endQuiz(); return; }
   quizIndex = idx;
   const q = quizQuestions[quizIndex]; hintUsed = false; questionShownAt = Date.now();
-  quizProgress.textContent   = `প্রশ্ন ${quizIndex + 1} / ${quizQuestions.length}`;
-  quizBloomBadge.textContent = bloomBangla(q.bloom);
+  quizProgress.textContent   = `Question ${quizIndex + 1} / ${quizQuestions.length}`;
+  quizBloomBadge.textContent = formatBloomLevel(q.bloom);
   quizBloomBadge.className   = `bloom-badge bloom-${q.bloom.toLowerCase()}`;
   quizQuestionEl.textContent = q.question;
   quizOptionsEl.innerHTML = '';
@@ -1975,10 +2045,10 @@ function handleAnswer(chosen, q) {
   else          { zpd.unassisted.total++; if (correct) zpd.unassisted.correct++; }
   const entry = { correct, usedHint: hintUsed, responseMs: Date.now() - questionShownAt };
   humanLog.mcqResults.push(entry);
-  dbLog('quiz_results', { session_id: SESSION_ID, bloom: q.bloom, topic: q.topic, correct: entry.correct, hint_used: entry.usedHint, response_ms: entry.responseMs, ts: 'NOW()' }); 
+  dbLog('quiz_results', { session_id: SESSION_ID, bloom: q.bloom, topic: q.topic, correct: entry.correct, hint_used: entry.usedHint, response_ms: entry.responseMs, ts: 'NOW()' });
   runAssessor('mcq_answered', { lastMCQ: entry });
   quizResults.push({ question: q.question, bloom: q.bloom, topic: q.topic, correct, hintUsed });
-  quizFeedback.textContent = correct ? `✓ সঠিক! ${q.explanation}` : `✗ ভুল। সঠিক: ${q.options[q.answer]}। ${q.explanation}`;
+  quizFeedback.textContent = correct ? `✓ Correct! ${q.explanation}` : `✗ Incorrect. Correct answer: ${q.options[q.answer]}. ${q.explanation}`;
   quizFeedback.className = `quiz-feedback ${correct ? 'feedback-correct' : 'feedback-wrong'}`;
   quizNextBtn.classList.remove('hidden');
 }
@@ -1992,19 +2062,19 @@ if (quizNextBtn) quizNextBtn.addEventListener('click', () => { quizIndex++; show
 function endQuiz() {
   quizActive = false; quizContent.classList.add('hidden'); quizResultPanel.classList.remove('hidden');
   const total = quizResults.length, correct = quizResults.filter(r => r.correct).length;
-  quizScoreEl.textContent = `${correct} / ${total} সঠিক`;
+  quizScoreEl.textContent = `${correct} / ${total} correct`;
   quizBloomChart.innerHTML = '';
   BLOOM_LEVELS.forEach(level => {
     const p = bloomPerf[level]; if (p.total === 0) return;
     const pct = Math.round((p.correct / p.total) * 100);
     const bar = document.createElement('div'); bar.className = 'bloom-bar-row';
-    bar.innerHTML = `<span class="bloom-bar-label">${bloomBangla(level)}</span><div class="bloom-bar-track"><div class="bloom-bar-fill" style="width:${pct}%;background:${pct>=70?'#16a34a':pct>=40?'#ca8a04':'#dc2626'}"></div></div><span class="bloom-bar-pct">${pct}%</span>`;
+    bar.innerHTML = `<span class="bloom-bar-label">${formatBloomLevel(level)}</span><div class="bloom-bar-track"><div class="bloom-bar-fill" style="width:${pct}%;background:${pct>=70?'#16a34a':pct>=40?'#ca8a04':'#dc2626'}"></div></div><span class="bloom-bar-pct">${pct}%</span>`;
     quizBloomChart.appendChild(bar);
   });
   const uRate = zpd.unassisted.total > 0 ? Math.round((zpd.unassisted.correct / zpd.unassisted.total) * 100) : 0;
   const aRate = zpd.assisted.total   > 0 ? Math.round((zpd.assisted.correct   / zpd.assisted.total)   * 100) : 0;
   const gap   = aRate - uRate;
-  quizZpdEl.innerHTML = `<div>স্বাধীন দক্ষতা: <strong>${uRate}%</strong></div><div>সহায়তা সহ: <strong>${aRate}%</strong></div><div>ZPD ব্যবধান: <strong>${gap>0?'+':''}${gap}%</strong> ${gap>20?'(বেশি সহায়তা প্রয়োজন)':gap>0?'(স্বাভাবিক)':'(স্বাধীনভাবে দক্ষ)'}</div>`;
+  quizZpdEl.innerHTML = `<div>Independent performance: <strong>${uRate}%</strong></div><div>With support: <strong>${aRate}%</strong></div><div>ZPD gap: <strong>${gap>0?'+':''}${gap}%</strong> ${gap>20?'(more support needed)':gap>0?'(expected)':'(independent mastery)'}</div>`;
   const weakSet = new Set();
   quizResults.forEach(r => { if (!r.correct && !r.hintUsed) weakSet.add(r.topic); if (r.correct && r.hintUsed) weakSet.add(r.topic); });
   weakTopics = [...weakSet];
@@ -2013,13 +2083,14 @@ function endQuiz() {
 
 if (reviseBtn) reviseBtn.addEventListener('click', () => {
   if (!weakTopics.length) return;
-  quizPanel.classList.add('hidden'); isPaused = false; pauseBtn.textContent = 'বিরতি';
-  if (ttsLabel) ttsLabel.textContent = 'নীরব';
-  dialogueLog.push({ name: 'সিস্টেম', text: `শিক্ষার্থী কুইজে দুর্বলতা দেখিয়েছে: ${weakTopics.join(', ')}। এখন শুধু এই বিষয়গুলো নিয়ে আলোচনা করো।` });
+  quizPanel.classList.add('hidden');
+  setPauseReason('quiz', false);
+  quizActive = false;
+  dialogueLog.push({ name: 'System', text: `The student struggled with these quiz topics: ${weakTopics.join(', ')}. Focus the discussion on these topics.` });
   currentTurnIndex = 0;
 });
 
 if (quizCloseBtn) quizCloseBtn.addEventListener('click', () => {
   quizPanel.classList.add('hidden'); quizActive = false;
-  if (isRunning) { isPaused = false; pauseBtn.textContent = 'বিরতি'; if (ttsLabel) ttsLabel.textContent = 'নীরব'; }
+  setPauseReason('quiz', false);
 });

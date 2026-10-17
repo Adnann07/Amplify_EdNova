@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23020B16'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%2300B7FF'>A</text></svg>">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Amplify — AI শিক্ষা সহকারী</title>
+  <title>Amplify — AI Tutor</title>
 
   <!-- Fonts -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Tiro+Bangla:ital@0;1&display=swap"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap"
     rel="stylesheet"
   />
 
@@ -25,16 +25,16 @@
   <nav>
     <div class="nav-logo">
       <button id="home-back-btn" style="background:none;border:none;cursor:pointer;font-size:1.1rem;margin-right:8px;">←</button>
-      Amplify <span class="badge">শিক্ষার্থী</span>
+      <a href="/index.html" style="color:inherit;text-decoration:none;">Amplify</a> <span class="badge">Student</span>
     </div>
     <div class="nav-right">
       <button class="btn-attention" id="attention-btn">
         <div class="dot"></div>
-        মনোযোগ ট্র্যাকার
+        Attention Tracker
       </button>
       <a href="./dashboard.html" class="btn-dashboard" style="text-decoration:none;">
         <button class="btn-dashboard-btn">
-          📊 ড্যাশবোর্ড
+          📊 Dashboard
         </button>
       </a>
     </div>
@@ -43,13 +43,13 @@
 <!-- ── HOME SCREEN ── -->
 <div id="home-screen">
   <div class="home-header">
-    <div class="home-logo">Amplify <span class="badge">শিক্ষার্থী</span></div>
-    <div class="home-subtitle">তোমার পাঠ্য উপকরণ</div>
+    <div class="home-logo">Amplify <span class="badge">Student</span></div>
+    <div class="home-subtitle">Your learning materials</div>
   </div>
   <div class="home-grid" id="home-grid">
     <div class="home-new-card" id="home-new-btn">
       <div class="home-new-icon">+</div>
-      <div>নতুন PDF যোগ করো</div>
+      <div>Add a new PDF</div>
     </div>
   </div>
 </div>
@@ -62,8 +62,8 @@
       <div class="panel-header">
         <div class="panel-icon">📄</div>
         <div>
-          <div class="panel-title">পাঠ্য উপকরণ</div>
-          <div class="panel-subtitle">PDF আপলোড করুন — টেক্সট বা ছবি উভয়ই চলবে</div>
+          <div class="panel-title">Learning materials</div>
+          <div class="panel-subtitle">Upload a PDF — text and scanned documents are supported</div>
         </div>
       </div>
 
@@ -76,7 +76,7 @@
 
       <!-- Indexing progress bar -->
       <div id="indexing-bar">
-        <div class="indexing-label" id="indexing-label">প্রক্রিয়াকরণ হচ্ছে…</div>
+        <div class="indexing-label" id="indexing-label">Processing…</div>
         <div class="progress-track">
           <div class="progress-fill" id="progress-fill"></div>
         </div>
@@ -86,10 +86,10 @@
       <div id="index-status">
         <div class="idx-stat">
           <div class="idx-dot"></div>
-          <span id="stat-chunks">0 অংশ</span>
+          <span id="stat-chunks">0 chunks</span>
         </div>
         <span class="idx-sep">·</span>
-        <div class="idx-stat"><span id="stat-pages">0 পৃষ্ঠা</span></div>
+        <div class="idx-stat"><span id="stat-pages">0 pages</span></div>
         <span class="idx-sep">·</span>
         <div class="idx-stat"><span id="stat-mode">—</span></div>
       </div>
@@ -97,10 +97,10 @@
       <!-- Upload zone -->
       <div class="upload-zone" id="upload-zone">
         <div class="upload-icon">📂</div>
-        <div class="upload-title">PDF ফাইল আপলোড করুন</div>
+        <div class="upload-title">Upload a PDF</div>
         <div class="upload-hint">
-          টেক্সট বা ছবি-ভিত্তিক PDF — উভয়ই চলবে<br />
-          <span>ব্রাউজ করুন</span>
+          Text-based and scanned PDFs are supported<br />
+          <span>Browse files</span>
         </div>
       </div>
       <input type="file" id="file-input" accept=".pdf" />
@@ -110,9 +110,9 @@
 
       <!-- Page navigation -->
       <div class="pdf-controls" id="pdf-controls">
-        <button id="prev-btn" disabled>← আগে</button>
-        <span class="page-info" id="page-info">পৃষ্ঠা 1 / 1</span>
-        <button id="next-btn">পরে →</button>
+        <button id="prev-btn" disabled>← Previous</button>
+        <span class="page-info" id="page-info">Page 1 / 1</span>
+        <button id="next-btn">Next →</button>
       </div>
     </div>
 
@@ -120,10 +120,10 @@
     <div class="panel" id="stage-panel">
       <div id="stage-idle">
         <div class="stage-idle-icon">🎬</div>
-        <h2 class="stage-idle-title">লেকচার স্টেজ</h2>
+        <h2 class="stage-idle-title">Lecture stage</h2>
         <p class="stage-idle-text">
-          ডান পাশ থেকে <strong>🎓 লাইভ লেকচার</strong> শুরু করুন।<br />
-          ভিডিও ও সাবটাইটেল এখানে বড় স্ক্রিনে দেখাবে।
+          Start a <strong>🎓 live lecture</strong> from the panel on the right.<br />
+          The video and captions will appear here.
         </p>
       </div>
 
@@ -131,11 +131,11 @@
         <div class="lecture-top">
           <div class="lecture-badge">
             <div class="live-dot"></div>
-            <span id="lecture-status-text">লেকচার প্রস্তুত হচ্ছে…</span>
+            <span id="lecture-status-text">Preparing lecture…</span>
           </div>
           <div class="lecture-controls">
-            <button class="lc-btn pause-btn" id="pause-btn">⏸ বিরতি ও প্রশ্ন</button>
-            <button class="lc-btn stop-btn" id="stop-lecture-btn">⏹ শেষ</button>
+            <button class="lc-btn pause-btn" id="pause-btn">⏸ Pause and ask</button>
+            <button class="lc-btn stop-btn" id="stop-lecture-btn">⏹ End</button>
           </div>
         </div>
 
@@ -150,7 +150,7 @@
               <div class="gen-dot"></div>
               <div class="gen-dot"></div>
             </div>
-            <p>লেকচার তৈরি হচ্ছে…</p>
+            <p>Generating lecture…</p>
           </div>
           <div id="lecture-visual-stage" style="display:none;">
             <div id="lecture-anim-container"></div>
@@ -160,10 +160,10 @@
         </div>
 
         <div id="lecture-question-area">
-          <div class="lq-label">⏸ বিরতি — প্রশ্ন করুন, তারপর লেকচার চলবে</div>
+          <div class="lq-label">⏸ Paused — ask a question, then resume the lecture</div>
           <div class="lq-row">
-            <textarea id="lecture-q-input" rows="1" placeholder="এখানে প্রশ্ন লিখুন…"></textarea>
-            <button id="lecture-q-send">জিজ্ঞেস করো →</button>
+            <textarea id="lecture-q-input" rows="1" placeholder="Type your question…"></textarea>
+            <button id="lecture-q-send">Ask →</button>
           </div>
           <div id="lq-answer" class="lq-answer" style="display:none;"></div>
         </div>
@@ -177,14 +177,14 @@
         <div style="flex:1;">
           <div class="chat-panel-header-row">
             <div>
-              <div class="panel-title">AI শিক্ষা সহকারী</div>
-              <div class="panel-subtitle">বাংলায় প্রশ্ন করুন, বিষয় বুঝুন</div>
+              <div class="panel-title">AI Tutor</div>
+              <div class="panel-subtitle">Ask questions and explore your subject</div>
             </div>
             <button id="lecture-btn">
-              <span class="btn-icon">🎓</span> লাইভ লেকচার
+              <span class="btn-icon">🎓</span> Live lecture
             </button>
             <button id="quiz-btn">
-              <span class="btn-icon">📝</span> কুইজ
+              <span class="btn-icon">📝</span> Quiz
             </button>
           </div>
         </div>
@@ -195,62 +195,62 @@
 
   <!-- SETUP SCREEN -->
   <div id="quiz-setup">
-    <div class="quiz-setup-title">📝 অ্যাডাপ্টিভ কুইজ</div>
-    <div class="quiz-setup-sub">কুইজটি তোমার বোঝার গভীরতা মূল্যায়ন করবে এবং দুর্বল বিষয়গুলো চিহ্নিত করবে।</div>
+    <div class="quiz-setup-title">📝 Adaptive quiz</div>
+    <div class="quiz-setup-sub">Check your understanding and identify topics that need more practice.</div>
     <div class="quiz-setup-row">
-      <label>প্রশ্ন সংখ্যা:</label>
+      <label>Number of questions:</label>
       <div class="quiz-count-btns">
-        <button class="qcount-btn active" data-count="5">৫</button>
-        <button class="qcount-btn" data-count="10">১০</button>
-        <button class="qcount-btn" data-count="15">১৫</button>
-        <button class="qcount-btn" data-count="20">২০</button>
+        <button class="qcount-btn active" data-count="5">5</button>
+        <button class="qcount-btn" data-count="10">10</button>
+        <button class="qcount-btn" data-count="15">15</button>
+        <button class="qcount-btn" data-count="20">20</button>
       </div>
     </div>
-    <button id="quiz-start-btn">কুইজ শুরু করো →</button>
+    <button id="quiz-start-btn">Start quiz →</button>
   </div>
 
   <!-- QUESTION SCREEN -->
   <div id="quiz-question-screen" style="display:none;">
     <div class="quiz-top-bar">
       <div class="quiz-progress-info">
-        <span id="quiz-q-counter">প্রশ্ন ১/১০</span>
+        <span id="quiz-q-counter">Question 1/10</span>
         <div class="quiz-prog-track"><div class="quiz-prog-fill" id="quiz-prog-fill"></div></div>
       </div>
-      <div class="quiz-score-badge" id="quiz-score-badge">স্কোর: ০</div>
+      <div class="quiz-score-badge" id="quiz-score-badge">Score: 0</div>
     </div>
 
-    <div class="quiz-difficulty-badge" id="quiz-diff-badge">মাঝারি</div>
+    <div class="quiz-difficulty-badge" id="quiz-diff-badge">Intermediate</div>
 
-    <div class="quiz-question-text" id="quiz-question-text">প্রশ্ন লোড হচ্ছে…</div>
+    <div class="quiz-question-text" id="quiz-question-text">Loading question…</div>
 
     <div class="quiz-options" id="quiz-options"></div>
 
     <div class="quiz-hint-row">
-      <button class="quiz-hint-btn" id="quiz-hint-btn">💡 হিন্ট দেখাও</button>
+      <button class="quiz-hint-btn" id="quiz-hint-btn">💡 Show hint</button>
       <div class="quiz-hint-text" id="quiz-hint-text" style="display:none;"></div>
     </div>
 
     <div class="quiz-feedback" id="quiz-feedback" style="display:none;"></div>
 
-    <button class="quiz-next-btn" id="quiz-next-btn" style="display:none;">পরের প্রশ্ন →</button>
+    <button class="quiz-next-btn" id="quiz-next-btn" style="display:none;">Next question →</button>
   </div>
 
   <!-- RESULT SCREEN -->
   <div id="quiz-result-screen" style="display:none;">
     <div class="quiz-result-emoji" id="quiz-result-emoji">🎉</div>
-    <div class="quiz-result-title" id="quiz-result-title">কুইজ সম্পন্ন!</div>
+    <div class="quiz-result-title" id="quiz-result-title">Quiz complete!</div>
     <div class="quiz-result-score" id="quiz-result-score"></div>
     <div class="quiz-result-diagnosis" id="quiz-result-diagnosis"></div>
 
     <!-- Replay recommendation (shown conditionally) -->
     <div class="quiz-replay-box" id="quiz-replay-box" style="display:none;">
       <div class="quiz-replay-msg" id="quiz-replay-msg"></div>
-      <button class="quiz-replay-btn" id="quiz-replay-btn">🔁 সেই অংশ আবার শোনো</button>
+      <button class="quiz-replay-btn" id="quiz-replay-btn">🔁 Replay this section</button>
     </div>
 
     <div class="quiz-result-actions">
-      <button class="quiz-action-btn primary" id="quiz-retry-btn">আবার কুইজ দাও</button>
-      <button class="quiz-action-btn secondary" id="quiz-close-btn">চ্যাটে ফিরে যাও</button>
+      <button class="quiz-action-btn primary" id="quiz-retry-btn">Try again</button>
+      <button class="quiz-action-btn secondary" id="quiz-close-btn">Return to chat</button>
     </div>
   </div>
 
@@ -259,7 +259,7 @@
     <div class="quiz-loading-dots">
       <div></div><div></div><div></div>
     </div>
-    <div class="quiz-loading-text" id="quiz-loading-text">প্রশ্ন তৈরি হচ্ছে…</div>
+    <div class="quiz-loading-text" id="quiz-loading-text">Generating questions…</div>
   </div>
 
 </div>
@@ -269,17 +269,16 @@
         <div class="no-pdf-msg" id="no-pdf-msg">
           <div class="big">📚</div>
           <div>
-            প্রথমে বাম পাশ থেকে একটি PDF আপলোড করুন।<br />
-            AI স্বয়ংক্রিয়ভাবে পাঠ্যক্রম বিশ্লেষণ করবে।
+            Upload a PDF from the panel on the left to get started.<br />
+            The AI will automatically analyze the material.
           </div>
         </div>
 
         <div class="msg ai" id="welcome-msg" style="display:none;">
           <div class="msg-label">Amplify AI</div>
           <div class="welcome-bubble">
-            স্বাগতম! আপনার উপকরণ বিশ্লেষণ হয়েছে।<br /><br />
-            যেকোনো প্রশ্ন করুন, অথবা
-            <strong>🎓 লাইভ লেকচার</strong> বোতামে ক্লিক করলে AI একজন শিক্ষকের মতো পড়াবে।
+            Welcome! Your material has been analyzed.<br /><br />
+            Ask a question, or click <strong>🎓 Live lecture</strong> to learn with an AI tutor.
           </div>
         </div>
 
@@ -292,7 +291,7 @@
 
       <!-- CHAT INPUT -->
       <div class="chat-input-area">
-        <textarea id="chat-input" rows="1" placeholder="বাংলায় প্রশ্ন লিখুন…" disabled></textarea>
+        <textarea id="chat-input" rows="1" placeholder="Ask a question…" disabled></textarea>
         <button id="send-btn" disabled>➤</button>
       </div>
     </div>
@@ -307,11 +306,11 @@
     <div id="webcam-box">
       <video id="tracker-video" autoplay muted playsinline></video>
       <canvas id="tracker-canvas"></canvas>
-      <div id="tracker-loading">মডেল লোড হচ্ছে…</div>
+      <div id="tracker-loading">Loading models…</div>
     </div>
     <div id="mood-badge">
       <span id="mood-emoji">😶</span>
-      <span id="mood-text">অপেক্ষা করুন</span>
+      <span id="mood-text">Please wait</span>
     </div>
   </div>
 
@@ -319,7 +318,7 @@
   <div id="chunk-modal">
     <div class="chunk-modal-box">
       <div class="chunk-modal-header">
-        <span class="chunk-modal-title" id="modal-title">উৎস</span>
+        <span class="chunk-modal-title" id="modal-title">Source</span>
         <button class="chunk-modal-close" id="modal-close-btn">✕</button>
       </div>
       <div class="chunk-modal-meta" id="modal-meta"></div>
@@ -349,7 +348,7 @@
   <!-- App script -->
   <script type="module" src="/src/styletutor.js"></script>
 <div id="distraction-warning">
-  ⚠️ মনোযোগ দিন! আপনি মনোযোগ হারাচ্ছেন!
+  ⚠️ Attention: you may be losing focus.
 </div>
 <script>
 window.addEventListener('load', function(){
@@ -367,5 +366,6 @@ window.addEventListener('load', function(){
   };
 });
 </script>
+<script type="module" src="/src/site-navigation.js"></script>
 </body>
 </html>

@@ -24,70 +24,11 @@ function getVisitDayNumber() {
   return dayCount;
 }
 
-// ── Bangla → English word map ──
-const BANGLA_WORD_MAP = {
-  'গণিত':         'Math',
-  'বাংলা':        'Bangla',
-  'ইংরেজি':       'English',
-  'বিজ্ঞান':      'Science',
-  'পদার্থবিজ্ঞান':'Physics',
-  'পদার্থ':       'Physics',
-  'রসায়ন':       'Chemistry',
-  'রসায়নবিজ্ঞান': 'Chemistry',
-  'জীববিজ্ঞান':   'Biology',
-  'উচ্চতর গণিত':  'Higher Math',
-  'ইতিহাস':       'History',
-  'ভূগোল':        'Geography',
-  'অর্থনীতি':     'Economics',
-  'হিসাববিজ্ঞান': 'Accounting',
-  'পৌরনীতি':      'Civics',
-  'ধর্ম':         'Religion',
-  'কৃষি':         'Agriculture',
-  'তথ্য ও যোগাযোগ প্রযুক্তি': 'ICT',
-  'আইসিটি':       'ICT',
-  'অধ্যায়':      'Chapter',
-  'পরীক্ষা':      'Exam',
-  'মডেল টেস্ট':   'Model Test',
-  'মডেল':         'Model',
-  'টেস্ট':        'Test',
-  'রিভিশন':       'Revision',
-  'বিরতি':        'Break',
-  'অনুশীলন':      'Practice',
-  'পড়া':         'Reading',
-  'লেখা':         'Writing',
-  'মক':           'Mock',
-  'সমীকরণ':       'Equations',
-  'সূত্র':        'Formulas',
-  'ব্যাকরণ':      'Grammar',
-  'রচনা':         'Essay',
-  'গদ্য':         'Prose',
-  'পদ্য':         'Poetry',
-  'নোট':          'Notes',
-  'সংখ্যা':       'Numbers',
-  'সমস্যা':       'Problems',
-  'সমাধান':       'Solutions',
-};
-
-// ── Strip Bangla and non-speakable characters ──
+// ── Keep routine announcements readable by English speech synthesis ──
 function sanitizeForSpeech(text) {
   if (!text) return '';
 
-  let out = text;
-
-  // Replace known Bangla words (longest first to avoid partial matches)
-  const entries = Object.entries(BANGLA_WORD_MAP).sort((a, b) => b[0].length - a[0].length);
-  for (const [bn, en] of entries) {
-    out = out.split(bn).join(en);
-  }
-
-  // Drop remaining Bangla Unicode block characters
-  out = out.replace(/[\u0980-\u09FF]/g, ' ');
-  // Drop other non-ASCII
-  out = out.replace(/[^\x00-\x7F]/g, ' ');
-  // Collapse spaces
-  out = out.replace(/\s{2,}/g, ' ').trim();
-
-  return out;
+  return text.replace(/[^\x00-\x7F]/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
 
 // ── Convert a time string like "8:00 AM - 9:45 AM" into natural speech ──

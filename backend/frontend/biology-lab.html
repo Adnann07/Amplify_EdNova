@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23020B16'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='18' fill='%2300B7FF'>A</text></svg>">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Biology Lab — 3D Models · Amplify</title>
@@ -565,7 +566,7 @@ body::before{
         <button class="ctrl-btn" onclick="zoomIn()">＋ Zoom</button>
         <button class="ctrl-btn" onclick="zoomOut()">－ Zoom</button>
         <button class="ctrl-btn" id="askAiBtn" onclick="openAiChat()">💬 Ask AI</button>
-        <button class="vo-btn" id="voBtn" onclick="toggleVoiceover()">🎙️ AI বাংলা ভয়েস</button>
+        <button class="vo-btn" id="voBtn" onclick="toggleVoiceover()">🎙️ English AI voiceover</button>
       </div>
     </div>
 
@@ -601,7 +602,7 @@ body::before{
       <!-- Voiceover HUD -->
       <div class="vo-hud" id="voHud">
         <div class="vo-hud-top">
-          <span class="vo-badge" id="voBadge">AI VOICE · বাংলা</span>
+          <span class="vo-badge" id="voBadge">AI VOICE · ENGLISH</span>
           <span class="vo-hud-name" id="voHudName">—</span>
           <button class="vo-stop-btn" onclick="stopVoiceover()" title="Stop">✕</button>
         </div>
@@ -613,7 +614,7 @@ body::before{
             <div class="vo-bar"></div><div class="vo-bar"></div>
           </div>
           <div class="vo-text-wrap">
-            <div class="vo-text" id="voText">প্রস্তুত হচ্ছে...</div>
+            <div class="vo-text" id="voText">Preparing…</div>
           </div>
         </div>
         <div class="vo-chips" id="voChips"></div>
@@ -632,7 +633,7 @@ body::before{
       <div class="hint-sep">·</div>
       <div class="hint"><span class="hint-key">Space</span> Auto-rotate</div>
       <div class="hint-sep">·</div>
-      <div class="hint"><span class="hint-key">🎙️</span> বাংলা AI ভয়েস</div>
+      <div class="hint"><span class="hint-key">🎙️</span> English AI voiceover</div>
     </div>
   </div>
 </div>
@@ -659,7 +660,7 @@ body::before{
 <!-- Three.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const MODEL_BASE_PATH = './public/models';
+const MODEL_BASE_PATH = '/models';
 const MODELS = [
   { id:'kidney',        file:`${MODEL_BASE_PATH}/human_kidney.glb`,                  name:'Human Kidney',                  category:'Urinary System',    icon:'🩸', color:'#c084fc', desc:'The kidneys filter blood, remove waste, regulate electrolytes, and produce urine. Essential for homeostasis.',                                                        tags:['Excretory','Homeostasis','Nephron'] },
   { id:'full_skeleton', file:`${MODEL_BASE_PATH}/skeleton.glb`,                       name:'Full Skeleton',                  category:'Skeletal System',   icon:'💀', color:'#e2e8f0', desc:'Complete human skeleton — 206 bones providing structure, protection, and movement. Includes axial and appendicular skeleton.',                                     tags:['Skeletal','Anatomy','Bones'] },
@@ -942,15 +943,6 @@ window.MODELS = MODELS;
 </script>
 
 <!-- AI Chat (Groq) -->
-<script src="/amplify-env-bootstrap.js"></script>
-<script src="/amplify-env-bootstrap.js"></script>
-<script>
-  // Debug: check key availability at different moments
-  console.log('[BOOT] AMPLIFY_ENV at parse time:', window.AMPLIFY_ENV);
-  window.addEventListener('DOMContentLoaded', () =>
-    console.log('[BOOT] AMPLIFY_ENV at DOMContentLoaded:', window.AMPLIFY_ENV)
-  );
-</script>
 <script type="module">
 const aiChatPanel   = document.getElementById('aiChatPanel');
 const aiChatOverlay = document.getElementById('aiChatOverlay');
@@ -959,79 +951,55 @@ const aiPrompt      = document.getElementById('aiPrompt');
 const aiSendBtn     = document.getElementById('aiSendBtn');
 const aiStatus      = document.getElementById('aiStatus');
 
-function openAiChat()  { aiChatPanel.classList.add('open'); aiChatOverlay.classList.add('open'); aiPrompt.focus(); }
+function openAiChat()  { aiChatPanel.classList.add('open');    aiChatOverlay.classList.add('open');    aiPrompt.focus(); }
 function closeAiChat() { aiChatPanel.classList.remove('open'); aiChatOverlay.classList.remove('open'); }
 
-function appendAiMessage(text, role='assistant') {
-  const m = document.createElement('div');
-  m.className = `ai-message ${role}`;
-  m.innerHTML = role === 'assistant'
-    ? `<strong>AI Tutor</strong>${text.replace(/\n/g,'<br/>')}`
-    : text.replace(/\n/g,'<br/>');
+function appendAiMessage(text,role='assistant') {
+  const m=document.createElement('div'); m.className=`ai-message ${role}`;
+  if (role === 'assistant') {
+    const label = document.createElement('strong');
+    label.textContent = 'AI Tutor';
+    m.appendChild(label);
+  }
+  const content = document.createElement('div');
+  content.textContent = text;
+  content.style.whiteSpace = 'pre-wrap';
+  m.appendChild(content);
   aiMessages.querySelector('.ai-chat-empty')?.remove();
-  aiMessages.appendChild(m);
-  aiMessages.scrollTop = aiMessages.scrollHeight;
-}
-
-function getChatAPI() {
-  const env = window.AMPLIFY_ENV || {};
-  if (env.CEREBRAS_KEY || env.CEREBRAS_API_KEY) return { key: env.CEREBRAS_KEY || env.CEREBRAS_API_KEY, base: env.CEREBRAS_BASE || 'https://api.cerebras.ai/v1', model: 'llama-3.3-70b' };
-  const orKey = (env.OPENROUTER_KEYS || [])[0] || '';
-  if (orKey) return { key: orKey, base: env.OPENROUTER_BASE || 'https://openrouter.ai/api/v1', model: 'meta-llama/llama-3.3-70b-instruct' };
-  const groqKey = (env.GROQ_KEYS || [])[0] || env.GROQ_KEY || '';
-  if (groqKey) return { key: groqKey, base: env.GROQ_BASE || 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b' };
-  return null;
+  aiMessages.appendChild(m); aiMessages.scrollTop=aiMessages.scrollHeight;
 }
 
 async function sendAiQuestion() {
-  const question = aiPrompt.value.trim();
-  if (!question) return;
-  appendAiMessage(question, 'user');
-  aiPrompt.value = ''; aiPrompt.disabled = true; aiSendBtn.disabled = true;
-  aiStatus.textContent = 'Thinking...';
+  const question=aiPrompt.value.trim(); if (!question) return;
+  appendAiMessage(question,'user'); aiPrompt.value=''; aiPrompt.disabled=true; aiSendBtn.disabled=true; aiStatus.textContent='Thinking...';
   try {
-    for (let i = 0; i < 40; i++) {
-      const e = window.AMPLIFY_ENV || {};
-      if (e.CEREBRAS_KEY || e.CEREBRAS_API_KEY || e.GROQ_KEY || (e.OPENROUTER_KEYS||[]).length) break;
-      await new Promise(r => setTimeout(r, 100));
-    }
-    const api = getChatAPI();
-    if (!api) throw new Error('No API key available.');
-    const selectedModel = document.getElementById('viewerName')?.textContent?.trim() || 'Biology model';
-    const response = await fetch(`${api.base}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
-      body: JSON.stringify({
-        model: api.model,
-        messages: [{ role: 'user', content: `You are an expert biology tutor. The user is viewing the ${selectedModel} 3D model. Answer clearly and concisely.\n\nQuestion: ${question}` }],
-        temperature: 0.4,
-        max_tokens: 1200
-      })
+    const selectedModel=document.getElementById('viewerName')?.textContent?.trim()||'Biology model';
+    const response=await fetch('/api/biology/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({ model_name:selectedModel, question })
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || `API error ${response.status}`);
-    appendAiMessage(data.choices?.[0]?.message?.content || 'Sorry, could not generate an answer.', 'assistant');
-    aiStatus.textContent = 'Ready for another biology question.';
+    const data=await response.json().catch(()=>({}));
+    if (!response.ok) throw new Error(data.detail||`Groq API error ${response.status}`);
+    if (typeof data.answer !== 'string' || !data.answer.trim()) throw new Error('Groq returned an empty answer.');
+    appendAiMessage(data.answer,'assistant');
+    aiStatus.textContent='Ready for another biology question.';
   } catch(err) {
-    appendAiMessage(`Error: ${err.message || 'Unable to reach AI.'}`, 'assistant');
-    aiStatus.textContent = 'Failed. Check network or API key.';
+    appendAiMessage(`Error: ${err.message||'Unable to ask AI.'}`, 'assistant');
+    aiStatus.textContent='Groq could not answer. Check the backend connection and try again.';
   } finally {
-    aiPrompt.disabled = false; aiSendBtn.disabled = false; aiPrompt.focus();
+    aiPrompt.disabled=false; aiSendBtn.disabled=false; aiPrompt.focus();
   }
 }
-
-window.openAiChat = openAiChat;
-window.closeAiChat = closeAiChat;
-window.sendAiQuestion = sendAiQuestion;
+window.openAiChat=openAiChat; window.closeAiChat=closeAiChat; window.sendAiQuestion=sendAiQuestion;
 </script>
-
 
 <!-- Hand Gesture Control -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script>
 (function() {
   const pip=document.createElement('div');
-  pip.style.cssText='position:fixed;bottom:90px;right:16px;width:280px;height:210px;border-radius:12px;overflow:hidden;border:1px solid rgba(74,240,196,0.3);background:#000;z-index:200;display:none;box-shadow:0 8px 32px rgba(0,0,0,0.5)';
+  pip.style.cssText='position:fixed;bottom:90px;right:16px;width:180px;height:135px;border-radius:12px;overflow:hidden;border:1px solid rgba(74,240,196,0.3);background:#000;z-index:200;display:none;box-shadow:0 8px 32px rgba(0,0,0,0.5)';
   const pipVid=document.createElement('video'); pipVid.style.cssText='width:100%;height:100%;object-fit:cover;transform:scaleX(-1)'; pipVid.autoplay=true; pipVid.muted=true; pipVid.playsInline=true;
   const pipCanvas=document.createElement('canvas'); pipCanvas.style.cssText='position:absolute;inset:0;width:100%;height:100%';
   const pipLabel=document.createElement('div'); pipLabel.style.cssText='position:absolute;top:6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#4af0c4;font-family:monospace;font-size:10px;padding:2px 10px;border-radius:999px;white-space:nowrap'; pipLabel.textContent='No gesture';
@@ -1087,225 +1055,137 @@ window.sendAiQuestion = sendAiQuestion;
 })();
 </script>
 
-<!-- ══════════════════════════════════════════
-     AI BANGLA VOICEOVER SYSTEM
-     FIX: reads model id/name from window._currentModelData.idx
-          which is always kept in sync by selectModel()
-══════════════════════════════════════════ -->
-<!-- AI BANGLA VOICEOVER SYSTEM -->
+<!-- English voiceover text is generated by Groq; browser speech synthesis reads it aloud. -->
 <script type="module">
-console.log('[ENV CHECK]', JSON.stringify(window.AMPLIFY_ENV));
-function getAPI() {
-  const env = window.AMPLIFY_ENV || {};
-  if (env.CEREBRAS_KEY || env.CEREBRAS_API_KEY) {
-    return { key: env.CEREBRAS_KEY || env.CEREBRAS_API_KEY, base: env.CEREBRAS_BASE || env.CEREBRAS_API_BASE_URL || 'https://api.cerebras.ai/v1', model: 'llama-3.3-70b' };
-  }
-  const orKey = (env.OPENROUTER_KEYS || [])[0] || '';
-  if (orKey) {
-    return { key: orKey, base: env.OPENROUTER_BASE || 'https://openrouter.ai/api/v1', model: 'meta-llama/llama-3.3-70b-instruct' };
-  }
-  const groqKey = (env.GROQ_KEYS || [])[0] || env.GROQ_KEY || '';
-  if (groqKey) {
-    return { key: groqKey, base: env.GROQ_BASE || 'https://api.groq.com/openai/v1', model: 'openai/gpt-oss-120b' };
-  }
-  return null;
-}
+const btn       = document.getElementById('voBtn');
+const hud       = document.getElementById('voHud');
+const wave      = document.getElementById('voWave');
+const textEl    = document.getElementById('voText');
+const chipsEl   = document.getElementById('voChips');
+const progressEl= document.getElementById('voProgress');
+const hudName   = document.getElementById('voHudName');
+const badge     = document.getElementById('voBadge');
+const spotlight = document.getElementById('voSpotlight');
+const canvasWrap= document.querySelector('.canvas-wrap');
 
-const btn        = document.getElementById('voBtn');
-const hud        = document.getElementById('voHud');
-const wave       = document.getElementById('voWave');
-const textEl     = document.getElementById('voText');
-const chipsEl    = document.getElementById('voChips');
-const progressEl = document.getElementById('voProgress');
-const hudName    = document.getElementById('voHudName');
-const badge      = document.getElementById('voBadge');
-const spotlight  = document.getElementById('voSpotlight');
-const canvasWrap = document.querySelector('.canvas-wrap');
+let _voActive   = false;
+let voSegments  = [];
+let voSegIdx    = 0;
+let voTimers    = [];
+let voRequestController = null;
 
-let _voActive  = false;
-let voSegments = [];
-let voSegIdx   = 0;
-let voTimers   = [];
-
-const FALLBACK_SEGMENTS = {
-  kidney:           [{ label:'কিডনি',        text:'কিডনি মানবদেহের একটি অত্যন্ত গুরুত্বপূর্ণ অঙ্গ। এটি রক্ত পরিশোধন করে এবং শরীরে পানি ও লবণের ভারসাম্য রক্ষা করে।', zoom:2.8, phi:Math.PI/2, theta:0 }],
-  full_skeleton:    [{ label:'কঙ্কাল',       text:'মানব কঙ্কাল ২০৬টি হাড় নিয়ে গঠিত। এটি শরীরকে কাঠামো দেয়, অঙ্গ রক্ষা করে এবং চলাচলে সাহায্য করে।', zoom:2.8, phi:Math.PI/2, theta:0 }],
-  lungs:            [{ label:'ফুসফুস',       text:'ফুসফুস শ্বাসতন্ত্রের প্রধান অঙ্গ। বাতাস থেকে অক্সিজেন রক্তে নেওয়া এবং কার্বন ডাইঅক্সাইড বের করে দেওয়াই এর কাজ।', zoom:2.8, phi:Math.PI/2, theta:0 }],
-  digestive_system: [{ label:'পরিপাকতন্ত্র', text:'পরিপাকতন্ত্র খাদ্যকে ক্ষুদ্র পুষ্টিতে ভেঙে রক্তে শোষণ করে। এটি মুখ থেকে মলদ্বার পর্যন্ত প্রায় নয় মিটার দীর্ঘ।', zoom:2.8, phi:Math.PI/2, theta:0 }],
-  dna:              [{ label:'ডিএনএ',        text:'ডিএনএ হলো জীবনের নীলনকশা যা প্রতিটি কোষের নিউক্লিয়াসে থাকে।', zoom:2.8, phi:Math.PI/2, theta:0 }],
-  cerebellum:       [{ label:'সেরিবেলাম',   text:'সেরিবেলাম মস্তিষ্কের পেছনের নিচের অংশে থাকে এবং ঐচ্ছিক নড়াচড়া সমন্বয় করে।', zoom:2.8, phi:Math.PI/2, theta:0 }],
-  humerus:          [{ label:'হিউমারাস',    text:'হিউমারাস হলো উপরের বাহুর লম্বা হাড় যা কাঁধ থেকে কনুই পর্যন্ত বিস্তৃত।', zoom:2.8, phi:Math.PI/2, theta:0 }],
-  ribs:             [{ label:'পাঁজর',       text:'পাঁজরের খাঁচা ১২ জোড়া পাঁজর নিয়ে গঠিত এবং হৃদপিণ্ড ও ফুসফুসকে রক্ষা করে।', zoom:2.8, phi:Math.PI/2, theta:0 }],
-  phospholipid:     [{ label:'ফসফোলিপিড',  text:'ফসফোলিপিড বিলেয়ার সকল কোষের ঝিল্লির মূল গঠন।', zoom:2.8, phi:Math.PI/2, theta:0 }],
-  rougher:          [{ label:'রাফ ইআর',     text:'রাফ এন্ডোপ্লাজমিক রেটিকুলাম কোষের প্রোটিন কারখানা। এর পৃষ্ঠে রাইবোসোম থাকে যা প্রোটিন তৈরি করে।', zoom:2.8, phi:Math.PI/2, theta:0 }],
+// CHANGE 1: UPDATED PREDEFINED SEGMENTS WITH 4 ENTRIES EACH (NO DASHES)
+const PREDEFINED_SEGMENTS = {
+  kidney: [
+    { label:'Overview', text:'The kidneys filter waste from the blood and help regulate water and salts.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Renal cortex', text:'The renal cortex is the outer region of the kidney, where blood filtration begins.', zoom:1.7, phi:1.4, theta:0.3 },
+    { label:'Nephrons', text:"Nephrons are the kidney's functional units. Each kidney contains about one million nephrons.", zoom:1.5, phi:1.2, theta:0.8 },
+    { label:'Renal pelvis', text:'The renal pelvis collects urine and carries it into the ureter on its way to the bladder.', zoom:1.6, phi:0.9, theta:1.1 },
+  ],
+  full_skeleton: [
+    { label:'Overview', text:'The adult human skeleton has 206 bones. It supports the body, protects organs, and enables movement.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Skull', text:'The skull protects the brain and is made of 22 bones joined together.', zoom:1.4, phi:0.6, theta:0.0 },
+    { label:'Spine', text:'The spine contains 33 vertebrae and protects the spinal cord.', zoom:2.0, phi:Math.PI/2, theta:0.2 },
+    { label:'Appendicular skeleton', text:'The appendicular skeleton includes the arms and legs and contains 126 bones.', zoom:1.5, phi:1.4, theta:0.6 },
+  ],
+  lungs: [
+    { label:'Overview', text:'The lungs bring oxygen into the blood and remove carbon dioxide from the body.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Bronchi', text:'The trachea divides into two main bronchi, one entering each lung before branching into smaller airways.', zoom:1.8, phi:1.1, theta:0.3 },
+    { label:'Alveoli', text:'Alveoli are tiny air sacs where gas exchange occurs. Both lungs contain roughly 300 million alveoli.', zoom:2.2, phi:1.4, theta:0.3 },
+    { label:'Pleura', text:'The pleura is a double-layered membrane around the lungs. A thin fluid layer reduces friction during breathing.', zoom:1.6, phi:0.8, theta:0.9 },
+  ],
+  digestive_system: [
+    { label:'Overview', text:'The digestive system breaks food into nutrients that can be absorbed into the blood.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Stomach', text:'The stomach releases acid and digestive enzymes, mixing food into a liquid mixture.', zoom:1.8, phi:1.1, theta:0.3 },
+    { label:'Small intestine', text:'Most nutrient absorption occurs in the small intestine. Tiny villi increase its absorptive surface area.', zoom:1.5, phi:1.3, theta:0.7 },
+    { label:'Large intestine', text:'The large intestine absorbs water and compacts waste. It also contains many beneficial bacteria.', zoom:1.6, phi:0.9, theta:1.1 },
+  ],
+  dna: [
+    { label:'Overview', text:'DNA stores the instructions used to build and maintain an organism. A human cell contains about two metres of DNA.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Double helix', text:'DNA has a double-helix structure, with two strands arranged like a twisted ladder.', zoom:1.8, phi:0.8, theta:0.3 },
+    { label:'Base pairs', text:'Adenine pairs with thymine, while cytosine pairs with guanine. These pairs encode genetic information.', zoom:1.8, phi:1.3, theta:1.0 },
+    { label:'Genes and code', text:'The human genome contains about three billion base pairs. Their sequence provides instructions for making proteins.', zoom:1.5, phi:1.0, theta:0.2 },
+  ],
+  cerebellum: [
+    { label:'Overview', text:'The cerebellum sits at the lower back of the brain and helps coordinate movement, balance, and fine motor control.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Cerebellar cortex', text:'The outer layer contains Purkinje cells, which play a central role in coordinating movement.', zoom:1.8, phi:0.9, theta:0.3 },
+    { label:'Deep nuclei', text:'Deep cerebellar nuclei relay output from the cerebellum to other parts of the brain.', zoom:1.5, phi:1.2, theta:0.8 },
+    { label:'Vermis', text:'The vermis is the central region of the cerebellum and helps coordinate posture and movements around the body midline.', zoom:1.6, phi:0.7, theta:1.2 },
+  ],
+  humerus: [
+    { label:'Overview', text:'The humerus is the long bone of the upper arm, extending from the shoulder to the elbow.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Humeral head', text:'The rounded head of the humerus meets the shoulder blade to form a ball-and-socket joint.', zoom:1.8, phi:0.7, theta:0.2 },
+    { label:'Shaft', text:'The humeral shaft has a strong compact outer layer and a hollow interior that reduces weight.', zoom:1.6, phi:1.0, theta:0.5 },
+    { label:'Distal end', text:'The lower end of the humerus meets the radius and ulna to form the elbow joint.', zoom:1.7, phi:1.3, theta:0.9 },
+  ],
+  ribs: [
+    { label:'Overview', text:'The rib cage has 12 pairs of ribs. It protects the heart and lungs and helps the chest expand during breathing.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'True ribs', text:'The first seven pairs attach directly to the sternum and form the most stable part of the rib cage.', zoom:1.8, phi:1.3, theta:0.4 },
+    { label:'False ribs', text:'The eighth through tenth pairs connect to the sternum indirectly through cartilage.', zoom:1.6, phi:1.1, theta:0.8 },
+    { label:'Floating ribs', text:'The eleventh and twelfth pairs do not attach to the sternum at the front; they are called floating ribs.', zoom:1.5, phi:0.8, theta:1.2 },
+  ],
+  phospholipid: [
+    { label:'Overview', text:'The phospholipid bilayer forms the basic structure of cell membranes and separates the cell interior from its surroundings.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Bilayer structure', text:'Hydrophilic heads face the watery environments while hydrophobic tails point inward.', zoom:1.8, phi:0.7, theta:0.4 },
+    { label:'Phosphate head', text:'The phosphate-containing head interacts with water and forms the outer surfaces of the membrane.', zoom:1.7, phi:1.1, theta:0.7 },
+    { label:'Fatty acid tails', text:'The water-repelling fatty acid tails face inward and help control membrane fluidity.', zoom:1.6, phi:1.0, theta:1.0 },
+  ],
+  rougher: [
+    { label:'Overview', text:'The rough endoplasmic reticulum helps produce proteins, with ribosomes attached to its surface.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Ribosomes', text:'Ribosomes read messenger RNA instructions and build proteins that enter the endoplasmic reticulum.', zoom:1.8, phi:0.7, theta:0.3 },
+    { label:'Cisternae', text:'The rough endoplasmic reticulum consists of flattened membrane sacs called cisternae, where proteins fold and are modified.', zoom:1.6, phi:1.1, theta:0.7 },
+    { label:'Golgi connection', text:'Transport vesicles carry proteins from the endoplasmic reticulum to the Golgi apparatus for final processing and delivery.', zoom:1.7, phi:1.3, theta:1.0 },
+  ],
 };
 
-const ZOOM_STEPS = [
-  { zoom:2.8, phi:Math.PI/2, theta:0.0 },
-  { zoom:1.8, phi:1.1,       theta:0.3 },
-  { zoom:1.5, phi:1.3,       theta:0.8 },
-  { zoom:1.6, phi:0.8,       theta:1.1 },
-];
-
-async function waitForEnv() {
-  for (let i = 0; i < 40; i++) {
-    const env = window.AMPLIFY_ENV || {};
-    if (env.CEREBRAS_KEY || env.CEREBRAS_API_KEY || env.GROQ_KEY || (env.OPENROUTER_KEYS||[]).length) return;
-    await new Promise(r => setTimeout(r, 100));
+async function fetchGroqVoiceover(modelName, signal) {
+  const response = await fetch('/api/biology/voiceover', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ model_name: modelName }),
+    signal,
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.detail || `Voiceover request failed (${response.status}).`);
   }
+  if (!Array.isArray(data.segments) || data.segments.length !== 4
+      || data.segments.some(segment => !segment.label || !segment.text)) {
+    throw new Error('Groq returned an invalid voiceover. Please try again.');
+  }
+  return data.segments;
 }
 
-async function fetchAISegments(modelName) {
-  await waitForEnv();
-  const api = getAPI();
-  if (!api) { console.warn('[VO] No API available'); return null; }
-  console.log('[VO] Using:', api.base, api.model);
-
-  const prompt = `তুমি একজন অভিজ্ঞ বাংলা জীববিজ্ঞান শিক্ষক। একজন শিক্ষার্থী এখন "${modelName}" এর ইন্টারেক্টিভ থ্রিডি মডেল দেখছে।
-
-এই অঙ্গ বা কাঠামো সম্পর্কে ঠিক চারটি শিক্ষামূলক অনুচ্ছেদ লেখো। প্রতিটি অনুচ্ছেদ তিন থেকে চারটি বাক্যের হবে।
-
-অবশ্যই মানতে হবে:
-- কোনো হাইফেন বা ড্যাশ চিহ্ন ব্যবহার করবে না
-- সংখ্যা বাংলা অক্ষরে লিখবে
-- কোনো ইংরেজি শব্দ বা বর্ণ ব্যবহার করবে না
-- কোনো মার্কডাউন বা বিশেষ চিহ্ন ব্যবহার করবে না
-
-শুধুমাত্র এই JSON ফরম্যাটে উত্তর দাও, অন্য কিছু লিখবে না:
-{"segments":[{"label":"শিরোনাম ১","text":"বিস্তারিত বিবরণ।"},{"label":"শিরোনাম ২","text":"বিস্তারিত বিবরণ।"},{"label":"শিরোনাম ৩","text":"বিস্তারিত বিবরণ।"},{"label":"শিরোনাম ৪","text":"বিস্তারিত বিবরণ।"}]}`;
-
-  try {
-    const r = await fetch(`${api.base}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
-      body: JSON.stringify({
-        model: api.model,
-        max_tokens: 1500,
-        temperature: 0.6,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error?.message || `HTTP ${r.status}`);
-    const raw = d.choices?.[0]?.message?.content?.trim();
-    if (!raw) throw new Error('Empty response');
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
-    if (!Array.isArray(parsed.segments) || !parsed.segments.length) throw new Error('Bad segments');
-    return parsed.segments.map((s, i) => ({
-      label: s.label,
-      text:  s.text,
-      ...ZOOM_STEPS[i % ZOOM_STEPS.length]
-    }));
-  } catch(e) {
-    console.error('[VO] fetchAISegments failed:', e);
-    return null;
-  }
-}
-
-let _voAudio = null;
-
-async function speak(text, onEnd) {
+function speak(text, onEnd) {
   window.speechSynthesis.cancel();
-  if (_voAudio) { _voAudio.pause(); _voAudio = null; }
-
-  const env    = window.AMPLIFY_ENV || {};
-  const key    = env.AZURE_SPEECH_KEY || env.VITE_AZURE_SPEECH_KEY || '';
-  const region = env.AZURE_SPEECH_REGION || env.VITE_AZURE_SPEECH_REGION || 'southeastasia';
-
-  // Fallback to Web Speech API if no Azure key
-  if (!key) {
-    console.warn('[VO] No Azure key, falling back to Web Speech API');
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'bn-BD';
-    const voices = window.speechSynthesis.getVoices();
-    const v = voices.find(v => v.lang.startsWith('bn'))
-           || voices.find(v => v.lang.startsWith('hi'))
-           || voices[0];
-    if (v) u.voice = v;
-    u.rate = 0.88; u.pitch = 1.05; u.volume = 1.0;
-    u.onend  = onEnd;
-    u.onerror = onEnd;
-    window.speechSynthesis.speak(u);
-    return;
-  }
-
-  const ssml = `<speak version='1.0' xml:lang='bn-BD'>
-    <voice name='bn-BD-NabanitaNeural'>
-      <prosody rate='-10%' pitch='+5%'>${text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')}
-      </prosody>
-    </voice>
-  </speak>`;
-
-  try {
-    const res = await fetch(
-      `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`,
-      {
-        method: 'POST',
-        headers: {
-          'Ocp-Apim-Subscription-Key': key,
-          'Content-Type': 'application/ssml+xml',
-          'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
-        },
-        body: ssml,
-      }
-    );
-
-    if (!res.ok) throw new Error(`Azure TTS ${res.status}`);
-
-    const blob  = await res.blob();
-    const url   = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    _voAudio = audio;
-
-    audio.onended = () => {
-      URL.revokeObjectURL(url);
-      _voAudio = null;
-      onEnd?.();
-    };
-    audio.onerror = () => {
-      URL.revokeObjectURL(url);
-      _voAudio = null;
-      onEnd?.();
-    };
-    audio.play();
-
-  } catch(e) {
-    console.warn('[Azure TTS VO]', e.message);
-    onEnd?.();
-  }
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  const voices = window.speechSynthesis.getVoices();
+  const v = voices.find(v=>v.lang.startsWith('en')) || voices[0];
+  if (v) u.voice = v;
+  u.rate = 0.88; u.pitch = 1.05; u.volume = 1.0;
+  u.onend  = onEnd;
+  u.onerror = onEnd;
+  window.speechSynthesis.speak(u);
 }
 
 function zoomToSeg(seg) {
-  if (typeof window.targetDistance  !== 'undefined') window.targetDistance = seg.zoom;
-  if (typeof window.targetSpherical !== 'undefined') {
-    window.targetSpherical.phi   = seg.phi;
-    window.targetSpherical.theta = seg.theta;
-  }
+  if (typeof window.targetDistance !== 'undefined') window.targetDistance = seg.zoom;
+  if (typeof window.targetSpherical !== 'undefined') { window.targetSpherical.phi = seg.phi; window.targetSpherical.theta = seg.theta; }
   const cw = canvasWrap.clientWidth, ch = canvasWrap.clientHeight;
   const size = Math.min(cw, ch) * 0.30;
   const cx = cw * 0.5 + Math.sin(seg.theta) * cw * 0.09;
-  const cy = ch * 0.5 + (seg.phi - Math.PI / 2) * ch * 0.12;
-  spotlight.style.width  = size + 'px';
-  spotlight.style.height = size + 'px';
-  spotlight.style.left   = (cx - size / 2) + 'px';
-  spotlight.style.top    = (cy - size / 2) + 'px';
+  const cy = ch * 0.5 + (seg.phi - Math.PI/2) * ch * 0.12;
+  spotlight.style.width = size + 'px'; spotlight.style.height = size + 'px';
+  spotlight.style.left = (cx - size/2) + 'px'; spotlight.style.top = (cy - size/2) + 'px';
   spotlight.classList.add('show');
 }
 
 function buildProgress(count) {
-  progressEl.innerHTML = Array.from({ length: count }, (_, i) =>
-    `<div class="vo-dot" id="vd${i}"></div>`).join('');
+  progressEl.innerHTML = Array.from({length:count},(_,i)=>`<div class="vo-dot" id="vd${i}"></div>`).join('');
 }
-function setProgress(idx) {
-  document.querySelectorAll('.vo-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
-}
-function setActiveChip(idx) {
-  chipsEl.querySelectorAll('.vo-chip').forEach((c, i) => c.classList.toggle('active', i === idx));
-}
+function setProgress(idx) { document.querySelectorAll('.vo-dot').forEach((d,i)=>d.classList.toggle('active',i===idx)); }
+function setActiveChip(idx) { chipsEl.querySelectorAll('.vo-chip').forEach((c,i)=>c.classList.toggle('active',i===idx)); }
 
 function speakSeg(idx) {
   if (!_voActive || idx >= voSegments.length) { endVO(); return; }
@@ -1315,57 +1195,58 @@ function speakSeg(idx) {
   textEl.classList.add('fade');
   setTimeout(() => { textEl.textContent = seg.text; textEl.classList.remove('fade'); }, 220);
   wave.classList.add('live'); badge.classList.add('live');
-  btn.classList.add('speaking'); btn.innerHTML = '⏹ থামাও';
+  btn.classList.add('speaking'); btn.innerHTML = '⏹ Stop voiceover';
   speak(seg.text, () => {
     if (!_voActive) return;
     wave.classList.remove('live');
-    const t = setTimeout(() => speakSeg(idx + 1), 850);
+    const t = setTimeout(()=>speakSeg(idx+1), 850);
     voTimers.push(t);
   });
-}
-
-function getCurrentModelInfo() {
-  const models = window.MODELS;
-  const idx    = window._currentModelData ? window._currentModelData.idx : 0;
-  if (models && models[idx]) return { id: models[idx].id, name: models[idx].name };
-  const name = document.getElementById('viewerName')?.textContent?.trim() || 'এই মডেল';
-  if (models) { const found = models.find(m => m.name === name); if (found) return { id: found.id, name: found.name }; }
-  return { id: null, name };
 }
 
 async function startVO() {
   const { id, name } = getCurrentModelInfo();
   _voActive = true; voSegIdx = 0;
   hud.classList.add('active');
-  requestAnimationFrame(() => requestAnimationFrame(() => hud.classList.add('visible')));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>hud.classList.add('visible')));
   hudName.textContent = name;
-  btn.classList.add('loading'); btn.innerHTML = '⏳ লোড হচ্ছে...';
-  textEl.textContent = 'AI থেকে তথ্য আনা হচ্ছে...';
+  btn.classList.add('loading'); btn.innerHTML = '⏳ Loading…';
+  textEl.textContent = 'Generating an English explanation with Groq…';
 
-  // Always try AI first
-  const aiSegs = await fetchAISegments(name);
+  const controller = new AbortController();
+  voRequestController = controller;
+  try {
+    const generatedSegments = await fetchGroqVoiceover(name, controller.signal);
+    if (!_voActive) return;
+    const layout = (id && PREDEFINED_SEGMENTS[id]) || [];
+    const defaults = [
+      { zoom:2.8, phi:Math.PI/2, theta:0.0 },
+      { zoom:2.0, phi:Math.PI/2, theta:0.3 },
+      { zoom:1.7, phi:1.1, theta:-0.5 },
+      { zoom:1.5, phi:0.8, theta:0.8 },
+    ];
+    voSegments = generatedSegments.map((segment, index) => ({
+      ...defaults[index],
+      ...(layout[index] || {}),
+      label: segment.label,
+      text: segment.text,
+    }));
+  } catch (error) {
+    if (controller.signal.aborted) return;
+    console.error('[Biology voiceover] Groq request failed:', error);
+    _voActive = false;
+    btn.classList.remove('loading');
+    btn.innerHTML = '🎙️ English AI voiceover';
+    textEl.textContent = `Could not generate the Groq voiceover. ${error.message}`;
+    return;
+  }
 
   if (!_voActive) return;
   btn.classList.remove('loading');
 
-  if (aiSegs) {
-    voSegments = aiSegs;
-    console.log('[VO] Using AI segments:', voSegments.length);
-  } else {
-    // Only fall back to hardcoded if AI completely failed
-    voSegments = FALLBACK_SEGMENTS[id] || [{
-      label: 'বিবরণ',
-      text: `${name} একটি গুরুত্বপূর্ণ জৈবিক কাঠামো যা শরীরের স্বাভাবিক কার্যক্রম বজায় রাখতে সাহায্য করে।`,
-      zoom: 2.0, phi: Math.PI/2, theta: 0
-    }];
-    console.warn('[VO] Using fallback segments');
-  }
-
-  chipsEl.innerHTML = voSegments.map((s, i) =>
-    `<span class="vo-chip" data-i="${i}">${s.label}</span>`).join('');
-  chipsEl.querySelectorAll('.vo-chip').forEach(c => c.addEventListener('click', () => {
-    if (!_voActive) return;
-    voTimers.forEach(clearTimeout); voTimers = [];
+  chipsEl.innerHTML = voSegments.map((s,i)=>`<span class="vo-chip" data-i="${i}">${s.label}</span>`).join('');
+  chipsEl.querySelectorAll('.vo-chip').forEach(c=>c.addEventListener('click',()=>{
+    if(!_voActive)return; voTimers.forEach(clearTimeout); voTimers=[];
     window.speechSynthesis.cancel(); speakSeg(+c.dataset.i);
   }));
   buildProgress(voSegments.length);
@@ -1374,30 +1255,43 @@ async function startVO() {
 
 function endVO() {
   _voActive = false;
+  voRequestController?.abort();
+  voRequestController = null;
   window.speechSynthesis.cancel();
-  if (_voAudio) { _voAudio.pause(); _voAudio = null; }
   voTimers.forEach(clearTimeout); voTimers = [];
   wave.classList.remove('live'); badge.classList.remove('live');
   spotlight.classList.remove('show');
-  btn.classList.remove('speaking', 'loading');
-  btn.innerHTML = '🎙️ AI বাংলা ভয়েস';
-  if (typeof window.targetDistance  !== 'undefined') window.targetDistance = 3;
-  if (typeof window.targetSpherical !== 'undefined') { window.targetSpherical.phi = Math.PI/2; window.targetSpherical.theta = 0; }
+  btn.classList.remove('speaking','loading');
+  btn.innerHTML = '🎙️ English AI voiceover';
+  if (typeof window.targetDistance !== 'undefined') window.targetDistance = 3;
+  if (typeof window.targetSpherical !== 'undefined') { window.targetSpherical.phi=Math.PI/2; window.targetSpherical.theta=0; }
+}
+
+function getCurrentModelInfo() {
+  const models = window.MODELS;
+  const idx    = window._currentModelData ? window._currentModelData.idx : 0;
+  if (models && models[idx]) {
+    return { id: models[idx].id, name: models[idx].name };
+  }
+  const name = document.getElementById('viewerName')?.textContent?.trim() || 'this model';
+  if (models) {
+    const found = models.find(m => m.name === name);
+    if (found) return { id: found.id, name: found.name };
+  }
+  return { id: null, name };
 }
 
 window.stopVoiceover = function() {
   if (_voActive) endVO();
   hud.classList.remove('visible');
-  setTimeout(() => hud.classList.remove('active'), 380);
+  setTimeout(()=>hud.classList.remove('active'), 380);
 };
 window.toggleVoiceover = function() {
-  if (_voActive) { window.stopVoiceover(); } else { startVO(); }
+  if (_voActive) { window.stopVoiceover(); }
+  else { startVO(); }
 };
-
 window.speechSynthesis.getVoices();
-if ('onvoiceschanged' in window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-}
+if ('onvoiceschanged' in window.speechSynthesis) window.speechSynthesis.onvoiceschanged = ()=>window.speechSynthesis.getVoices();
 </script>
 </body>
 </html>

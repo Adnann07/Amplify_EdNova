@@ -15,9 +15,10 @@ function resolveBackendBase(viteEnv = getViteEnv()) {
   if (!configured) return '';
   try {
     const parsed = new URL(String(configured), origin);
-    
+    const isLocalHost = host === 'localhost' || host === '127.0.0.1';
+    // In production pages, do not allow cross-origin backend override.
+    if (!isLocalHost && parsed.origin !== origin) return '';
     return parsed.origin.replace(/\/$/, '');
-    
   } catch {
     return '';
   }
@@ -111,7 +112,7 @@ function normalizeApiBase(base, fallback) {
   return url || fallback;
 }
 
-
+/** Resolve Groq API keys from server config, window bootstrap, or Vite env. */
 export function getGroqKeys(config = {}, env = null) {
   const viteEnv = env ?? getViteEnv();
   for (const list of [
@@ -122,7 +123,6 @@ export function getGroqKeys(config = {}, env = null) {
       const keys = filterValidKeys(list);
       if (keys.length) return keys;
     }
-    // Railway returns env vars as strings — parse them
     if (typeof list === 'string' && list.trim()) {
       const keys = filterValidKeys(parseEnvList(list));
       if (keys.length) return keys;
@@ -131,7 +131,6 @@ export function getGroqKeys(config = {}, env = null) {
   for (const key of [
     config.GROQ_API_KEY,
     typeof window !== 'undefined' ? window.AMPLIFY_ENV?.GROQ_KEY : '',
-    config.GROQ_API_KEY,
   ]) {
     const keys = filterValidKeys(parseEnvList(key));
     if (keys.length) return keys;
@@ -139,7 +138,7 @@ export function getGroqKeys(config = {}, env = null) {
   return filterValidKeys(parseEnvList(viteEnv.VITE_GROQ_KEYS || viteEnv.VITE_GROQ_KEY));
 }
 
-
+/** Resolve OpenRouter API keys from server config, window bootstrap, or Vite env. */
 export function getOpenRouterKeys(config = {}, env = null) {
   const viteEnv = env ?? getViteEnv();
   for (const list of [
@@ -151,7 +150,6 @@ export function getOpenRouterKeys(config = {}, env = null) {
       const keys = filterValidKeys(list);
       if (keys.length) return keys;
     }
-    // Railway returns env vars as strings — parse them
     if (typeof list === 'string' && list.trim()) {
       const keys = filterValidKeys(parseEnvList(list));
       if (keys.length) return keys;
