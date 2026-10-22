@@ -146,7 +146,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--body);line-height:1
 .jb-sector.health{background:rgba(240,100,140,.1);border:1px solid rgba(240,100,140,.22);color:#f0648c}
 .jb-sector.creative{background:rgba(160,100,240,.1);border:1px solid rgba(160,100,240,.22);color:#a064f0}
 .jb-sector.engineering{background:rgba(240,196,74,.08);border:1px solid rgba(240,196,74,.2);color:#f0c44a}
-.jb-sector.ngo{background:rgba(74,196,160,.1);border:1px solid rgba(74,196,160,.22);color:#4ac4a0}
+.jb-sector.consulting{background:rgba(74,196,160,.1);border:1px solid rgba(74,196,160,.22);color:#4ac4a0}
 .jb-title{font-size:.9rem;font-weight:600;color:var(--txt);margin-bottom:5px;line-height:1.4}
 .jb-co{font-family:var(--mono);font-size:.72rem;color:var(--txt3);margin-bottom:10px}
 .jb-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
@@ -189,17 +189,17 @@ footer{text-align:center;padding:32px;border-top:1px solid var(--border);color:v
 <!-- HERO -->
 <div class="hero" id="heroSection">
   <div class="hero-eyebrow"><i class="fas fa-rocket"></i>&nbsp; CAREER ENGINE v2.0</div>
-  <h1 class="hero-title">Find your<br><span class="g">dream job in Bangladesh.</span></h1>
-  <p class="hero-sub">Tell us about yourself and our AI matches you to real career paths, tailored learning resources, and live job openings across Bangladesh.</p>
+  <h1 class="hero-title">Find your<br><span class="g">global career path.</span></h1>
+  <p class="hero-sub">Tell us about yourself and our AI matches you to international career paths, tailored learning resources, and official company career portals.</p>
   <button class="start-btn" onclick="beginEngine()"><i class="fas fa-chevron-right"></i>&nbsp; Start Career Assessment</button>
 </div>
 
 <!-- STATS -->
 <div class="stats-row" id="statsRow">
-  <div class="stat"><div class="stat-num">22+</div><div class="stat-lbl">JOB LISTINGS</div></div>
+  <div class="stat"><div class="stat-num">20+</div><div class="stat-lbl">GLOBAL EMPLOYERS</div></div>
   <div class="stat"><div class="stat-num">10</div><div class="stat-lbl">QUESTIONS</div></div>
   <div class="stat"><div class="stat-num">AI</div><div class="stat-lbl">MATCHED CAREER</div></div>
-  <div class="stat"><div class="stat-num">BD</div><div class="stat-lbl">JOB MARKET</div></div>
+  <div class="stat"><div class="stat-num">GLOBAL</div><div class="stat-lbl">CAREER MARKET</div></div>
 </div>
 
 <!-- QUESTIONS -->
@@ -225,7 +225,7 @@ footer{text-align:center;padding:32px;border-top:1px solid var(--border);color:v
     <div class="ll" id="l0">⬡ Reading your personality and values</div>
     <div class="ll" id="l1">⬡ Mapping career pathways to your profile</div>
     <div class="ll" id="l2">⬡ Finding the best learning resources</div>
-    <div class="ll" id="l3">⬡ Scanning Bangladesh job boards</div>
+    <div class="ll" id="l3">⬡ Matching international career pathways</div>
     <div class="ll" id="l4">⬡ Building your personalised roadmap</div>
   </div>
 </div>
@@ -247,7 +247,7 @@ footer{text-align:center;padding:32px;border-top:1px solid var(--border);color:v
       <div id="rArts"></div>
     </div>
     <div>
-      <div class="sec-h"><i class="fas fa-briefcase"></i>&nbsp; Matched Jobs in Bangladesh</div>
+      <div class="sec-h"><i class="fas fa-briefcase"></i>&nbsp; Global Company Career Paths</div>
       <div id="rJobs"></div>
     </div>
   </div>
@@ -257,8 +257,8 @@ footer{text-align:center;padding:32px;border-top:1px solid var(--border);color:v
 <!-- JOB BOARD -->
 <section class="jobs-section" id="jobsBoard">
   <div class="sec-header">
-    <h2><i class="fas fa-briefcase" style="color:var(--green);font-size:1.2rem;margin-right:10px"></i>Bangladesh Job Board</h2>
-    <p>Curated openings across top sectors — updated regularly.</p>
+    <h2><i class="fas fa-briefcase" style="color:var(--green);font-size:1.2rem;margin-right:10px"></i>International Company Career Paths</h2>
+    <p>Explore role pathways through official global employer career portals. Listings are examples, not claims of current vacancies.</p>
   </div>
   <div class="jboard-filters">
     <button class="jf active" onclick="setJF('ALL',this)">All Sectors</button>
@@ -267,7 +267,7 @@ footer{text-align:center;padding:32px;border-top:1px solid var(--border);color:v
     <button class="jf" onclick="setJF('health',this)">Healthcare</button>
     <button class="jf" onclick="setJF('engineering',this)">Engineering</button>
     <button class="jf" onclick="setJF('creative',this)">Creative</button>
-    <button class="jf" onclick="setJF('ngo',this)">NGO / Dev</button>
+    <button class="jf" onclick="setJF('consulting',this)">Consulting</button>
     <input class="jsearch" id="jsearch" placeholder="Search roles or companies..." oninput="renderJobs()"/>
   </div>
   <div class="jboard-grid" id="jboardGrid">
@@ -381,7 +381,7 @@ const QS = [
   {id:'collab',q:"How do you prefer to work?",hint:"",type:'chips',
    opts:['Independently — I work best alone','Small close-knit team','Large collaborative organisation','Leading and delegating to a team','Client-facing, external-relationship roles']},
   {id:'location',q:"Where do you want to work?",hint:"",type:'chips',
-   opts:['Dhaka — corporate or startup sector','Outside Dhaka — home city or region','Remote for global companies','Open to relocating abroad','Fully flexible — anywhere']},
+   opts:['Remote for an international company','Relocate to North America','Relocate to Europe','Relocate to Asia-Pacific','Relocate to the Middle East','Open to opportunities worldwide']},
   {id:'timeline',q:"What is your career urgency right now?",hint:"This shapes your roadmap timeline.",type:'chips',
    opts:['Need a role within 3 months','6 months to prepare','Planning a 1-year journey','1–2 years — building foundations','Exploring long-term options']},
 ];
@@ -476,13 +476,13 @@ function markL(i){
 }
 async function callGroq(){
   const profile=Object.entries(ans).map(([k,v])=>`${k}: ${v}`).join('\n');
-  const sys=`You are an expert career counsellor for the Bangladesh job market.
+  const sys=`You are an international career counsellor advising learners about global companies and careers across regions.
 Return ONLY a valid JSON object — no markdown, no backticks — with keys:
 1. "career": Specific job title
 2. "summary": 2-3 personalised sentences on why this role suits them
 3. "roadmap": [{step,title,duration}] x5
 4. "articles": [{title,url,source,description}] x5 — real URLs from Coursera, freeCodeCamp, HBR, Medium, LinkedIn Learning, dev.to
-5. "jobs": [{title,company,url,tags,requirements}] x5 — real Bangladesh job URLs: bdjobs.com, linkedin.com/jobs, chakri.com, or company career pages`;
+5. "jobs": [{title,company,url,tags,requirements}] x5 — international role pathways linked to official global company career portals. Do not claim that a specific vacancy is currently open; never use single-country job boards or employers. Respect the learner's location and relocation preferences from their assessment.`;
   try {
     if(!GROQ_KEY) throw new Error('API key not loaded — check /api/groq-key endpoint.');
     const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
@@ -497,17 +497,24 @@ Return ONLY a valid JSON object — no markdown, no backticks — with keys:
     [0,1,2,3,4].forEach(i=>markL(i)); await wait(400); showResults(parsed);
   } catch(err){
     console.error(err); [0,1,2,3,4].forEach(i=>markL(i)); await wait(300);
-    showResults({career:'Analysis Unavailable',summary:`Error: ${err.message}`,roadmap:[],articles:[],jobs:[]});
+    showResults({
+      career:'International Career Opportunities',
+      summary:'Explore these career paths and official global employer portals while personalized recommendations are unavailable.',
+      roadmap:[],
+      articles:[],
+      jobs:fallbackOpportunityJobs(),
+    });
   }
 }
 function showResults(d){
+  const jobs = Array.isArray(d.jobs) && d.jobs.length ? d.jobs : fallbackOpportunityJobs();
   document.getElementById('analysing').classList.remove('show');
   document.getElementById('results').classList.add('show');
   document.getElementById('rCareer').textContent=d.career||'';
   document.getElementById('rSum').textContent=d.summary||'';
   document.getElementById('rRoad').innerHTML=(d.roadmap||[]).map(s=>`<div class="rm"><div class="rm-n">STEP ${s.step}</div><div class="rm-t">${s.title}</div><div class="rm-d">${s.duration}</div></div>`).join('');
   document.getElementById('rArts').innerHTML=(d.articles||[]).map(a=>`<a class="art-card" href="${a.url}" target="_blank" rel="noopener"><div class="art-src">${a.source}</div><div class="art-title">${a.title}</div><div class="art-desc">${a.description}</div></a>`).join('');
-  document.getElementById('rJobs').innerHTML=(d.jobs||[]).map(j=>`<a class="job-card" href="${j.url}" target="_blank" rel="noopener"><div class="job-co">${j.company}</div><div class="job-t">${j.title}</div><div class="job-tags">${(j.tags||[]).map(t=>`<span class="job-tag">${t}</span>`).join('')}</div><div class="job-r">${j.requirements}</div></a>`).join('');
+  document.getElementById('rJobs').innerHTML=jobs.map(j=>`<a class="job-card" href="${j.url}" target="_blank" rel="noopener"><div class="job-co">${j.company}</div><div class="job-t">${j.title}</div><div class="job-tags">${(j.tags||[]).map(t=>`<span class="job-tag">${t}</span>`).join('')}</div><div class="job-r">${j.requirements}</div></a>`).join('');
   if(window.speechSynthesis&&d.career&&!d.career.includes('Unavailable')){
     speak(`Your career match is ${d.career}. ${d.summary}`);
   }
@@ -527,29 +534,51 @@ function restart(){
 
 // ── JOB BOARD ──
 const JOBS=[
-  {sector:'tech',title:'Software Engineer (Backend)',company:'Brain Station 23',tags:['Node.js','REST API','PostgreSQL'],salary:'BDT 60–90k/mo',type:'Full-time',link:'https://brainstation-23.com/career'},
-  {sector:'tech',title:'AI / ML Engineer',company:'Pathao',tags:['Python','TensorFlow','Data Pipelines'],salary:'BDT 80–120k/mo',type:'Full-time',link:'https://pathao.com/bn/career/'},
-  {sector:'tech',title:'Frontend Developer (React)',company:'BJIT Group',tags:['React','TypeScript','Figma'],salary:'BDT 50–75k/mo',type:'Full-time',link:'https://bjitgroup.com/career'},
-  {sector:'tech',title:'DevOps Engineer',company:'Grameenphone',tags:['AWS','Kubernetes','CI/CD'],salary:'BDT 90–130k/mo',type:'Full-time',link:'https://www.grameenphone.com/about/corporate-information/career'},
-  {sector:'tech',title:'Product Manager — Fintech',company:'bKash',tags:['Roadmapping','Agile','Analytics'],salary:'BDT 100–150k/mo',type:'Full-time',link:'https://www.bkash.com/about/career'},
-  {sector:'tech',title:'UX / UI Designer',company:'Daraz BD',tags:['Figma','User Research','Prototyping'],salary:'BDT 45–70k/mo',type:'Full-time',link:'https://careers.daraz.com/'},
-  {sector:'finance',title:'Credit Risk Analyst',company:'Dutch-Bangla Bank',tags:['Excel','Financial Modelling','SQL'],salary:'BDT 55–80k/mo',type:'Full-time',link:'https://www.dutchbanglabank.com/career/career.html'},
-  {sector:'finance',title:'Investment Banking Associate',company:'BRAC Bank',tags:['CFA','DCF Valuation','M&A'],salary:'BDT 90–140k/mo',type:'Full-time',link:'https://www.bracbank.com/en/career'},
-  {sector:'finance',title:'Financial Analyst',company:'Robi Axiata',tags:['FP&A','SAP','Reporting'],salary:'BDT 60–90k/mo',type:'Full-time',link:'https://www.robi.com.bd/en/corporate/career'},
-  {sector:'finance',title:'Fintech Product Analyst',company:'Nagad',tags:['MFS','Data Analysis','KPI Tracking'],salary:'BDT 50–75k/mo',type:'Full-time',link:'https://bdjobs.com'},
-  {sector:'health',title:'Medical Affairs Officer',company:'Square Pharma',tags:['MBBS/Pharm','Regulatory','Documentation'],salary:'BDT 50–70k/mo',type:'Full-time',link:'https://www.squarepharma.com.bd/career.php'},
-  {sector:'health',title:'Public Health Specialist',company:'BRAC Health',tags:['MPH','Field Coordination','DHIS2'],salary:'BDT 55–80k/mo',type:'Contract',link:'https://careers.brac.net/'},
-  {sector:'health',title:'Hospital IT Systems Analyst',company:'Square Hospital',tags:['HIS','SQL','Healthcare IT'],salary:'BDT 45–65k/mo',type:'Full-time',link:'https://bdjobs.com'},
-  {sector:'engineering',title:'Telecom Network Engineer',company:'Ericsson BD',tags:['4G/5G','RAN','Network Optimisation'],salary:'BDT 80–120k/mo',type:'Full-time',link:'https://www.ericsson.com/en/careers'},
-  {sector:'engineering',title:'R&D Electronics Engineer',company:'Walton Hi-Tech',tags:['PCB Design','Embedded C','Prototyping'],salary:'BDT 50–80k/mo',type:'Full-time',link:'https://waltonbd.com/page/career'},
-  {sector:'engineering',title:'Civil / Infrastructure Engineer',company:'Chattogram Port Authority',tags:['AutoCAD','Structural','Project Mgmt'],salary:'BDT 60–90k/mo',type:'Full-time',link:'https://cpa.gov.bd/'},
-  {sector:'creative',title:'Content & Brand Strategist',company:'Daraz BD',tags:['Copywriting','SEO','Social Media'],salary:'BDT 40–60k/mo',type:'Full-time',link:'https://careers.daraz.com/'},
-  {sector:'creative',title:'Motion Designer / Video Editor',company:'Grameenphone Digital',tags:['After Effects','Premiere','Storytelling'],salary:'BDT 35–55k/mo',type:'Full-time',link:'https://www.grameenphone.com/about/corporate-information/career'},
-  {sector:'creative',title:'Digital Marketing Manager',company:'Robi Axiata',tags:['Google Ads','Meta Ads','Analytics'],salary:'BDT 60–90k/mo',type:'Full-time',link:'https://www.robi.com.bd/en/corporate/career'},
-  {sector:'ngo',title:'Programme Manager — Livelihoods',company:'BRAC',tags:['Project Cycle Mgmt','M&E','Budget Mgmt'],salary:'BDT 70–100k/mo',type:'Full-time',link:'https://careers.brac.net/'},
-  {sector:'ngo',title:'Research Analyst — Social Development',company:'BRAC Institute',tags:['Quantitative','Stata/R','Report Writing'],salary:'BDT 55–80k/mo',type:'Full-time',link:'https://careers.brac.net/'},
-  {sector:'ngo',title:'Monitoring & Evaluation Officer',company:'CARE Bangladesh',tags:['Data Collection','KoboToolbox','Reporting'],salary:'BDT 50–75k/mo',type:'Contract',link:'https://bdjobs.com'},
+  {sector:'tech',title:'Software Engineer',company:'Google',tags:['Distributed systems','Cloud','Programming'],link:'https://www.google.com/about/careers/applications/'},
+  {sector:'tech',title:'Cloud Solutions Architect',company:'Microsoft',tags:['Azure','Architecture','Enterprise'],link:'https://careers.microsoft.com/v2/global/en/home.html'},
+  {sector:'tech',title:'Machine Learning Engineer',company:'Amazon',tags:['Python','Machine learning','AWS'],link:'https://www.amazon.jobs/en/'},
+  {sector:'tech',title:'AI Research Engineer',company:'NVIDIA',tags:['Deep learning','CUDA','Research'],link:'https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite'},
+  {sector:'tech',title:'Product Designer',company:'Adobe',tags:['UX research','Prototyping','Creative tools'],link:'https://careers.adobe.com/us/en'},
+  {sector:'finance',title:'Investment Banking Analyst',company:'JPMorgan Chase',tags:['Financial modelling','Valuation','Markets'],link:'https://careers.jpmorgan.com/global/en'},
+  {sector:'finance',title:'Payments Strategy Analyst',company:'Visa',tags:['Payments','Analytics','Strategy'],link:'https://www.visa.com/careers.html'},
+  {sector:'finance',title:'Financial Data Analyst',company:'Stripe',tags:['SQL','Payments','Data analysis'],link:'https://stripe.com/jobs'},
+  {sector:'health',title:'Clinical Research Associate',company:'Pfizer',tags:['Clinical trials','GCP','Research'],link:'https://careers.pfizer.com/'},
+  {sector:'health',title:'Biostatistician',company:'Novartis',tags:['Statistics','Clinical data','R'],link:'https://www.novartis.com/careers'},
+  {sector:'health',title:'Biomedical Data Scientist',company:'Roche',tags:['Bioinformatics','Python','Healthcare'],link:'https://careers.roche.com/global/en'},
+  {sector:'engineering',title:'Automation Engineer',company:'Siemens',tags:['Automation','PLC','Industry 4.0'],link:'https://jobs.siemens.com/careers'},
+  {sector:'engineering',title:'Aerospace Systems Engineer',company:'Airbus',tags:['Systems engineering','Safety','Aerospace'],link:'https://www.airbus.com/en/careers'},
+  {sector:'engineering',title:'Manufacturing Engineer',company:'Tesla',tags:['Manufacturing','Quality','Process design'],link:'https://www.tesla.com/careers'},
+  {sector:'creative',title:'Product Content Designer',company:'Canva',tags:['Content design','UX writing','Design systems'],link:'https://www.canva.com/careers/'},
+  {sector:'creative',title:'Creative Producer',company:'Netflix',tags:['Production','Storytelling','Collaboration'],link:'https://jobs.netflix.com/'},
+  {sector:'creative',title:'Music Data Analyst',company:'Spotify',tags:['SQL','Streaming','Analytics'],link:'https://www.lifeatspotify.com/jobs'},
+  {sector:'consulting',title:'Technology Consultant',company:'Accenture',tags:['Digital transformation','Cloud','Consulting'],link:'https://www.accenture.com/us-en/careers'},
+  {sector:'consulting',title:'Business Analyst',company:'Deloitte',tags:['Business analysis','Strategy','Communication'],link:'https://www.deloitte.com/global/en/careers.html'},
+  {sector:'consulting',title:'Strategy Consultant',company:'McKinsey & Company',tags:['Problem solving','Research','Strategy'],link:'https://www.mckinsey.com/careers'},
 ];
+
+function fallbackOpportunityJobs(){
+  const sectors = (ans.sectors || '').toLowerCase();
+  const sectorPatterns = [
+    {sector:'tech', pattern:/technology|software|e-commerce|telecommunications/},
+    {sector:'finance', pattern:/finance|banking/},
+    {sector:'health', pattern:/healthcare|health|biotech/},
+    {sector:'engineering', pattern:/engineering|manufacturing/},
+    {sector:'creative', pattern:/media|creative arts/},
+  ];
+  const preferred = sectorPatterns
+    .filter(({pattern})=>pattern.test(sectors))
+    .map(({sector})=>sector);
+  const ranked = preferred.length
+    ? [...JOBS.filter(job=>preferred.includes(job.sector)), ...JOBS.filter(job=>!preferred.includes(job.sector))]
+    : JOBS;
+  return ranked.slice(0,5).map(job=>({
+    title:job.title,
+    company:job.company,
+    url:job.link,
+    tags:job.tags,
+    requirements:`Explore ${job.tags.join(', ')} opportunities through the company career portal.`,
+  }));
+}
 
 let jobFilter='ALL';
 function setJF(f,btn){
@@ -568,7 +597,7 @@ function renderJobs(){
       <div class="jb-title">${j.title}</div>
       <div class="jb-co"><i class="fas fa-building" style="font-size:.6rem;margin-right:5px"></i>${j.company}</div>
       <div class="jb-tags">${j.tags.map(t=>`<span class="jb-tag">${t}</span>`).join('')}</div>
-      <div class="jb-meta"><span class="jb-salary">${j.salary}</span><span class="jb-type">${j.type}</span></div>
+      <div class="jb-meta"><span class="jb-salary">Official career portal</span><span class="jb-type">Explore roles ↗</span></div>
     </a>`).join('');
 }
 

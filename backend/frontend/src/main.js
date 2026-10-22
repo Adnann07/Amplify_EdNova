@@ -44,6 +44,35 @@ function stopVoice() {
 document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.lang = 'en';
 
+    const headline = document.querySelector('.hero-headline');
+    const headlineLines = headline
+        ? [...headline.querySelectorAll('.hero-line-1, .hero-line-2')]
+        : [];
+    if (headlineLines.length && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const fullText = headlineLines.map(line => line.textContent);
+        headline.classList.add('is-typing');
+        headlineLines.forEach(line => { line.textContent = ''; });
+        let lineIndex = 0;
+        let characterIndex = 0;
+        const typeNextCharacter = () => {
+            if (lineIndex >= headlineLines.length) {
+                headline.classList.remove('is-typing');
+                return;
+            }
+            const text = fullText[lineIndex];
+            headlineLines[lineIndex].textContent = text.slice(0, ++characterIndex);
+            if (characterIndex >= text.length) {
+                lineIndex += 1;
+                characterIndex = 0;
+                if (lineIndex === 1) headline.classList.add('typing-second-line');
+                window.setTimeout(typeNextCharacter, 180);
+                return;
+            }
+            window.setTimeout(typeNextCharacter, 48);
+        };
+        window.setTimeout(typeNextCharacter, 220);
+    }
+
     // Animate cards into view on scroll
     const observer = new IntersectionObserver(
         (entries) => {

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#faf6ec">
+  <title>PDF Tutor — Amplify</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/study-assistant.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/index.html"><span class="brand-mark">A</span> Amplify</a>
+    <div class="topbar-links">
+      <a href="/classroomai.html">Classroom AI</a>
+      <a href="/teacher/index.html">Teacher Dashboard</a>
+      <a href="/index.html">Home</a>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="intro">
+      <p class="eyebrow">YOUR PERSONAL LEARNING COMPANION</p>
+      <h1>Understand it, <span>your way.</span></h1>
+      <p>Bring your notes. We’ll find the clearest path through them, together.</p>
+    </section>
+
+    <div class="learning-grid">
+      <aside class="setup-column">
+        <section class="card upload-card" aria-labelledby="uploadTitle">
+          <div class="section-heading">
+            <span class="step-number">01</span>
+            <div><h2 id="uploadTitle">Add your material</h2><p>Choose a PDF to study from</p></div>
+          </div>
+          <label class="dropzone" id="dropzone" for="pdfFile">
+            <span class="upload-icon" aria-hidden="true">↑</span>
+            <strong>Drop a PDF here</strong>
+            <span>or browse your files · up to 20 MB</span>
+            <input id="pdfFile" type="file" accept="application/pdf,.pdf">
+          </label>
+          <div class="file-status" id="fileStatus" role="status" aria-live="polite">Your PDF is read in this browser. Only relevant extracted text is sent to the AI tutor.</div>
+          <div class="progress-wrap hidden" id="progressWrap">
+            <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+            <p id="progressText" aria-live="polite"></p>
+          </div>
+        </section>
+
+        <form class="card diagnostic-card" id="diagnosticForm">
+          <div class="section-heading">
+            <span class="step-number">02</span>
+            <div><h2>Let’s find your fit</h2><p>A short learning check-in</p></div>
+          </div>
+          <label class="field-label" for="levelSelect">How familiar are you with this topic?</label>
+          <select id="levelSelect">
+            <option value="beginner">I’m new to it</option>
+            <option value="intermediate">I know a few basics</option>
+            <option value="advanced">I’m ready to go deeper</option>
+          </select>
+          <label class="field-label" for="styleSelect">What usually helps you understand?</label>
+          <select id="styleSelect">
+            <option value="simple analogies">Simple analogies</option>
+            <option value="step-by-step reasoning">Step-by-step reasoning</option>
+            <option value="visual descriptions">Visual descriptions</option>
+            <option value="practical everyday examples">Everyday examples</option>
+            <option value="practice and repetition">Practice and repetition</option>
+            <option value="direct problem-solving">Direct problem-solving</option>
+          </select>
+          <label class="field-label" for="languageSelect">Learning language</label>
+          <select id="languageSelect">
+            <option value="English">English</option>
+            <option value="French">Français</option>
+            <option value="Moroccan Darija">Darija</option>
+            <option value="Arabic">العربية</option>
+          </select>
+          <label class="field-label" for="priorKnowledge">Quick check: what can you already explain? <span>(optional)</span></label>
+          <textarea id="priorKnowledge" rows="3" placeholder="Describe one idea from the PDF in your own words…"></textarea>
+          <button class="primary-button" id="startLesson" type="submit" disabled>Analyze &amp; start lesson</button>
+        </form>
+
+        <section class="card profile-card hidden" id="profileCard" aria-live="polite">
+          <span class="profile-kicker">YOUR LEARNING PLAN</span>
+          <p id="profileSummary"></p>
+          <button class="text-button" id="editProfile" type="button">Adjust my preferences</button>
+        </section>
+      </aside>
+
+      <section class="card tutor-card" aria-labelledby="tutorTitle">
+        <div class="tutor-header">
+          <div class="tutor-avatar" aria-hidden="true">✦</div>
+          <div><h2 id="tutorTitle">Your AI tutor</h2><p id="tutorStatus">Start by adding a PDF and completing your learning check-in.</p></div>
+          <span class="live-pill"><i></i> READY WHEN YOU ARE</span>
+        </div>
+        <div class="chat-messages" id="chatMessages" aria-live="polite" aria-relevant="additions">
+          <div class="welcome-message">
+            <span class="welcome-spark">✦</span>
+            <h3>Curiosity is a great place to start.</h3>
+            <p>Upload class notes or a textbook chapter. I’ll read selectable text and use OCR for scanned pages, then adapt explanations to your level, language, and preferred way of learning.</p>
+            <div class="welcome-tags"><span>Hints before answers</span><span>Four languages</span><span>Built around your PDF</span></div>
+          </div>
+        </div>
+        <form class="chat-composer" id="chatForm">
+          <label class="sr-only" for="messageInput">Ask a question about your PDF</label>
+          <textarea id="messageInput" rows="1" placeholder="Upload a PDF and start your learning check-in first…" disabled></textarea>
+          <button type="submit" id="sendButton" aria-label="Send question" disabled>↑</button>
+          <p>Hints come first; ask for a full explanation whenever you’re ready.</p>
+        </form>
+      </section>
+    </div>
+  </main>
+  <script type="module" src="/src/study-assistant.js"></script>
+</body>
+</html>

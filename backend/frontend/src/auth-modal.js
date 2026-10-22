@@ -34,6 +34,8 @@
     },
     isLoggedIn() { return !!this.token(); },
   };
+  const BYPASS_KEY = 'amplify_auth_bypass';
+  const isGuestAccessEnabled = () => sessionStorage.getItem(BYPASS_KEY) === '1';
 
   // ── Determine current portal ───────────────────────────────────────────
   const isTeacherPortal = window.location.pathname.startsWith('/teacher');
@@ -49,6 +51,7 @@
     } else if (user.role === 'student' && isTeacherPortal) {
       window.location.replace('/index.html');
     }
+
   }
 
   // ── API calls ──────────────────────────────────────────────────────────
@@ -100,6 +103,14 @@
         box-shadow: 0 40px 100px rgba(0,0,0,0.6);
         position: relative;
       }
+
+      .am-close {
+        position: absolute; top: 14px; right: 16px;
+        border: 0; background: transparent; color: #888;
+        font: inherit; font-size: 24px; line-height: 1;
+        padding: 6px; cursor: pointer;
+      }
+      .am-close:hover { color: #fff; }
 
       #amplify-auth-box .am-logo {
         font-size: 22px; font-weight: 800; letter-spacing: -0.04em;
@@ -197,6 +208,7 @@
 
     overlay.innerHTML = `
       <div id="amplify-auth-box">
+        <button class="am-close" type="button" aria-label="Continue without signing in" title="Continue without signing in">×</button>
         <div class="am-logo">Amplify</div>
         <div class="am-subtitle">Your Student & Educator Platform</div>
 
@@ -267,6 +279,7 @@
     `;
 
     document.body.appendChild(overlay);
+    overlay.querySelector('.am-close').addEventListener('click', continueWithoutSigningIn);
     requestAnimationFrame(() => overlay.classList.add('visible'));
   }
 
@@ -317,6 +330,11 @@
       overlay.style.opacity = '0';
       setTimeout(() => overlay.remove(), 300);
     }
+  }
+
+  function continueWithoutSigningIn() {
+    sessionStorage.setItem(BYPASS_KEY, '1');
+    dismissModal();
   }
 
   // ── Login ──────────────────────────────────────────────────────────────
@@ -382,7 +400,7 @@
   function init() {
     enforcePortalAccess();
 
-    if (!Auth.isLoggedIn()) {
+    if (!Auth.isLoggedIn() && !isGuestAccessEnabled()) {
       injectStyles();
       buildModal();
     }
@@ -399,6 +417,7 @@
         });
       } catch (_) {}
       Auth.clear();
+      sessionStorage.removeItem(BYPASS_KEY);
       window.location.replace('/');
     };
   }

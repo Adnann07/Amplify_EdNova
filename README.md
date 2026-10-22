@@ -93,6 +93,7 @@ The Amplify Tutor is the core learning engine that provides one-on-one adaptive 
 
 - **Document Processing**: PDF parsing, OCR for scanned documents, semantic chunking (300 words with 60-word overlap)
 - **Conversational AI**: Multi-turn dialogue with context retention, RAG-based responses, contextual quizzes
+- **Accessible PDF Tutor**: Upload PDFs for text extraction and vision OCR, then get hint-first, level- and learning-style-adapted Groq responses in English, French, Arabic, or Moroccan Darija, with browser text-to-speech. Groq requests go through the FastAPI `/api/pdf-tutor/chat` endpoint, use the same server-side Groq configuration as AI Classroom and Deep Learn, and fall back across the shared Groq model set. Open `backend/frontend/pdf-tutor.html`.
 - **Visual Animation**: Manim-powered animated explanations of lesson topics
 - **Attention Monitoring**: Real-time facial expression recognition with distraction warnings (5-8 second threshold)
 
@@ -177,12 +178,12 @@ Three AI experts (Dr. Arif, Dr. Nafisa, Dr. Rakib) debate topics from different 
 
 ### 8. **Career Engine** (Opportunity Matching)
 
-AI-powered career guidance matching students to scholarships, internships, and job opportunities.
+AI-powered career guidance that matches learners to international career paths and official employer career portals.
 
 **Features:**
-- Live integration with scholarship and internship platforms
-- Profile-based matching (GPA, skills, preferences)
-- Hybrid recommendation engine (collaborative + content-based)
+- Profile-based career assessment and personalized learning roadmaps
+- International employer examples across technology, finance, healthcare, engineering, creative, and consulting careers
+- Links to official company career portals; example roles are not a feed of verified live vacancies
 
 ---
 

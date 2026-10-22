@@ -270,6 +270,32 @@ body::after {
     text-shadow: var(--glow-green);
     position: relative;
 }
+.hero-headline.is-typing .hero-line-1,
+.hero-headline.is-typing .hero-line-2 {
+    min-height: 1.04em;
+}
+.hero-headline.is-typing .hero-line-1::after,
+.hero-headline.is-typing.typing-second-line .hero-line-2::after {
+    content: '';
+    display: inline-block;
+    height: 0.85em;
+    margin-left: 0.08em;
+    border-right: 2px solid currentColor;
+    vertical-align: -0.05em;
+    animation: headline-caret 0.8s steps(1) infinite;
+}
+.hero-headline.is-typing:not(.typing-second-line) .hero-line-2::after {
+    display: none;
+}
+@keyframes headline-caret {
+    50% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-headline.is-typing .hero-line-1::after,
+    .hero-headline.is-typing.typing-second-line .hero-line-2::after {
+        animation: none;
+    }
+}
 
 .hero-sub {
     font-size: 16.5px;

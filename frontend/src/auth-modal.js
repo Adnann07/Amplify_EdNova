@@ -101,6 +101,16 @@
         position: relative;
       }
 
+      #amplify-auth-close {
+        position: absolute; top: 14px; right: 14px;
+        width: 36px; height: 36px; border: none; border-radius: 50%;
+        background: rgba(255,255,255,0.08); color: #aaa;
+        font-size: 24px; line-height: 1; cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+      }
+      #amplify-auth-close:hover { background: rgba(255,255,255,0.16); color: #fff; }
+      #amplify-auth-close:focus-visible { outline: 2px solid #00ff88; outline-offset: 2px; }
+
       #amplify-auth-box .am-logo {
         font-size: 22px; font-weight: 800; letter-spacing: -0.04em;
         background: linear-gradient(135deg,#fff,#00ff88);
@@ -197,6 +207,7 @@
 
     overlay.innerHTML = `
       <div id="amplify-auth-box">
+        <button id="amplify-auth-close" type="button" aria-label="Close sign-in dialog" title="Continue without signing in" onclick="amplifyAuthDismiss()">×</button>
         <div class="am-logo">Amplify</div>
         <div class="am-subtitle">Your Student & Educator Platform</div>
 
@@ -318,6 +329,8 @@
       setTimeout(() => overlay.remove(), 300);
     }
   }
+
+  window.amplifyAuthDismiss = dismissModal;
 
   // ── Login ──────────────────────────────────────────────────────────────
   window.amplifyAuthLogin = async function () {

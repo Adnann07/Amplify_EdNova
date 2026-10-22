@@ -668,6 +668,7 @@ const MODELS = [
   { id:'digestive_system', file:`${MODEL_BASE_PATH}/digestive_system_human_anatomy.glb`, name:'Digestive System',           category:'Digestive Anatomy', icon:'🍽️', color:'#a3e635', desc:'Complete digestive tract from esophagus to intestines. Breaks down food and absorbs nutrients.',                                                                tags:['Digestion','Organs','Nutrient Absorption'] },
   { id:'dna',           file:`${MODEL_BASE_PATH}/dna.glb`,                            name:'DNA Double Helix',               category:'Genetics',          icon:'🧬', color:'#38bdf8', desc:'The blueprint of life — double helix structure storing genetic information. Base pairs: A-T, C-G.',                                                               tags:['Genetics','Molecular','Heredity'] },
   { id:'cerebellum',    file:`${MODEL_BASE_PATH}/cerebellum.glb`,                     name:'Cerebellum',                     category:'Neuroscience',      icon:'🧠', color:'#f05b8b', desc:'The cerebellum coordinates voluntary movements, balance, and fine motor skills. It contains more neurons than the rest of the brain combined.',                    tags:['Nervous System','Brain','Motor Control'] },
+  { id:'brain',         file:`${MODEL_BASE_PATH}/brain_hologram.glb`,                 name:'Human Brain',                    category:'Neuroscience',      icon:'🧠', color:'#a78bfa', desc:'Explore the major regions of the human brain, which processes sensory information and coordinates thought, memory, emotion, and movement.',                            tags:['Nervous System','Brain','Cognition'] },
   { id:'humerus',       file:`${MODEL_BASE_PATH}/human_humerus_bone.glb`,             name:'Humerus Bone',                   category:'Skeletal System',   icon:'🦴', color:'#f0c44a', desc:'The humerus is the long bone of the upper arm, connecting the shoulder to the elbow.',                                                                           tags:['Skeletal','Upper Limb','Bone'] },
   { id:'ribs',          file:`${MODEL_BASE_PATH}/low_poly_skeleton_ribs.glb`,         name:'Rib Cage',                       category:'Skeletal System',   icon:'🫁', color:'#f0c44a', desc:'The thoracic cage formed by 12 pairs of ribs protects the heart and lungs while enabling breathing.',                                                            tags:['Skeletal','Thorax','Protection'] },
   { id:'phospholipid',  file:`${MODEL_BASE_PATH}/Phospholipid_bilayer_Beige.glb`,     name:'Phospholipid Bilayer',           category:'Cell Biology',      icon:'🔬', color:'#4af0c4', desc:'The fundamental structure of all cell membranes — two layers of phospholipid molecules creating a selectively permeable barrier.',                             tags:['Cell Membrane','Biochemistry','Lipids'] },
@@ -1112,6 +1113,12 @@ const PREDEFINED_SEGMENTS = {
     { label:'Deep nuclei', text:'Deep cerebellar nuclei relay output from the cerebellum to other parts of the brain.', zoom:1.5, phi:1.2, theta:0.8 },
     { label:'Vermis', text:'The vermis is the central region of the cerebellum and helps coordinate posture and movements around the body midline.', zoom:1.6, phi:0.7, theta:1.2 },
   ],
+  brain: [
+    { label:'Overview', text:'The brain receives and processes information, coordinates movement, and supports memory, emotion, and thought.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
+    { label:'Cerebrum', text:'The cerebrum is the largest brain region and supports conscious thought, language, sensory processing, and voluntary movement.', zoom:1.8, phi:0.9, theta:0.3 },
+    { label:'Cerebellum', text:'The cerebellum helps coordinate balance, posture, and precise movements.', zoom:1.7, phi:1.2, theta:0.8 },
+    { label:'Brain stem', text:'The brain stem connects the brain with the spinal cord and helps regulate essential functions such as breathing and heart rate.', zoom:1.6, phi:0.8, theta:1.0 },
+  ],
   humerus: [
     { label:'Overview', text:'The humerus is the long bone of the upper arm, extending from the shoulder to the elbow.', zoom:2.8, phi:Math.PI/2, theta:0.0 },
     { label:'Humeral head', text:'The rounded head of the humerus meets the shoulder blade to form a ball-and-socket joint.', zoom:1.8, phi:0.7, theta:0.2 },
@@ -1145,9 +1152,24 @@ async function fetchGroqVoiceover(modelName, signal) {
     body: JSON.stringify({ model_name: modelName }),
     signal,
   });
-  const data = await response.json();
+  const responseText = await response.text();
+  let data = null;
+  if (responseText.trim()) {
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      throw new Error(response.ok
+        ? 'The voiceover service returned an unreadable response.'
+        : `The voiceover service returned an invalid response (HTTP ${response.status}).`);
+    }
+  } else if (!response.ok) {
+    throw new Error(`The Biology API is unavailable (HTTP ${response.status}). Start the API backend on port 8001 and try again.`);
+  } else {
+    throw new Error('The voiceover service returned an empty response.');
+  }
   if (!response.ok) {
-    throw new Error(data.detail || `Voiceover request failed (${response.status}).`);
+    const detail = data && typeof data === 'object' && typeof data.detail === 'string' ? data.detail : '';
+    throw new Error(detail || `Voiceover request failed (${response.status}).`);
   }
   if (!Array.isArray(data.segments) || data.segments.length !== 4
       || data.segments.some(segment => !segment.label || !segment.text)) {

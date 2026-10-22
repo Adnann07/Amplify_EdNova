@@ -295,29 +295,27 @@ const API = '/api';
 let currentUser = null;
 let classrooms  = [];
 let activeClassroom = null;
+let notificationPollTimer = null;
+let visibleNotificationIds = new Set();
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('amplify_token');
-  // #region agent log
-  fetch('http://127.0.0.1:7855/ingest/88b42546-15d9-45dd-bbc9-809da1e8d15f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8bf0d0'},body:JSON.stringify({sessionId:'8bf0d0',runId:'pre-fix',hypothesisId:'A',location:'classroom.html:DOMContentLoaded',message:'bootstrap start',data:{hasToken:!!token,apiBase:API,origin:location.origin},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   if (!token) { redirectToLogin(); return; }
 
   try {
     const r = await api('GET', '/user');
     currentUser = r.user;
-    // #region agent log
-    fetch('http://127.0.0.1:7855/ingest/88b42546-15d9-45dd-bbc9-809da1e8d15f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8bf0d0'},body:JSON.stringify({sessionId:'8bf0d0',runId:'pre-fix',hypothesisId:'A',location:'classroom.html:DOMContentLoaded',message:'loaded currentUser',data:{userType:typeof currentUser,hasUser:!!currentUser,role:currentUser?.role||null,userId:currentUser?.id||null},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     renderSidebarUser();
     await loadClassrooms();
     showView('classrooms');
-  } catch (e) {
-    // #region agent log
-    fetch('http://127.0.0.1:7855/ingest/88b42546-15d9-45dd-bbc9-809da1e8d15f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8bf0d0'},body:JSON.stringify({sessionId:'8bf0d0',runId:'pre-fix',hypothesisId:'B',location:'classroom.html:DOMContentLoaded',message:'bootstrap failed; redirecting',data:{errorName:e?.name||null,errorMessage:e?.message||String(e)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-    redirectToLogin();
+  } catch (error) {
+    document.getElementById('mainArea').innerHTML = `
+      <div style="text-align:center;padding:80px 20px;">
+        <div class="page-title">Unable to load classrooms</div>
+        <p class="page-sub">${esc(error.message)}</p>
+        <a href="/index.html" class="btn btn-primary" style="display:inline-flex;margin-top:20px;">Go to Home</a>
+      </div>`;
   }
 });
 
@@ -335,62 +333,22 @@ function redirectToLogin() {
 // ─── API helper ───────────────────────────────────────────────────────────────
 async function api(method, path, body) {
   const token = localStorage.getItem('amplify_token');
-  const url = API + path;
-  // #region agent log
-  fetch('http://127.0.0.1:7855/ingest/88b42546-15d9-45dd-bbc9-809da1e8d15f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8bf0d0'},body:JSON.stringify({sessionId:'8bf0d0',runId:'pre-fix',hypothesisId:'C',location:'classroom.html:api',message:'api request',data:{method,path,url,hasToken:!!token,hasBody:!!body},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-
-  let res;
-  try {
-    res = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    });
-  } catch (e) {
-    // #region agent log
-    fetch('http://127.0.0.1:7855/ingest/88b42546-15d9-45dd-bbc9-809da1e8d15f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8bf0d0'},body:JSON.stringify({sessionId:'8bf0d0',runId:'pre-fix',hypothesisId:'C',location:'classroom.html:api',message:'fetch threw (likely CORS/network)',data:{method,path,url,errorName:e?.name||null,errorMessage:e?.message||String(e)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-    const msg = (e && e.name === 'TypeError' && String(e.message || '').toLowerCase().includes('fetch'))
-      ? 'Cannot reach the API (likely CORS). Ensure your backend allows Origin http://localhost:5173.'
-      : (e?.message || String(e));
-    throw new Error(msg);
-  }
-
-  // #region agent log
-  fetch('http://127.0.0.1:7855/ingest/88b42546-15d9-45dd-bbc9-809da1e8d15f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8bf0d0'},body:JSON.stringify({sessionId:'8bf0d0',runId:'pre-fix',hypothesisId:'D',location:'classroom.html:api',message:'api response headers',data:{method,path,url,status:res.status,ok:res.ok,contentType:res.headers.get('content-type')},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-
+  const res = await fetch(API + path, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
   const contentType = (res.headers.get('content-type') || '').toLowerCase();
   if (contentType.includes('text/html') && res.ok) {
-    // Most commonly: Vite dev server served index.html because /api wasn't proxied.
-    throw new Error('API misrouted: received HTML from /api. Ensure Vite proxy for /api points to Laravel (127.0.0.1:8888) and restart Vite.');
+    throw new Error('The API returned HTML instead of JSON. Check that the Laravel API is running and the /api proxy is configured.');
   }
 
-  // Capture a small snippet for debugging server-side 4xx/5xx.
-  // (We avoid logging full bodies to prevent accidental sensitive data exposure.)
-  if (!res.ok) {
-    res.clone().text().then((t) => {
-      const snippet = String(t || '').slice(0, 240);
-      // #region agent log
-      fetch('http://127.0.0.1:7855/ingest/88b42546-15d9-45dd-bbc9-809da1e8d15f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8bf0d0'},body:JSON.stringify({sessionId:'8bf0d0',runId:'pre-fix',hypothesisId:'E',location:'classroom.html:api',message:'non-ok response body snippet',data:{method,path,url,status:res.status,contentType:res.headers.get('content-type'),snippet},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-    }).catch(() => {});
-  }
-
-  let data = null;
-  try {
-    data = await res.json();
-  } catch (e) {
-    // #region agent log
-    fetch('http://127.0.0.1:7855/ingest/88b42546-15d9-45dd-bbc9-809da1e8d15f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8bf0d0'},body:JSON.stringify({sessionId:'8bf0d0',runId:'pre-fix',hypothesisId:'D',location:'classroom.html:api',message:'res.json failed',data:{method,path,url,status:res.status,errorName:e?.name||null,errorMessage:e?.message||String(e)},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-  }
+  const data = contentType.includes('application/json') ? await res.json() : {};
   if (!res.ok) throw new Error(data?.message || 'Request failed');
   return data;
 }
@@ -430,9 +388,6 @@ async function loadClassrooms() {
 
 // ─── Views ────────────────────────────────────────────────────────────────────
 function showView(view) {
-  // #region agent log
-  fetch('http://127.0.0.1:7855/ingest/88b42546-15d9-45dd-bbc9-809da1e8d15f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8bf0d0'},body:JSON.stringify({sessionId:'8bf0d0',runId:'pre-fix',hypothesisId:'A',location:'classroom.html:showView',message:'showView called',data:{view,hasUser:!!currentUser,role:currentUser?.role||null},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   if (!currentUser) {
     showToast('Loading your account… please wait.', 'error');
     return;
@@ -441,12 +396,10 @@ function showView(view) {
 }
 
 function renderClassroomsView() {
+  clearInterval(notificationPollTimer);
+  notificationPollTimer = null;
   activeClassroom = null;
   renderSidebarClassList();
-
-  // #region agent log
-  fetch('http://127.0.0.1:7855/ingest/88b42546-15d9-45dd-bbc9-809da1e8d15f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8bf0d0'},body:JSON.stringify({sessionId:'8bf0d0',runId:'pre-fix',hypothesisId:'A',location:'classroom.html:renderClassroomsView',message:'renderClassroomsView entry',data:{hasUser:!!currentUser,classroomsCount:classrooms?.length??null},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
 
   if (!currentUser) {
     document.getElementById('mainArea').innerHTML = `
@@ -493,6 +446,8 @@ function renderClassroomsView() {
 
 // ─── Classroom dashboard ──────────────────────────────────────────────────────
 async function openClassroom(id) {
+  clearInterval(notificationPollTimer);
+  notificationPollTimer = null;
   const main = document.getElementById('mainArea');
   main.innerHTML = `<div style="padding:40px;text-align:center"><div class="spinner"></div></div>`;
 
@@ -503,7 +458,18 @@ async function openClassroom(id) {
 
     const isTeacher = currentUser.role === 'teacher';
     main.innerHTML = buildDashboard(r, isTeacher);
+    visibleNotificationIds = new Set((r.notifications || []).map(notification => notification.id));
     if (isTeacher) initVoice();
+    const draft = isTeacher ? sessionStorage.getItem('amplify_classroom_notification_draft') : null;
+    const notificationInput = document.getElementById('notifInput');
+    if (draft && notificationInput) {
+      notificationInput.value = draft;
+      sessionStorage.removeItem('amplify_classroom_notification_draft');
+      showToast('Draft loaded. Send it to this classroom when ready.', 'success');
+    }
+    if (!isTeacher) {
+      notificationPollTimer = window.setInterval(() => refreshClassroomNotifications(id), 5000);
+    }
   } catch(e) {
     showToast(e.message, 'error');
     renderClassroomsView();
@@ -534,7 +500,7 @@ function buildDashboard(r, isTeacher) {
         </div>
       </div>
       <div style="margin-top:10px;">
-        <button class="btn btn-primary btn-sm" onclick="sendNotification()">Send to All Students</button>
+        <button class="btn btn-primary btn-sm" id="sendNotifBtn" onclick="sendNotification()">Send to All Students</button>
       </div>
     </div>
 
@@ -632,21 +598,56 @@ async function submitJoinClassroom() {
 // ─── Send notification ────────────────────────────────────────────────────────
 async function sendNotification() {
   const msg = document.getElementById('notifInput')?.value.trim();
-  if (!msg || !activeClassroom) return;
+  if (!msg || !activeClassroom) {
+    showToast('Enter a message before sending.', 'error');
+    return;
+  }
 
+  const button = document.getElementById('sendNotifBtn');
+  if (button) button.disabled = true;
   try {
     const r = await api('POST', `/classrooms/${activeClassroom.id}/notify`, { message: msg });
     document.getElementById('notifInput').value = '';
-    const list = document.getElementById('notifList');
-    const empty = list.querySelector('.empty-state');
-    if (empty) empty.remove();
-    const item = document.createElement('div');
-    item.className = 'notif-item';
-    item.innerHTML = `<div class="notif-msg">${esc(r.notification.message)}</div><div class="notif-time">Just now</div>`;
-    list.insertBefore(item, list.firstChild);
+    visibleNotificationIds.add(r.notification.id);
+    prependNotification(r.notification);
     showToast('Notification sent!', 'success');
   } catch(e) {
     showToast(e.message, 'error');
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+function prependNotification(notification) {
+  const list = document.getElementById('notifList');
+  if (!list) return;
+  list.querySelector('.empty-state')?.remove();
+  const item = document.createElement('div');
+  item.className = 'notif-item';
+  const message = document.createElement('div');
+  message.className = 'notif-msg';
+  message.textContent = notification.message;
+  const time = document.createElement('div');
+  time.className = 'notif-time';
+  time.textContent = notification.created_at ? formatDate(notification.created_at) : 'Just now';
+  item.append(message, time);
+  list.insertBefore(item, list.firstChild);
+}
+
+async function refreshClassroomNotifications(classroomId) {
+  if (!activeClassroom || activeClassroom.id !== classroomId) return;
+  try {
+    const { notifications = [] } = await api('GET', `/classrooms/${classroomId}`);
+    const received = notifications.filter(notification => !visibleNotificationIds.has(notification.id));
+    received.forEach(notification => {
+      visibleNotificationIds.add(notification.id);
+      prependNotification(notification);
+    });
+    if (received.length) showToast('Your teacher sent a classroom notification.', 'success');
+  } catch (error) {
+    clearInterval(notificationPollTimer);
+    notificationPollTimer = null;
+    showToast(`Could not refresh classroom notifications: ${error.message}`, 'error');
   }
 }
 

@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import asyncio, subprocess, json, os, uuid, re, ast, sys
-import urllib.parse, urllib.request, xml.etree.ElementTree as ET
+import urllib.error, urllib.parse, urllib.request, xml.etree.ElementTree as ET
 import html
 from openai import OpenAI
 
@@ -51,8 +51,8 @@ FRONTEND_DIR = resolve_frontend_dir()
 # ── LangGraph (Deep Learn feature) ──
 from langgraph.graph import StateGraph, END, START
 from langchain_groq import ChatGroq
-from langchain_core.messages import SystemMessage, HumanMessage
-from typing import Annotated, List, TypedDict
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from typing import Annotated, List, Literal, TypedDict
 import operator
 import shutil
 
@@ -88,9 +88,54 @@ def get_api_keys() -> list[str]:
 def get_groq_keys() -> list[str]:
     global GROQ_KEYS
     if GROQ_KEYS is None:
-        GROQ_KEYS = parse_env_list('GROQ_KEYS')
+        names = ('GROQ_KEYS', 'GROQ_API_KEY', 'GROQ_KEY', 'VITE_GROQ_KEYS', 'VITE_GROQ_API_KEY')
+
+        def parse_keys(value: str) -> list[str]:
+            value = value.strip().strip('"').strip("'")
+            if not value:
+                return []
+            try:
+                parsed = json.loads(value)
+            except json.JSONDecodeError:
+                parsed = None
+            if isinstance(parsed, list):
+                return [str(item).strip() for item in parsed if str(item).strip()]
+            if isinstance(parsed, str):
+                value = parsed
+            return [item.strip() for item in re.split(r'[\r\n,]+', value) if item.strip()]
+
+        GROQ_KEYS = []
+        for name in names:
+            GROQ_KEYS = parse_keys(os.getenv(name, ''))
+            if GROQ_KEYS:
+                break
+
         if not GROQ_KEYS:
-            raise RuntimeError('GROQ_KEYS must be configured in backend/.env or Vercel environment variables.')
+            env_files = (
+                os.path.join(BASE_DIR, '.env'),
+                os.path.join(BASE_DIR, 'frontend', '.env'),
+            )
+            for env_file in env_files:
+                if not os.path.isfile(env_file):
+                    continue
+                with open(env_file, encoding='utf-8') as file:
+                    for line in file:
+                        entry = line.strip()
+                        if entry.startswith('export '):
+                            entry = entry[7:].lstrip()
+                        if not entry or entry.startswith('#') or '=' not in entry:
+                            continue
+                        name, value = entry.split('=', 1)
+                        if name.strip() not in names:
+                            continue
+                        GROQ_KEYS = parse_keys(value)
+                        if GROQ_KEYS:
+                            break
+                if GROQ_KEYS:
+                    break
+
+        if not GROQ_KEYS:
+            raise RuntimeError('Configure GROQ_KEYS in the server environment or a local backend/frontend .env file.')
     return GROQ_KEYS
 
 
@@ -478,6 +523,134 @@ class TurnRequest(BaseModel):
 
 class BiologyVoiceoverRequest(BaseModel):
     model_name: str = Field(min_length=1, max_length=120)
+
+
+class PdfTutorMessage(BaseModel):
+    role: Literal["system", "user", "assistant"]
+    content: str = Field(min_length=1, max_length=12000)
+
+
+class PdfTutorChatRequest(BaseModel):
+    groq_model: Literal[
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b",
+        "qwen/qwen3.6-27b",
+    ] = Field(alias="model_id")
+    messages: List[PdfTutorMessage]
+    max_tokens: int = Field(default=700, ge=1, le=1200)
+    temperature: float = Field(default=0.35, ge=0, le=1)
+
+
+class PdfTutorSpeechRequest(BaseModel):
+    language: Literal["English", "French", "Moroccan Darija", "Arabic"]
+    text: str = Field(min_length=1, max_length=5000)
+
+
+@app.post("/api/pdf-tutor/chat")
+async def pdf_tutor_chat(req: PdfTutorChatRequest):
+    if not req.messages or len(req.messages) > 12:
+        raise HTTPException(422, "The tutor request must contain between 1 and 12 messages.")
+    if sum(len(message.content) for message in req.messages) > 30000:
+        raise HTTPException(413, "The tutor context is too large. Please shorten the conversation or PDF question.")
+
+    try:
+        groq_keys = get_groq_keys()
+    except RuntimeError as exc:
+        print(f"[PDF tutor] Groq configuration error: {exc}")
+        raise HTTPException(503, "Groq is not configured for the PDF tutor.")
+
+    message_types = {
+        "system": SystemMessage,
+        "user": HumanMessage,
+        "assistant": AIMessage,
+    }
+    messages = [
+        message_types[message.role](content=message.content)
+        for message in req.messages
+    ]
+    last_error = None
+    for key_index, key in enumerate(groq_keys, start=1):
+        try:
+            llm_kwargs = {
+                "api_key": key,
+                "model": req.groq_model,
+                "max_tokens": req.max_tokens,
+                "temperature": req.temperature,
+            }
+            if req.groq_model.startswith("openai/gpt-oss"):
+                llm_kwargs["reasoning_effort"] = "low"
+            elif req.groq_model.startswith("qwen/"):
+                llm_kwargs["reasoning_effort"] = "none"
+            llm = ChatGroq(**llm_kwargs)
+            result = await asyncio.to_thread(llm.invoke, messages)
+            content = str(result.content).strip()
+            content = re.sub(r"<think[^>]*>[\s\S]*?</think>", "", content, flags=re.IGNORECASE).strip()
+            if content:
+                return {"content": content}
+            last_error = "Groq returned an empty response."
+        except Exception as exc:
+            last_error = exc
+            print(f"[PDF tutor] {req.groq_model} key {key_index} failed: {type(exc).__name__}")
+            if "429" in str(exc) or "rate_limit" in str(exc).lower():
+                continue
+
+    print(f"[PDF tutor] All Groq keys failed: {type(last_error).__name__ if last_error else 'no keys'}")
+    raise HTTPException(502, "Groq could not generate a tutor response. Please try again.")
+
+
+@app.post("/api/pdf-tutor/speech")
+async def pdf_tutor_speech(req: PdfTutorSpeechRequest):
+    speech_key = os.getenv("AZURE_SPEECH_KEY", "").strip()
+    if not speech_key:
+        raise HTTPException(503, "Azure speech is not configured.")
+
+    voices = {
+        "English": ("en-US", "en-US-JennyNeural"),
+        "French": ("fr-FR", "fr-FR-DeniseNeural"),
+        "Moroccan Darija": ("ar-MA", "ar-MA-MounaNeural"),
+        "Arabic": ("ar-SA", "ar-SA-ZariyahNeural"),
+    }
+    locale, voice = voices[req.language]
+    region = os.getenv("AZURE_SPEECH_REGION", "southeastasia").strip()
+    if not re.fullmatch(r"[a-z0-9-]+", region, re.IGNORECASE):
+        raise HTTPException(500, "Azure speech region is invalid.")
+
+    ssml = (
+        f'<speak version="1.0" xml:lang="{locale}">'
+        f'<voice name="{voice}">{html.escape(req.text, quote=False)}</voice>'
+        "</speak>"
+    )
+    speech_request = urllib.request.Request(
+        f"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1",
+        data=ssml.encode("utf-8"),
+        headers={
+            "Ocp-Apim-Subscription-Key": speech_key,
+            "Content-Type": "application/ssml+xml",
+            "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3",
+        },
+        method="POST",
+    )
+
+    def request_audio():
+        with urllib.request.urlopen(speech_request, timeout=30) as response:
+            return response.read()
+
+    try:
+        audio = await asyncio.to_thread(request_audio)
+    except urllib.error.HTTPError as exc:
+        print(f"[PDF tutor speech] Azure returned HTTP {exc.code}.")
+        raise HTTPException(502, "Azure could not generate speech audio.") from exc
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        print(f"[PDF tutor speech] Azure request failed: {type(exc).__name__}.")
+        raise HTTPException(502, "Azure speech is temporarily unavailable.") from exc
+
+    if not audio:
+        raise HTTPException(502, "Azure returned empty speech audio.")
+    return Response(
+        content=audio,
+        media_type="audio/mpeg",
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.post("/biology/voiceover")

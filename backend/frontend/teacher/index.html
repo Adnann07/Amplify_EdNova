@@ -157,7 +157,7 @@
         <div class="notify-info">
           <div class="section-label">Live Feature</div>
           <h2 class="section-h">Notify students<br>with your voice</h2>
-          <p class="section-sub">Speak naturally in English. Amplify transcribes your speech — you can edit the message and send it instantly to all students.</p>
+          <p class="section-sub">Speak naturally in English and review the transcript. Continue to your classroom dashboard to choose a class and send the message to its students.</p>
           <div class="notify-steps">
             <div class="step">
               <div class="step-num">1</div>
@@ -176,8 +176,8 @@
             <div class="step">
               <div class="step-num">3</div>
               <div class="step-text">
-                <h4>Send to students</h4>
-                <p>Review, polish, and deliver the message to all students with one tap.</p>
+                <h4>Choose a classroom</h4>
+                <p>Review the draft in your classroom dashboard and send it to the selected class.</p>
               </div>
             </div>
           </div>
@@ -216,7 +216,7 @@
             <div class="vw-label">Your message (edit if needed)</div>
             <div class="vw-send-row">
               <input class="vw-send-input" id="vwEditInput" placeholder="Edit message before sending..." />
-              <button class="vw-send-btn" onclick="sendNotification()">Send to students</button>
+              <button class="vw-send-btn" onclick="openClassroomToSend()">Open classroom to send</button>
             </div>
           </div>
 
@@ -358,30 +358,12 @@
       }
     }
 
-    function sendNotification() {
+    function openClassroomToSend() {
       const msg = document.getElementById('vwEditInput').value.trim();
       if (!msg) return;
 
-      const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-      const list = document.getElementById('vwMsgList');
-      const el = document.createElement('div');
-      el.className = 'vw-msg';
-      el.innerHTML = `
-        <div class="vw-msg-meta">
-          <span class="vw-msg-tag">Sent to all students</span>
-          <span class="vw-msg-time">${time}</span>
-        </div>
-        <div class="vw-msg-text">${escapeHtml(msg)}</div>
-      `;
-      list.appendChild(el);
-      list.scrollTop = list.scrollHeight;
-
-      document.getElementById('vwDirectSendWrap').classList.remove('visible');
-      document.getElementById('vwTranscript').textContent = 'Your spoken words will appear here...';
-      document.getElementById('vwTranscript').classList.remove('has-text');
-      finalTranscript = '';
-      setStatus('Sent!', false);
-      setTimeout(() => setStatus('Ready', false), 2000);
+      sessionStorage.setItem('amplify_classroom_notification_draft', msg);
+      window.location.href = '/teacher/classroom.html';
     }
 
     function escapeHtml(str) {

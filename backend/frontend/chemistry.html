@@ -2058,32 +2058,38 @@ function autoRunExperiment(exp){
 function startVoiceCommand(){
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SpeechRecognition){
-    showToast('⚠️ Speech recognition not supported in this browser', 3000);
+    showToast('Speech recognition is not supported here. Try Chrome or Edge over localhost or HTTPS.', 5000);
     return;
   }
+  if(window.__chemistryVoiceRecognitionActive) return;
 
   const btn = document.getElementById('voiceBtn');
   const lbl = document.getElementById('voiceBtnLabel');
   const mic = document.getElementById('micIcon');
-
-  btn.style.background = 'rgba(0,255,136,0.25)';
-  btn.style.borderColor = '#00ff88';
-  mic.textContent = '🔴';
-  lbl.textContent = 'Listening...';
-
-  showToast('🎙️ Listening... say an experiment name');
+  const resetVoiceButton = () => {
+    window.__chemistryVoiceRecognitionActive = false;
+    btn.style.background = 'rgba(0,255,136,0.08)';
+    btn.style.borderColor = 'rgba(0,255,136,0.25)';
+    mic.textContent = '🎙️';
+    lbl.textContent = 'Speak Experiment';
+    btn.setAttribute('aria-pressed', 'false');
+  };
 
   const recog = new SpeechRecognition();
   recog.lang = 'en-US';
   recog.interimResults = false;
   recog.maxAlternatives = 5;
 
-  recog.onresult = (e)=>{
-    btn.style.background = 'rgba(0,255,136,0.08)';
-    btn.style.borderColor = 'rgba(0,255,136,0.25)';
-    mic.textContent = '🎙️';
-    lbl.textContent = 'Speak Experiment';
+  recog.onstart = () => {
+    btn.style.background = 'rgba(0,255,136,0.25)';
+    btn.style.borderColor = '#00ff88';
+    mic.textContent = '🔴';
+    lbl.textContent = 'Listening...';
+    btn.setAttribute('aria-pressed', 'true');
+    showToast('🎙️ Listening — say an experiment name');
+  };
 
+  recog.onresult = (e)=>{
     const said = e.results[0][0].transcript;
     const section = matchSection(said);
 
@@ -2135,36 +2141,31 @@ function startVoiceCommand(){
   };
 
   recog.onerror = (e)=>{
-    btn.style.background = 'rgba(0,255,136,0.08)';
-    btn.style.borderColor = 'rgba(0,255,136,0.25)';
-    mic.textContent = '🎙️';
-    lbl.textContent = 'Speak Experiment';
-    showToast(`⚠️ Mic error: ${e.error}`, 3000);
+    resetVoiceButton();
+    const messages = {
+      'not-allowed': 'Microphone access is blocked. Allow microphone access for this site and try again.',
+      'service-not-allowed': 'Speech recognition is blocked by the browser. Try Chrome or Edge over localhost or HTTPS.',
+      'audio-capture': 'No microphone was found. Connect or enable a microphone and try again.',
+      'no-speech': 'No speech was detected. Tap the microphone and speak clearly.',
+      'network': 'Speech recognition could not reach its service. Check your internet connection and try again.',
+      'aborted': 'Voice input was stopped.',
+    };
+    showToast(`⚠️ ${messages[e.error] || `Microphone error: ${e.error}`}`, 5000);
   };
 
   recog.onend = ()=>{
-    btn.style.background = 'rgba(0,255,136,0.08)';
-    btn.style.borderColor = 'rgba(0,255,136,0.25)';
-    mic.textContent = '🎙️';
-    lbl.textContent = 'Speak Experiment';
+    resetVoiceButton();
   };
 
-  recog.start();
-}
-
-function fireWelcome(){
-  const voices = window.speechSynthesis.getVoices();
-  if(voices.length === 0){
-    window.speechSynthesis.onvoiceschanged = ()=>{
-      window.speechSynthesis.onvoiceschanged = null;
-      speak("Welcome to the laboratory. What experiment would you like to do today?");
-    };
-  } else {
-    speak("Welcome to the laboratory. What experiment would you like to do today?");
+  window.__chemistryVoiceRecognitionActive = true;
+  window.speechSynthesis.cancel();
+  try {
+    recog.start();
+  } catch (error) {
+    resetVoiceButton();
+    showToast(`⚠️ Microphone could not start: ${error.message || error.name}. Check site permission and try again.`, 5000);
   }
 }
-
-window.addEventListener('load', ()=>{ setTimeout(fireWelcome, 800); });
 
 const eqs = [
   'NaOH + HCl → NaCl + H₂O',

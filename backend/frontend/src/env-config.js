@@ -27,7 +27,7 @@ function resolveBackendBase(viteEnv = getViteEnv()) {
 /** Safe access to Vite env in ES modules (returns {} when not running under Vite). */
 export function getViteEnv() {
   try {
-    return import.meta?.env ?? {};
+    return import.meta.env ?? {};
   } catch {
     return {};
   }
@@ -135,7 +135,7 @@ export function getGroqKeys(config = {}, env = null) {
     const keys = filterValidKeys(parseEnvList(key));
     if (keys.length) return keys;
   }
-  return filterValidKeys(parseEnvList(viteEnv.VITE_GROQ_KEYS || viteEnv.VITE_GROQ_KEY));
+  return filterValidKeys(parseEnvList(viteEnv.VITE_GROQ_KEYS || viteEnv.VITE_GROQ_KEY || viteEnv.VITE_GROQ_API_KEY));
 }
 
 /** Resolve OpenRouter API keys from server config, window bootstrap, or Vite env. */
