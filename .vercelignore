@@ -1,13 +1,16 @@
 # Local env and build artifacts
-.env
-frontend/.env
-backend/.env
+.env*
+**/.env*
 *.log
 node_modules
-frontend/node_modules
-backend/__pycache__
-backend/media_*
-videos
-scenes
-storage
+**/node_modules
+**/__pycache__
+backend/media_*/
+backend/videos/
+backend/frontend/dist/
+backend/frontend/.vercel/
 vendor
+**/vendor
+storage/
+/frontend/
+.git/

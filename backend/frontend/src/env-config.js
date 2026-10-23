@@ -10,14 +10,10 @@ let _configPromise = null;
 function resolveBackendBase(viteEnv = getViteEnv()) {
   if (typeof window === 'undefined') return '';
   const origin = window.location?.origin || '';
-  const host = window.location?.hostname || '';
   const configured = window.AMPLIFY_ENV?.BACKEND_URL || viteEnv.VITE_BACKEND_URL || '';
   if (!configured) return '';
   try {
     const parsed = new URL(String(configured), origin);
-    const isLocalHost = host === 'localhost' || host === '127.0.0.1';
-    // In production pages, do not allow cross-origin backend override.
-    if (!isLocalHost && parsed.origin !== origin) return '';
     return parsed.origin.replace(/\/$/, '');
   } catch {
     return '';
@@ -66,8 +62,18 @@ export async function loadEnvConfig() {
       }
 
       const data = await response.json();
-      _configCache = data;
-      return data;
+      const fallback = getDefaultConfig();
+      const merged = {
+        ...fallback,
+        ...data,
+        GROQ_API_KEY: data.GROQ_API_KEY || fallback.GROQ_API_KEY,
+        GROQ_KEYS: (data.GROQ_KEYS && data.GROQ_KEYS.length) ? data.GROQ_KEYS : fallback.GROQ_KEYS,
+        CEREBRAS_API_KEY: data.CEREBRAS_API_KEY || fallback.CEREBRAS_API_KEY,
+        OPENROUTER_KEYS: (data.OPENROUTER_KEYS && data.OPENROUTER_KEYS.length) ? data.OPENROUTER_KEYS : fallback.OPENROUTER_KEYS,
+        GEMINI_KEY: data.GEMINI_KEY || fallback.GEMINI_KEY,
+      };
+      _configCache = merged;
+      return merged;
     } catch (error) {
       console.warn('[EnvConfig] Error fetching config:', error.message);
       return getDefaultConfig();
@@ -80,21 +86,30 @@ export async function loadEnvConfig() {
 }
 
 /**
- * Get default (empty) config for fallback
+ * Get default config for fallback using viteEnv
  */
 function getDefaultConfig() {
+  const viteEnv = getViteEnv();
+  const groqSingle = viteEnv.VITE_GROQ_API_KEY || viteEnv.VITE_GROQ_KEY || '';
+  const groqList = filterValidKeys(parseEnvList(viteEnv.VITE_GROQ_KEYS || groqSingle));
+  const cerebrasKey = viteEnv.VITE_CEREBRAS_API_KEY || viteEnv.VITE_CEREBRAS_KEY || '';
+  const openRouterList = filterValidKeys(parseEnvList(viteEnv.VITE_OPENROUTER_KEYS || viteEnv.VITE_OPENROUTER_KEY));
+  const geminiKey = viteEnv.VITE_GEMINI_KEY || '';
+
   return {
-    GROQ_API_KEY: '',
-    GROQ_KEYS: [],
-    GROQ_API_BASE_URL: 'https://api.groq.com/openai/v1',
-    CEREBRAS_API_KEY: '',
-    CEREBRAS_API_BASE: 'https://api.cerebras.ai/v1',
-    OPENROUTER_KEYS: [],
-    OPENROUTER_API_KEYS: [],
-    OPENROUTER_BASE: 'https://openrouter.ai/api/v1',
-    GEMINI_KEY: '',
-    GEMINI_MODEL: 'gemini-2.0-flash-lite',
-    GEMINI_BASE: 'https://generativelanguage.googleapis.com/v1beta/models',
+    GROQ_API_KEY: groqList[0] || groqSingle || '',
+    GROQ_KEYS: groqList.length ? groqList : (groqSingle ? [groqSingle] : []),
+    GROQ_API_BASE_URL: viteEnv.VITE_GROQ_BASE || 'https://api.groq.com/openai/v1',
+    CEREBRAS_API_KEY: cerebrasKey,
+    CEREBRAS_API_BASE: viteEnv.VITE_CEREBRAS_BASE || 'https://api.cerebras.ai/v1',
+    OPENROUTER_KEYS: openRouterList,
+    OPENROUTER_API_KEYS: openRouterList,
+    OPENROUTER_BASE: viteEnv.VITE_OPENROUTER_BASE || 'https://openrouter.ai/api/v1',
+    GEMINI_KEY: geminiKey,
+    GEMINI_MODEL: viteEnv.VITE_GEMINI_MODEL || 'gemini-2.0-flash-lite',
+    GEMINI_BASE: viteEnv.VITE_GEMINI_BASE || 'https://generativelanguage.googleapis.com/v1beta/models',
+    AZURE_SPEECH_KEY: viteEnv.VITE_AZURE_SPEECH_KEY || '',
+    AZURE_SPEECH_REGION: viteEnv.VITE_AZURE_SPEECH_REGION || 'southeastasia',
   };
 }
 

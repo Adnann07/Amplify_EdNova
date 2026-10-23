@@ -1,0 +1,6 @@
+.env*
+frontend/
+media_*/
+videos/
+**/__pycache__/
+*.py[cod]

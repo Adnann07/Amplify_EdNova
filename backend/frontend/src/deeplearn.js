@@ -303,15 +303,15 @@ let userInterrupted    = false;
 let agentVoiceMap      = { expert1: null, expert2: null, expert3: null };
 
 const AGENT_TTS = {
-  expert1: { rate: 0.97, pitch: 1.00 },
-  expert2: { rate: 0.98, pitch: 1.02 },
-  expert3: { rate: 0.96, pitch: 0.98 },
+  expert1: { rate: 0.97, pitch: 1.05 }, // Dr. Arifa (Female voice)
+  expert2: { rate: 0.98, pitch: 1.12 }, // Dr. Nafisa (Female voice, distinct pitch)
+  expert3: { rate: 0.96, pitch: 0.92 }, // Dr. Rakib (Male voice)
 };
 
 const EXPERT_AZURE_VOICES = {
-  expert1: { voice: 'en-US-GuyNeural',   rate: '-5%', pitch: '-5%'  },
-  expert2: { voice: 'en-US-JennyNeural', rate: '0%',  pitch: '+8%'  },
-  expert3: { voice: 'en-US-DavisNeural', rate: '+5%', pitch: '-12%' },
+  expert1: { voice: 'en-US-AriaNeural',  rate: '-2%', pitch: '+2%'  }, // Dr. Arifa (Female)
+  expert2: { voice: 'en-US-JennyNeural', rate: '0%',  pitch: '+8%'  }, // Dr. Nafisa (Female)
+  expert3: { voice: 'en-US-DavisNeural', rate: '+5%', pitch: '-12%' }, // Dr. Rakib (Male)
 };
 
 // ── DOM ───────────────────────────────────────
@@ -621,6 +621,9 @@ function startTimer() {
 function toEnglishNumerals(str) { return str; }
 
 // ── Voices ────────────────────────────────────
+const FEMALE_VOICE_REGEX = /female|woman|aria|ava|jenny|zira|sara|susan|michelle|samantha|victoria|karen|moira|tessa|fiona|veena|kate|serena|allison|sonia|ana|natasha|libby|clara|neerja|emily|catherine/i;
+const MALE_VOICE_REGEX = /male|man|guy|david|davis|mark|ryan|andrew|eric|george|daniel|oliver|alex|richard|charles|james|brian|steve/i;
+
 function loadVoices() {
   const assign = () => {
     const all = speechSynthesis.getVoices();
@@ -632,21 +635,51 @@ function loadVoices() {
     const naturalVoiceScore = voice => {
       let score = voice.localService === false ? 100 : 0;
       if (/natural|neural|online|enhanced/i.test(voice.name)) score += 1000;
-      if (/google|aria|ava|jenny|guy|davis|sonia|ryan/i.test(voice.name)) score += 100;
+      if (/google|aria|ava|jenny|guy|davis|sonia|ryan|zira|samantha/i.test(voice.name)) score += 100;
       return score;
     };
     const ranked = [...enAll].sort((a, b) => naturalVoiceScore(b) - naturalVoiceScore(a));
     const used = new Set();
-    const pick = pattern => {
-      const voice = ranked.find(candidate => !used.has(candidate) && pattern.test(candidate.name))
-        || ranked.find(candidate => !used.has(candidate))
-        || ranked[0];
+    const pick = (pattern, isFemale) => {
+      let voice = ranked.find(candidate => {
+        if (used.has(candidate)) return false;
+        if (!pattern.test(candidate.name)) return false;
+        if (isFemale && MALE_VOICE_REGEX.test(candidate.name) && !candidate.name.toLowerCase().includes('female')) return false;
+        if (!isFemale && FEMALE_VOICE_REGEX.test(candidate.name) && !candidate.name.toLowerCase().includes('male')) return false;
+        return true;
+      });
+      if (!voice && isFemale) {
+        voice = ranked.find(candidate => !used.has(candidate) && FEMALE_VOICE_REGEX.test(candidate.name) && !MALE_VOICE_REGEX.test(candidate.name));
+      } else if (!voice && !isFemale) {
+        voice = ranked.find(candidate => !used.has(candidate) && MALE_VOICE_REGEX.test(candidate.name) && !FEMALE_VOICE_REGEX.test(candidate.name));
+      }
+      if (!voice && isFemale) {
+        voice = ranked.find(candidate => !used.has(candidate) && !MALE_VOICE_REGEX.test(candidate.name));
+      } else if (!voice && !isFemale) {
+        voice = ranked.find(candidate => !used.has(candidate) && !FEMALE_VOICE_REGEX.test(candidate.name));
+      }
+      if (!voice && isFemale) {
+        voice = ranked.find(candidate => FEMALE_VOICE_REGEX.test(candidate.name) && !MALE_VOICE_REGEX.test(candidate.name))
+          || ranked.find(candidate => !MALE_VOICE_REGEX.test(candidate.name));
+      }
+      if (!voice) {
+        voice = ranked.find(candidate => !used.has(candidate));
+      }
+      if (!voice) {
+        voice = isFemale
+          ? (ranked.find(candidate => FEMALE_VOICE_REGEX.test(candidate.name)) || ranked[0])
+          : (ranked.find(candidate => MALE_VOICE_REGEX.test(candidate.name)) || ranked[0]);
+      }
       if (voice) used.add(voice);
       return voice || null;
     };
-    agentVoiceMap.expert1 = pick(/guy|david|mark|ryan|andrew|eric|male/i);
-    agentVoiceMap.expert2 = pick(/aria|ava|jenny|zira|sara|susan|michelle|female/i);
-    agentVoiceMap.expert3 = pick(/davis|guy|david|mark|ryan|andrew|eric|male/i);
+
+    // Dr. Arifa: Female voice
+    agentVoiceMap.expert1 = pick(/aria|sara|sonia|samantha|victoria|karen|michelle|zira|ava|jenny|female/i, true);
+    // Dr. Nafisa: Female voice (different from Dr. Arifa when available)
+    agentVoiceMap.expert2 = pick(/jenny|ava|zira|susan|allison|clara|natasha|libby|sara|aria|female/i, true);
+    // Dr. Rakib: Male voice
+    agentVoiceMap.expert3 = pick(/davis|guy|david|mark|ryan|andrew|eric|george|daniel|male/i, false);
   };
   assign();
   speechSynthesis.onvoiceschanged = assign;

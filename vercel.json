@@ -1,40 +1,30 @@
 {
-  "version": 2,
-  "builds": [
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "rewrites": [
     {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "source": "/turn",
+      "destination": "https://amplify-ednova-fastapi.vercel.app/turn"
     },
     {
-      "src": "backend/api.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/ai/(.*)",
-      "dest": "/backend/api.py"
+      "source": "/generate",
+      "destination": "https://amplify-ednova-fastapi.vercel.app/generate"
     },
     {
-      "src": "/research/(.*)",
-      "dest": "/backend/api.py"
+      "source": "/research/:path*",
+      "destination": "https://amplify-ednova-fastapi.vercel.app/research/:path*"
     },
     {
-      "src": "/api/biology/(.*)",
-      "dest": "/backend/api.py"
+      "source": "/videos/:path*",
+      "destination": "https://amplify-ednova-fastapi.vercel.app/videos/:path*"
     },
     {
-      "handle": "filesystem"
+      "source": "/neo4j/:path*",
+      "destination": "https://amplify-ednova-fastapi.vercel.app/neo4j/:path*"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/api/:path*",
+      "destination": "https://amplify-ednova-fastapi.vercel.app/api/:path*"
     }
   ]
 }

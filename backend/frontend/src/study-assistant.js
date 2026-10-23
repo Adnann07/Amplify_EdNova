@@ -1,3 +1,5 @@
+import { loadEnvConfig, getGroqKeys, getGroqBase } from './env-config.js';
+
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const MAX_PAGES = 35;
 const FAST_MODEL = 'openai/gpt-oss-20b';
@@ -179,6 +181,44 @@ function setProgress(percent, message) {
   elements.progressText.textContent = message;
 }
 
+async function requestDirectGroq(model, messages, { maxTokens = 700, temperature = 0.35 } = {}) {
+  const config = await loadEnvConfig();
+  const keys = getGroqKeys(config);
+  if (!keys.length) throw new Error('No Groq API key available for direct fallback.');
+  const base = getGroqBase(config);
+
+  let groqModel = 'llama-3.3-70b-versatile';
+  if (model && (model.includes('20b') || model.includes('qwen'))) {
+    groqModel = 'llama-3.1-8b-instant';
+  }
+
+  for (const key of keys) {
+    try {
+      const res = await fetch(`${base}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+          model: groqModel,
+          max_tokens: maxTokens,
+          temperature,
+          messages,
+        }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        const content = d.choices?.[0]?.message?.content || '';
+        if (content) return content.replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '').trim();
+      }
+    } catch (e) {
+      console.warn('[PDF tutor] Direct Groq attempt failed:', e);
+    }
+  }
+  throw new Error('Direct Groq fallback failed.');
+}
+
 async function requestModel(model, messages, { maxTokens = 700, temperature = 0.35 } = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
@@ -221,7 +261,12 @@ async function requestModel(model, messages, { maxTokens = 700, temperature = 0.
     if (error.name === 'AbortError') {
       throw new Error(`The AI model ${model} timed out after ${MODEL_TIMEOUT_MS / 1000} seconds.`);
     }
-    throw error;
+    console.warn(`[PDF tutor] /api/pdf-tutor/chat failed (${error.message}); attempting direct Groq fallback.`);
+    try {
+      return await requestDirectGroq(model, messages, { maxTokens, temperature });
+    } catch (fallbackError) {
+      throw error;
+    }
   } finally {
     clearTimeout(timeout);
   }
