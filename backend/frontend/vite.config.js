@@ -55,7 +55,11 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
-        '/api': {
+      '/llm': {
+        target: backendUrl,
+        changeOrigin: true,
+      },
+      '/api': {
           target: apiUrl,
           changeOrigin: true,
         },

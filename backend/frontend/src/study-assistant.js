@@ -1,9 +1,9 @@
-import { loadEnvConfig, getGroqKeys, getGroqBase } from './env-config.js';
+import { felcloudChatCompletion } from './felcloud-client.js';
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const MAX_PAGES = 35;
-const FAST_MODEL = 'openai/gpt-oss-20b';
-const REASONING_MODELS = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.6-27b'];
+const FAST_MODEL = 'compact';
+const REASONING_MODELS = ['midsize'];
 const MODEL_TIMEOUT_MS = 90_000;
 const elements = {
   dropzone: document.getElementById('dropzone'),
@@ -181,92 +181,23 @@ function setProgress(percent, message) {
   elements.progressText.textContent = message;
 }
 
-async function requestDirectGroq(model, messages, { maxTokens = 700, temperature = 0.35 } = {}) {
-  const config = await loadEnvConfig();
-  const keys = getGroqKeys(config);
-  if (!keys.length) throw new Error('No Groq API key available for direct fallback.');
-  const base = getGroqBase(config);
-
-  let groqModel = 'llama-3.3-70b-versatile';
-  if (model && (model.includes('20b') || model.includes('qwen'))) {
-    groqModel = 'llama-3.1-8b-instant';
-  }
-
-  for (const key of keys) {
-    try {
-      const res = await fetch(`${base}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`,
-        },
-        body: JSON.stringify({
-          model: groqModel,
-          max_tokens: maxTokens,
-          temperature,
-          messages,
-        }),
-      });
-      if (res.ok) {
-        const d = await res.json();
-        const content = d.choices?.[0]?.message?.content || '';
-        if (content) return content.replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '').trim();
-      }
-    } catch (e) {
-      console.warn('[PDF tutor] Direct Groq attempt failed:', e);
-    }
-  }
-  throw new Error('Direct Groq fallback failed.');
-}
-
 async function requestModel(model, messages, { maxTokens = 700, temperature = 0.35 } = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
   try {
-    const response = await fetch('/api/pdf-tutor/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    const content = await felcloudChatCompletion(messages, {
+      tier: model === 'compact' ? 'compact' : 'midsize',
+      maxTokens,
+      temperature,
       signal: controller.signal,
-      body: JSON.stringify({
-        model_id: model,
-        max_tokens: maxTokens,
-        temperature,
-        messages,
-      }),
     });
-    const responseText = await response.text();
-    let data = null;
-    if (responseText.trim()) {
-      try {
-        data = JSON.parse(responseText);
-      } catch {
-        throw new Error(response.ok
-          ? 'The tutor service returned an unreadable response.'
-          : `The tutor service returned an invalid response (HTTP ${response.status}).`);
-      }
-    } else if (!response.ok) {
-      throw new Error(`The tutor service is unavailable (HTTP ${response.status}). Check that the AI backend is running.`);
-    } else {
-      throw new Error('The tutor service returned an empty response.');
-    }
-    if (!response.ok) {
-      const detail = data && typeof data.detail === 'string' ? data.detail : '';
-      throw new Error(detail || `The AI request failed (${response.status}).`);
-    }
-    if (typeof data.content !== 'string' || !data.content.trim()) {
-      throw new Error('The AI service returned an empty response.');
-    }
-    return data.content.replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '').trim();
+    if (!content.trim()) throw new Error('Felcloud returned an empty tutor response.');
+    return content.replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '').trim();
   } catch (error) {
     if (error.name === 'AbortError') {
-      throw new Error(`The AI model ${model} timed out after ${MODEL_TIMEOUT_MS / 1000} seconds.`);
+      throw new Error(`The AI model request timed out after ${MODEL_TIMEOUT_MS / 1000} seconds.`);
     }
-    console.warn(`[PDF tutor] /api/pdf-tutor/chat failed (${error.message}); attempting direct Groq fallback.`);
-    try {
-      return await requestDirectGroq(model, messages, { maxTokens, temperature });
-    } catch (fallbackError) {
-      throw error;
-    }
+    throw error;
   } finally {
     clearTimeout(timeout);
   }

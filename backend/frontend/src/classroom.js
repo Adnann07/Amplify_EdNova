@@ -1,32 +1,17 @@
 // ══════════════════════════════════════════════
 //  AI Classroom — classroom.js
-//  4 agents · Groq ONLY (all AI + Whisper)
+//  4 AI agents · Felcloud model proxy
 //  PDF pipeline: pdf.js + TF-IDF VectorStore
 //  Generative UI slides · laser pointer
 // ══════════════════════════════════════════════
 
-import { loadEnvConfig, getGroqKeys, getOpenRouterKeys, getGroqBase, getOpenRouterBase, getViteEnv } from './env-config.js';
+import { loadEnvConfig } from './env-config.js';
+import { felcloudChatCompletion, getFelcloudConfig } from './felcloud-client.js';
 
 // ── Load config from server (keys never hardcoded in bundle) ──────
 let _config = {};
-const _env = getViteEnv();
 loadEnvConfig().then(cfg => { _config = cfg; });
 
-function groqKeys() { return getGroqKeys(_config, _env); }
-function openRouterKeys() { return getOpenRouterKeys(_config, _env); }
-function groqBase() { return getGroqBase(_config, _env); }
-function openRouterBase() { return getOpenRouterBase(_config, _env); }
-
-const OPENROUTER_MODELS = ['openrouter/free'];
-// ── Groq (primary chat + Whisper STT + Vision OCR) ──
-const GROQ_WHISPER_MODEL = 'whisper-large-v3';
-const VISION_MODEL       = 'qwen/qwen3.6-27b';
-const OPENROUTER_VISION_MODEL = 'openrouter/free';
-const GROQ_MODELS = [
-  'openai/gpt-oss-120b',
-  'openai/gpt-oss-20b',
-  'qwen/qwen3.6-27b',
-];
 
 // ── PDF Pipeline Config ───────────────────────
 const CHUNK_WORDS   = 150;  // was 300 — smaller chunks = better retrieval
@@ -361,109 +346,28 @@ function getRelevantContext(query, maxChars = 5000) {
  */
 
 async function openRouterChat(messages, system, maxTokens = 1000, temp = 0.7) {
-  for (const model of OPENROUTER_MODELS) {
-    for (let i = 0; i < openRouterKeys().length; i++) {
-      try {
-        const res = await fetch(`${openRouterBase()}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openRouterKeys()[i]}`,
-            'HTTP-Referer': 'http://localhost',
-            'X-Title': 'AI Classroom',
-          },
-          body: JSON.stringify({
-            model,
-            max_tokens: maxTokens,
-            temperature: temp,
-            messages: [{ role: 'system', content: system }, ...messages],
-          }),
-        });
-        if (!res.ok) {
-        if (res.status === 429) await sleep(1000);
-        throw new Error(`OpenRouter key ${i + 1}: ${res.status}`);
-        }
-        const d = await res.json();
-        const text = d?.choices?.[0]?.message?.content || '';
-        if (!text.trim()) {
-        if (res.status === 200) await sleep(500); // brief wait before next key
-        throw new Error('Empty response');
-    }
-        console.log(`[OpenRouter] ✓ model:${model} key:${i + 1}`);
-        return _stripThinking(text.trim());
-      } catch (e) {
-        console.warn(`[OpenRouter] model:${model} key:${i + 1} failed: ${e.message}`);
-      }
-    }
-  }
-  throw new Error('All OpenRouter keys failed');
+  return felcloudChatCompletion([
+    { role: 'system', content: system }, ...messages,
+  ], { tier: 'midsize', maxTokens, temperature: temp });
 }
+
 async function groqOnlyChat(messages, system, maxTokens = 500, temp = 0.78) {
-  for (let modelIdx = 0; modelIdx < GROQ_MODELS.length; modelIdx++) {
-    const model = GROQ_MODELS[modelIdx];
-    for (let ki = 0; ki < groqKeys().length; ki++) {
-      try {
-        const payload = {
-          model,
-          max_tokens: maxTokens,
-          temperature: temp,
-          messages: [{ role: 'system', content: system }, ...messages],
-        };
-        if (model.includes('gpt-oss')) payload.reasoning_effort = 'low';
-        else if (model.includes('qwen/')) payload.reasoning_effort = 'none';
-
-        const res = await fetch(`${groqBase()}/chat/completions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKeys()[ki]}` },
-          body: JSON.stringify(payload),
-        });
-        if (res.status === 429) { await sleep(400); continue; }
-        if (!res.ok) {
-          const errBody = await res.text().catch(() => '');
-          console.warn(`[Groq] model:${model} key:${ki + 1}: ${res.status} ${errBody.slice(0, 240)}`);
-          continue;
-        }
-        const d = await res.json();
-        const text = d?.choices?.[0]?.message?.content || '';
-        if (!text.trim()) continue;
-        console.log(`[Groq] ✓ model:${model} key:${ki + 1}`);
-        return _stripThinking(text.trim());
-      } catch (e) {
-        console.warn(`[Groq] model:${model} key:${ki + 1}: ${e.message}`);
-      }
-    }
-  }
-  throw new Error('All Groq models failed');
+  return openRouterChat(messages, system, maxTokens, temp);
 }
 
-async function groqChat(messages, system, maxTokens = 500, temp = 0.78, agentId = null) {
-  try {
-    return await groqOnlyChat(messages, system, maxTokens, temp);
-  } catch (e) {
-    console.warn('[groqChat] Groq failed, falling back to OpenRouter:', e.message);
-  }
-
-  try {
-    return await openRouterChat(messages, system, maxTokens, temp);
-  } catch (e) {
-    console.warn('[groqChat] OpenRouter also failed:', e.message);
-  }
-
-  throw new Error('All configured AI providers failed.');
+async function groqChat(messages, system, maxTokens = 500, temp = 0.78) {
+  return groqOnlyChat(messages, system, maxTokens, temp);
 }
 
-/**
- * JSON variant — calls groqChat and parses JSON from response.
- */
-async function groqJsonChat(messages, system, maxTokens = 600, temp = 0.3, agentId = null) {
-  const raw   = await groqChat(messages, system, maxTokens, temp, agentId);
+async function groqJsonChat(messages, system, maxTokens = 600, temp = 0.3) {
+  const raw = await groqChat(messages, system, maxTokens, temp);
   const clean = raw.replace(/```json|```/g, '').trim();
   const match = clean.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-  if (!match) throw new Error('No JSON in Groq response');
+  if (!match) throw new Error('Felcloud did not return valid JSON.');
   return JSON.parse(match[0]);
 }
 
-// ── OCR via Groq Vision ───────────────────────
+// OCR via Felcloud vision model ───────────────────────
 const _ocrQueue = [];
 let _ocrRunning = false;
 
@@ -486,94 +390,18 @@ async function drainOCRQueue() {
 }
 
 async function groqVisionOCR(base64Img, pageNum) {
-  console.log('[OCR] using model:', VISION_MODEL);
-  const ocrKeys = [...groqKeys()];
-
-  if (!ocrKeys.length && !openRouterKeys().length) {
-    console.error('[OCR] No API keys configured. Set GROQ_KEYS or OPENROUTER_API_KEYS.');
-    return '';
-  }
-
-  for (let ki = 0; ki < ocrKeys.length; ki++) {
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const res = await fetch(`${groqBase()}/chat/completions`, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${ocrKeys[ki]}` },
-          body: JSON.stringify({
-            model: VISION_MODEL, max_tokens: 2048,
-            messages: [{ role: 'user', content: [
-              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Img}` } },
-              { type: 'text', text: 'Transcribe ALL text visible on this page exactly. Output only raw text, no commentary.' }
-            ]}],
-          }),
-        });
-        if (res.status === 429) {
-          const wait = (ki + 1) * (attempt + 1) * 3000;
-          console.warn(`[OCR] 429 key:${ki+1} attempt:${attempt+1}, waiting ${wait}ms`);
-          await sleep(wait);
-          continue;
-        }
-        if (!res.ok) {
-          const errBody = await res.text().catch(() => '');
-          console.warn(`[OCR] Groq key ${ki + 1} error ${res.status}: ${errBody.slice(0, 240)}`);
-          break;
-        }
-        const d = await res.json();
-        const text = d.choices?.[0]?.message?.content || '';
-        if (text.trim()) return text;
-      } catch (e) {
-        console.warn(`[OCR] key ${ki+1} attempt ${attempt+1}: ${e.message}`);
-        await sleep(2000);
-      }
-    }
-  }
-
-  console.warn(`[OCR] Groq failed for page ${pageNum}, trying OpenRouter`);
-  for (let i = 0; i < openRouterKeys().length; i++) {
-    try {
-      const res = await fetch(`${openRouterBase()}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openRouterKeys()[i]}`,
-          'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'http://localhost',
-          'X-Title': 'AI Classroom',
-        },
-        body: JSON.stringify({
-          model: OPENROUTER_VISION_MODEL,
-          max_tokens: 2048,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Img}` } },
-              { type: 'text', text: 'Transcribe ALL text visible on this page exactly. Output only raw text, no commentary.' }
-            ],
-          }],
-        }),
-      });
-      if (res.status === 429) { await sleep(4000); continue; }
-      if (!res.ok) {
-        const errBody = await res.text().catch(() => '');
-        console.warn(`[OCR] OpenRouter key ${i + 1} error ${res.status}: ${errBody.slice(0, 240)}`);
-        continue;
-      }
-      const d = await res.json();
-      const text = d.choices?.[0]?.message?.content || '';
-      if (text.trim()) {
-        console.log(`[OCR] OpenRouter key ${i + 1} succeeded for page ${pageNum}`);
-        return text;
-      }
-    } catch (e) {
-      console.warn(`[OCR] OpenRouter key ${i + 1}: ${e.message}`);
-    }
-  }
-
-  console.error(`[OCR] all keys failed for page ${pageNum}, falling back to text extraction`);
-  return '';
+  const config = await getFelcloudConfig();
+  const text = await felcloudChatCompletion([{
+    role: 'user',
+    content: [
+      { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Img}` } },
+      { type: 'text', text: 'Transcribe all text visible on this page exactly. Output only the raw text.' },
+    ],
+  }], { model: config.vision_model, maxTokens: 2048, temperature: 0 });
+  if (!text.trim()) throw new Error(`Felcloud returned empty OCR for page ${pageNum}.`);
+  return text;
 }
 
-// ══════════════════════════════════════════════
 //  TEXT CLEANING
 // ══════════════════════════════════════════════
 
@@ -1373,17 +1201,14 @@ async function startLesson() {
   if (lessonStarting) return;
   lessonStarting = true;
   _config = await loadEnvConfig();
-  const hasGroq = groqKeys().length > 0;
-  const hasOR   = openRouterKeys().length > 0;
-  if (!hasGroq && !hasOR) {
-    console.warn('[Amplify] No API keys found. Set GROQ_KEYS or OPENROUTER_API_KEYS in server environment.');
-    alert('API keys not configured. Set GROQ_KEYS or OPENROUTER_API_KEYS in your server environment (Railway/Vercel).');
+  try {
+    await getFelcloudConfig();
+  } catch (error) {
+    console.error('[AI Classroom] Felcloud configuration failed:', error);
+    alert(error.message || 'Felcloud is not configured on the AI backend.');
     lessonStarting = false;
     _lessonStarted = false;
     return;
-  }
-  if (!hasGroq) {
-    console.warn('[Amplify] No Groq keys — using OpenRouter only.');
   }
   isRunning = false; turnLoopRunning = false;
   _turnInProgress = false;   // ← ADD THIS
@@ -1723,103 +1548,64 @@ function submitUserMessage() {
 }
 
 // ══════════════════════════════════════════════
-//  SPEECH-TO-TEXT — Groq Whisper (key rotation)
-// ══════════════════════════════════════════════
-
+// Browser speech recognition is available without an audio-transcription API.
 const MIC_BTN_LABEL = document.getElementById('micBtnLabel');
-let mediaRecorder = null, mediaStream = null, audioChunks = [];
-let micState = 'idle', recordTimer = null, recordStartTs = 0;
-const MIC_MAX_SECONDS = 60, MIC_MIN_MS = 350;
+let micState = 'idle';
+let speechRecognition = null;
 
 if (micBtn) {
   micBtn.addEventListener('click', () => {
-    if (micState === 'recording')       stopRecording();
+    if (micState === 'recording') stopRecording();
     else if (micState !== 'processing') startRecording();
   });
 }
 
-function pickMime() {
-  const c = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4','audio/wav'];
-  if (typeof MediaRecorder === 'undefined') return '';
-  for (const m of c) { if (MediaRecorder.isTypeSupported?.(m)) return m; }
-  return '';
-}
-function setMicLabel(t) { if (MIC_BTN_LABEL) MIC_BTN_LABEL.textContent = t; }
+function setMicLabel(text) { if (MIC_BTN_LABEL) MIC_BTN_LABEL.textContent = text; }
 function setMicState(state) {
-  micState = state; if (!micBtn) return;
-  micBtn.classList.toggle('mic-active',     state === 'recording');
+  micState = state;
+  if (!micBtn) return;
+  micBtn.classList.toggle('mic-active', state === 'recording');
   micBtn.classList.toggle('mic-processing', state === 'processing');
-  setMicLabel(state === 'recording' ? 'Stop' : state === 'processing' ? 'Processing…' : 'Speak');
+  setMicLabel(state === 'recording' ? 'Stop' : state === 'processing' ? 'Processing?' : 'Speak');
 }
 
-async function startRecording() {
-  if (!navigator.mediaDevices?.getUserMedia) { alert('Your browser does not support microphone input.'); return; }
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: 16000 } });
-  } catch (err) {
-    if (err.name === 'NotAllowedError') alert('Please allow microphone access.');
-    else if (err.name === 'NotFoundError') alert('No microphone was found.');
-    else alert('Could not start the microphone.');
+function startRecording() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('Speech input is not supported by this browser. You can type your question instead.');
     return;
   }
-  audioChunks = [];
-  const mime = pickMime();
-  try { mediaRecorder = mime ? new MediaRecorder(mediaStream, { mimeType: mime }) : new MediaRecorder(mediaStream); }
-  catch (err) { alert('Could not create the audio recorder.'); _releaseStream(); return; }
-
-  mediaRecorder.ondataavailable = e => { if (e.data?.size > 0) audioChunks.push(e.data); };
-  mediaRecorder.onstop = async () => {
-    const elapsed = Date.now() - recordStartTs; _releaseStream();
-    if (elapsed < MIC_MIN_MS || !audioChunks.length) { setMicState('idle'); return; }
-    setMicState('processing');
-    const blob = new Blob(audioChunks, { type: mediaRecorder?.mimeType || 'audio/webm' });
-    try { _appendTranscript(await transcribeWithWhisper(blob)); }
-    catch (err) { console.warn('[mic] transcription failed:', err); alert('Transcription failed.'); }
-    finally { setMicState('idle'); }
+  speechRecognition = new SpeechRecognition();
+  speechRecognition.lang = 'en-US';
+  speechRecognition.interimResults = false;
+  speechRecognition.continuous = false;
+  speechRecognition.onresult = event => {
+    const transcript = event.results?.[0]?.[0]?.transcript || '';
+    _appendTranscript(transcript);
   };
-
-  recordStartTs = Date.now(); setMicState('recording');
-  try { mediaRecorder.start(); }
-  catch (err) { _releaseStream(); setMicState('idle'); return; }
-  recordTimer = setTimeout(() => { if (micState === 'recording') stopRecording(); }, MIC_MAX_SECONDS * 1000);
+  speechRecognition.onerror = event => {
+    if (event.error !== 'aborted' && event.error !== 'no-speech') {
+      console.warn('[Speech recognition]', event.error);
+      alert(`Speech input failed (${event.error}). You can type your question instead.`);
+    }
+  };
+  speechRecognition.onend = () => {
+    speechRecognition = null;
+    setMicState('idle');
+  };
+  try {
+    speechRecognition.start();
+    setMicState('recording');
+  } catch (error) {
+    speechRecognition = null;
+    setMicState('idle');
+    alert(`Could not start speech input: ${error.message}`);
+  }
 }
 
 function stopRecording() {
-  if (recordTimer) { clearTimeout(recordTimer); recordTimer = null; }
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') { try { mediaRecorder.stop(); } catch (_) {} }
-  else { _releaseStream(); setMicState('idle'); }
-}
-function _releaseStream() { mediaStream?.getTracks().forEach(t => { try { t.stop(); } catch (_) {} }); mediaStream = null; }
-function _appendTranscript(text) {
-  const cleaned = text?.trim(); if (!cleaned || !userInput) return;
-  userInput.value = userInput.value.trim() ? `${userInput.value.trim()} ${cleaned}` : cleaned;
-  setTimeout(() => { if (userInput.value.trim()) submitUserMessage(); }, 300);
-}
-
-async function transcribeWithWhisper(blob) {
-  const ext = blob.type?.includes('mp4') ? 'm4a' : blob.type?.includes('ogg') ? 'ogg' : blob.type?.includes('wav') ? 'wav' : 'webm';
-  const fd  = new FormData();
-  fd.append('file', blob, `voice.${ext}`);
-  fd.append('model', GROQ_WHISPER_MODEL);
-  fd.append('language', 'en');
-  fd.append('response_format', 'json');
-  fd.append('temperature', '0');
-
-  for (let ki = 0; ki < groqKeys().length; ki++) {
-    try {
-      const res = await fetch(`${groqBase()}/audio/transcriptions`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${groqKeys()[ki]}` },
-        body: fd,
-      });
-      if (res.status === 429) { console.warn(`[Whisper] key ${ki + 1} 429, trying next`); continue; }
-      if (!res.ok) throw new Error(`Whisper ${res.status}`);
-      const data = await res.json();
-      console.log(`[Whisper] ✓ key ${ki + 1}`);
-      return data?.text || data?.transcript || '';
-    } catch (e) { console.warn(`[Whisper] key ${ki + 1}:`, e.message); if (ki === groqKeys().length - 1) throw e; }
-  }
-  return '';
+  if (speechRecognition) speechRecognition.stop();
+  else setMicState('idle');
 }
 
 function stopMic() { if (micState !== 'idle') stopRecording(); }

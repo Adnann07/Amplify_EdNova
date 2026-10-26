@@ -40,6 +40,10 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
+        '/llm': {
+          target: backendUrl,
+          changeOrigin: true,
+        },
         '/api': {
           target: apiUrl,
           changeOrigin: true,

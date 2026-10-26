@@ -454,6 +454,12 @@ npm install && npm run dev         # Frontend
 # Access at http://localhost:5173
 ```
 
+### Configure Felcloud AI
+
+Keep the Felcloud API key on the backend. Copy `backend/.env.example` to `backend/.env`, then set `FELCLOUD_API_KEY`, `FELCLOUD_BASE_URL`, and compact, mid-size, and optional vision model IDs. The base URL is configurable and should be the `/v1` URL supplied by the platform. Do not put the API key in a `VITE_` variable or frontend file.
+
+Run the FastAPI service on port 8000 and the Vite frontend on port 5173. Use `GET http://localhost:8000/llm/models` to verify authentication and discover model IDs, then assign the suitable IDs to `FELCLOUD_COMPACT_MODEL` and `FELCLOUD_MIDSIZE_MODEL`. AI chat, analysis, OCR, tutor, quiz, routine, and content-generation features use the backend proxy, which keeps the key out of browser requests and applies the compact-model fallback when the mid-size model is saturated.
+
 ### Production Deployment
 
 **Railway (Recommended):**

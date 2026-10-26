@@ -1,12 +1,7 @@
-import { loadEnvConfig, getGroqKeys, getOpenRouterKeys, getGroqBase, getOpenRouterBase, getViteEnv } from './env-config.js';
+import { loadEnvConfig } from './env-config.js';
+import { felcloudChatCompletion, getFelcloudConfig } from './felcloud-client.js';
 
 let _config = {};
-const _env = getViteEnv();
-
-function groqKeys() { return getGroqKeys(_config, _env); }
-function openRouterKeys() { return getOpenRouterKeys(_config, _env); }
-function groqBase() { return getGroqBase(_config, _env); }
-function openRouterBase() { return getOpenRouterBase(_config, _env); }
 
 function apiBase() {
   const fromConfig = _config.BACKEND_URL || (typeof window !== 'undefined' && window.AMPLIFY_ENV?.BACKEND_URL);
@@ -138,16 +133,6 @@ async function initNeo4j() {
 }
 
 
-const OPENROUTER_MODEL = 'openrouter/free';
-const VISION_MODEL = 'qwen/qwen3.8-27b';
-
-// Primary model for all lecture + chat generation
-const GROQ_MODELS = [
-  'openai/gpt-oss-120b',
-  'openai/gpt-oss-20b',
-  'qwen/qwen3.6-27b',
-];
-
 // ── TTS MANAGER ──
 const TTS = {
   aiUtterance: null,
@@ -246,16 +231,7 @@ function triggerDistractionWarning() {
   }, 8000);
 }
 
-// Gemini config — used for slide generation
-let _geminiConfig = {};
-loadEnvConfig().then(cfg => {
-  _config = cfg;
-  _geminiConfig = cfg;
-});
-
-function geminiKey() { return _geminiConfig.GEMINI_KEY || _env.VITE_GEMINI_KEY || ''; }
-function geminiModel() { return _geminiConfig.GEMINI_MODEL || _env.VITE_GEMINI_MODEL || 'gemini-2.0-flash-lite'; }
-function geminiBase() { return _geminiConfig.GEMINI_BASE || _env.VITE_GEMINI_BASE || 'https://generativelanguage.googleapis.com/v1beta/models'; }
+loadEnvConfig().then(cfg => { _config = cfg; });
 
 // Pipeline settings
 const CHUNK_WORDS  = 300;
@@ -731,204 +707,25 @@ async function detectPDFMode(doc) {
 // ─────────────────────────────────────────────────────
 // GROQ API  — key rotation with per-model fallback
 // ─────────────────────────────────────────────────────
-async function groqCallModel(model, messages, system, maxTokens=400, temperature=0.72, apiKey) {
-  const key = apiKey || groqKeys()[0];
-  const res = await fetch(`${groqBase()}/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-    body: JSON.stringify({
-      model, max_tokens: maxTokens, temperature,
-      messages: [{ role: 'system', content: system }, ...messages]
-    })
-  });
-  if (res.status === 429) {
-    const err = await res.json().catch(() => ({}));
-    throw Object.assign(new Error('429'), { is429: true, groqMsg: err?.error?.message || '' });
-  }
-  if (!res.ok) { const e = await res.text(); throw new Error('Groq ' + res.status + ': ' + e); }
-  const d = await res.json();
-  return d.choices?.[0]?.message?.content || '';
+async function groqChat(messages, system, maxTokens = 400, temperature = 0.72) {
+  return felcloudChatCompletion([
+    { role: 'system', content: system }, ...messages,
+  ], { tier: 'midsize', maxTokens, temperature });
 }
 
-const _deadORKeys = new Set(); // keys that returned 402 (out of credits) — skip permanently this session
-
-async function openRouterChat(messages, system, maxTokens = 1000, temp = 0.7) {
-  const keys = openRouterKeys();
-  for (let i = 0; i < keys.length; i++) {
-    if (_deadORKeys.has(i)) continue; // known dead, don't waste a request
-    try {
-      const res = await fetch(`${openRouterBase()}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${keys[i]}`,
-          'HTTP-Referer': 'http://localhost:5173',
-          'X-Title': 'Amplify'
-        },
-        body: JSON.stringify({
-          model: OPENROUTER_MODEL,
-          max_tokens: maxTokens,
-          temperature: temp,
-          messages: [
-            { role: 'system', content: system },
-            ...messages
-          ]
-        })
-      });
-      if (res.status === 402) { _deadORKeys.add(i); throw new Error(`OpenRouter key ${i+1}: 402 (no credits) — marking dead`); }
-      if (!res.ok) throw new Error(`OpenRouter key ${i+1}: ${res.status}`);
-      const d = await res.json();
-      console.log(`[OpenRouter] key ${i+1} success`);
-      return d.choices[0].message.content;
-    } catch(e) {
-      console.warn(`[OpenRouter] key ${i+1} error: ${e.message} — trying next`);
-      continue;
-    }
-  }
-  throw new Error('All OpenRouter keys failed');
-}
-
-
-async function groqChat(messages, system, maxTokens=400, temperature=0.72) {
-  // Try OpenRouter first
-  try {
-    const result = await openRouterChat(messages, system, maxTokens, temperature);
-    console.log('[Chat] OpenRouter success');
-    return result;
-  } catch(e) {
-    console.warn('[Chat] OpenRouter failed, falling back to Groq:', e.message);
-  }
-
-  // Fallback — try each Groq model + key combination
-  for (let mi = 0; mi < GROQ_MODELS.length; mi++) {
-    const model = GROQ_MODELS[mi];
-    for (let ki = 0; ki < groqKeys().length; ki++) {
-      try {
-        console.log(`[Groq] model: ${model} | key: ${ki+1}/${groqKeys().length} | key starts: ${groqKeys()[ki]?.slice(0,12)}`);
-        return await groqCallModel(model, messages, system, maxTokens, temperature, groqKeys()[ki]);
-      } catch(e) {
-        console.warn(`[Groq] key ${ki+1} model ${model} error: ${e.message}`);
-        continue; // try next key regardless of error type
-      }
-    }
-    console.warn(`[Groq] All keys exhausted for ${model}, trying next model`);
-  }
-  throw new Error('All models and API keys are rate-limited. Please try again in one minute.');
-}
 async function groqVisionOCR(base64Img, pageNum) {
-  for (let ki = 0; ki < groqKeys().length; ki++) {
-    let attempts = 0;
-    while (attempts < 2) { // max 2 attempts per key (1 retry after 429)
-      attempts++;
-      try {
-        const res = await fetch(`${groqBase()}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${groqKeys()[ki]}`
-          },
-          body: JSON.stringify({
-            model: VISION_MODEL, max_tokens: 2048,
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Img}` } },
-                { type: 'text', text: 'Transcribe ALL text visible on this page exactly as it appears. Output only the raw text, preserving structure. No commentary or explanations.' }
-              ]
-            }]
-          })
-        });
-
-        if (res.status === 429) {
-          if (attempts < 2) {
-            const waitMs = (ki + 1) * 4000;
-            console.warn(`[Vision] Groq key ${ki+1} rate limited, waiting ${waitMs}ms then retrying once`);
-            await sleep(waitMs);
-            continue; // retry THIS key once
-          } else {
-            console.warn(`[Vision] Groq key ${ki+1} still rate limited after retry, moving to next key`);
-            break; // give up on this key, outer loop moves to ki+1
-          }
-        }
-
-        if (!res.ok) {
-          console.warn(`[Vision] Groq key ${ki+1} error ${res.status}, trying next key`);
-          break; // move to next key
-        }
-
-        const d = await res.json();
-        console.log(`[Vision] Groq key ${ki+1} succeeded for page ${pageNum}`);
-        return d.choices?.[0]?.message?.content || '';
-
-      } catch(e) {
-        console.warn(`[Vision] Groq key ${ki+1} failed: ${e.message}, trying next key`);
-        break; // move to next key
-      }
-    }
-  }
-
-  // All Groq keys exhausted — fall back to OpenRouter
-  console.warn(`[Vision] All Groq keys failed for page ${pageNum}, trying OpenRouter`);
-  for (let i = 0; i < openRouterKeys().length; i++) {
-    let attempts = 0;
-    while (attempts < 2) {
-      attempts++;
-      try {
-        const res = await fetch(`${openRouterBase()}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openRouterKeys()[i]}`,
-            'HTTP-Referer': 'http://localhost:5173',
-            'X-Title': 'Amplify'
-          },
-          body: JSON.stringify({
-            model: 'openrouter/free',
-            max_tokens: 2048,
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Img}` } },
-                { type: 'text', text: 'Transcribe ALL text visible on this page exactly as it appears. Output only the raw text, preserving structure. No commentary or explanations.' }
-              ]
-            }]
-          })
-        });
-
-        if (res.status === 429) {
-          if (attempts < 2) {
-            const waitMs = (i + 1) * 5000;
-            console.warn(`[Vision] OpenRouter key ${i+1} rate limited, waiting ${waitMs}ms then retrying once`);
-            await sleep(waitMs);
-            continue;
-          } else {
-            console.warn(`[Vision] OpenRouter key ${i+1} still rate limited, moving to next key`);
-            break;
-          }
-        }
-
-        if (!res.ok) {
-          console.warn(`[Vision] OpenRouter key ${i+1} error ${res.status}, trying next`);
-          break;
-        }
-
-        const d = await res.json();
-        console.log(`[Vision] OpenRouter key ${i+1} succeeded for page ${pageNum}`);
-        return d.choices?.[0]?.message?.content || '';
-
-      } catch(e) {
-        console.warn(`[Vision] OpenRouter key ${i+1} failed: ${e.message}`);
-        break;
-      }
-    }
-  }
-
-  console.error(`[Vision] All providers failed for page ${pageNum}`);
-  return '';
+  const config = await getFelcloudConfig();
+  const text = await felcloudChatCompletion([{
+    role: 'user',
+    content: [
+      { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Img}` } },
+      { type: 'text', text: 'Transcribe all visible text exactly. Output only the raw text.' },
+    ],
+  }], { model: config.vision_model, maxTokens: 2048, temperature: 0 });
+  if (!text.trim()) throw new Error(`Felcloud returned empty OCR for page ${pageNum}.`);
+  return text;
 }
 
-
-// ═══════════════════════════════════════════════════
 // QUIZ ENGINE — Adaptive CAT with Groq student model
 // ═══════════════════════════════════════════════════
 
@@ -1480,51 +1277,25 @@ async function replayWeakSegment() {
 // ─────────────────────────────────────────────────────
 // GEMINI API  (slide generation)
 // ─────────────────────────────────────────────────────
-async function geminiChat(userContent, systemInstruction, retries=4) {
-  for (let attempt=0; attempt<=retries; attempt++) {
-    const res = await fetch(
-      `${geminiBase()}/${geminiModel()}:generateContent?key=${geminiKey()}`,
-      {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          system_instruction:{parts:[{text:systemInstruction}]},
-          contents:[{role:'user',parts:[{text:userContent}]}],
-          generationConfig:{maxOutputTokens:1024,temperature:0.65}
-        })
-      }
-    );
-    if(res.status===429){
-      let waitMs=62000;
-      try{const eb=await res.json();const m=eb?.error?.message?.match(/retry after (\d+)/i);if(m)waitMs=Math.max(parseInt(m[1])*1000+1000,62000);}catch(e){}
-      if(attempt<retries){await sleep(waitMs);continue;}
-      throw new Error('Rate limit: max retries exceeded');
-    }
-    if(!res.ok){const e=await res.text();throw new Error('Gemini '+res.status+': '+e);}
-    const d=await res.json();
-    return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
-  }
-  throw new Error('geminiChat: exhausted retries');
+async function geminiChat(userContent, systemInstruction) {
+  return felcloudChatCompletion([
+    { role: 'system', content: systemInstruction },
+    { role: 'user', content: userContent },
+  ], { tier: 'midsize', maxTokens: 1024, temperature: 0.65 });
 }
 
-async function geminiJSON(userContent, retries=4) {
-  for(let attempt=0;attempt<=retries;attempt++){
-    const res=await fetch(
-      `${geminiBase()}/${geminiModel()}:generateContent?key=${geminiKey()}`,
-      {method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user',parts:[{text:userContent}]}],
-      generationConfig:{maxOutputTokens:400,temperature:0.25,responseMimeType:'application/json'}})}
-    );
-    if(res.status===429){let w=Math.pow(2,attempt+1)*2000;if(attempt<retries){await sleep(w);continue;}return{type:'none'};}
-    if(!res.ok)return{type:'none'};
-    const d=await res.json();
-    const text=d.candidates?.[0]?.content?.parts?.[0]?.text||'{"type":"none"}';
-    try{return JSON.parse(text);}catch(e){return{type:'none'};}
+async function geminiJSON(userContent) {
+  const text = await felcloudChatCompletion(
+    [{ role: 'user', content: userContent }],
+    { tier: 'compact', maxTokens: 400, temperature: 0.25, responseFormat: { type: 'json_object' } }
+  );
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error('Felcloud returned invalid JSON for the slide response.', { cause: error });
   }
-  return{type:'none'};
 }
 
-// ─────────────────────────────────────────────────────
 // MAIN LOAD + INDEX PIPELINE
 // ─────────────────────────────────────────────────────
 async function loadAndIndex(file) {
@@ -2906,8 +2677,10 @@ function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrol
 document.addEventListener('DOMContentLoaded', async function(){
   _config = await loadEnvConfig();
   refreshNeo4jConfig();
-  if (!groqKeys().length) {
-    console.warn('[Amplify Tutor] No Groq API keys. Set GROQ_KEYS in Railway variables.');
+  try {
+    await getFelcloudConfig();
+  } catch (error) {
+    console.error('[Amplify Tutor] Felcloud configuration unavailable:', error);
   }
   showHomeScreen(true);
   if (_neo4jEnabled) await initNeo4j();

@@ -1,9 +1,10 @@
 // ══════════════════════════════════════════════
 //  DeepLearn — deeplearn.js
-//  3 Expert Agents · Groq multi-model · English discussion
+//  3 Expert Agents · Felcloud OpenAI-compatible API · English discussion
 // ══════════════════════════════════════════════
 
-import { loadEnvConfig, getGroqKeys, getOpenRouterKeys, getGroqBase, getOpenRouterBase, getViteEnv } from './env-config.js';
+import { loadEnvConfig, getViteEnv } from './env-config.js';
+import { felcloudChatCompletion, getFelcloudConfig } from './felcloud-client.js';
 
 let _config = {};
 const _env = getViteEnv();
@@ -16,17 +17,14 @@ loadEnvConfig().then(cfg => {
   console.log('[DeepLearn Azure] config loaded. key present:', !!_azureKey, '| key length:', _azureKey.length, '| region:', _azureRegion);
 });
 
-function groqKeys() { return getGroqKeys(_config, _env); }
-function openRouterKeys() { return getOpenRouterKeys(_config, _env); }
-function groqBase() { return getGroqBase(_config, _env); }
-function openRouterBase() { return getOpenRouterBase(_config, _env); }
-
-const OPENROUTER_MODELS = ['openrouter/free'];
-const GROQ_MODELS        = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.6-27b'];
-const VISION_MODEL       = 'qwen/qwen3.6-27b';
-
-// ── Expert Config ──────────────────────────────
-const MODEL_FALLBACK = 'openai/gpt-oss-120b';
+const felcloudConfig = getFelcloudConfig;
+const requestFelcloudChat = (model, messages, maxTokens, temperature, responseFormat) =>
+  felcloudChatCompletion(messages, {
+    model,
+    maxTokens,
+    temperature,
+    responseFormat,
+  });
 
 
 // ══════════════════════════════════════════════
@@ -157,27 +155,17 @@ async function detectPDFMode(doc) {
   return (total / n) < 50 ? 'image' : 'text';
 }
 
-async function groqVisionOCR(base64Img, pageNum) {
-  for (let ki = 0; ki < groqKeys().length; ki++) {
-    try {
-      const res = await fetch(`${groqBase()}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKeys()[ki]}` },
-        body: JSON.stringify({
-          model: VISION_MODEL, max_tokens: 2048,
-          messages: [{ role: 'user', content: [
-            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Img}` } },
-            { type: 'text', text: 'Transcribe ALL text visible on this page exactly. Output only raw text, no commentary.' }
-          ]}],
-        }),
-      });
-      if (res.status === 429) { await sleep(4000); continue; }
-      if (!res.ok) continue;
-      const d = await res.json();
-      return d.choices?.[0]?.message?.content || '';
-    } catch (e) { console.warn(`[OCR] key ${ki+1}: ${e.message}`); }
-  }
-  return '';
+async function felcloudVisionOCR(base64Img, pageNum) {
+  const config = await felcloudConfig();
+  const text = await requestFelcloudChat(config.vision_model, [{
+    role: 'user',
+    content: [
+      { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Img}` } },
+      { type: 'text', text: 'Transcribe ALL text visible on this page exactly. Output only raw text, no commentary.' },
+    ],
+  }], 2048, 0);
+  if (!text.trim()) throw new Error(`Felcloud returned empty OCR text for page ${pageNum}.`);
+  return text;
 }
 
 async function loadAndIndexPDF(file, onProgress) {
@@ -194,7 +182,7 @@ async function loadAndIndexPDF(file, onProgress) {
     if (pageText.trim().length < 30 && mode === 'image') {
       try {
         const b64 = await pageToBase64(pg);
-        const ocr = await groqVisionOCR(b64, i);
+        const ocr = await felcloudVisionOCR(b64, i);
         if (ocr && ocr.trim().length > pageText.length) pageText = ocr;
       } catch (e) { console.warn(`[PDF OCR p${i}]:`, e.message); }
     }
@@ -215,7 +203,6 @@ const EXPERTS = {
     name:  'Dr. Arifa',
     nameShort: 'A',
     role:  'Subject expert and synthesizer',
-    model: 'openai/gpt-oss-120b',
     color: '#5b21b6',
     avatarClass: 'expert1-avatar',
     bubbleClass: 'bubble-expert1',
@@ -232,7 +219,6 @@ Rules:
     name:  'Dr. Nafisa',
     nameShort: 'N',
     role:  'Analyst and researcher',
-    model: 'qwen/qwen3.6-27b',
     color: '#0369a1',
     avatarClass: 'expert2-avatar',
     bubbleClass: 'bubble-expert2',
@@ -249,7 +235,6 @@ Rules:
     name:  'Dr. Rakib',
     nameShort: 'R',
     role:  'Critic and questioner',
-    model: 'openai/gpt-oss-20b',
     color: '#b45309',
     avatarClass: 'expert3-avatar',
     bubbleClass: 'bubble-expert3',
@@ -1000,75 +985,26 @@ function buildMessagesForExpert(expertId) {
   }];
 }
 
-// ── Groq API call ─────────────────────────────
+// ── Felcloud API calls ─────────────────────────
 
-async function openRouterChat(messages, system, maxTokens = 200, temp = 0.8) {
-  for (const model of OPENROUTER_MODELS) {
-    for (let i = 0; i < openRouterKeys().length; i++) {
-      try {
-        const res = await fetch(`${openRouterBase()}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openRouterKeys()[i]}`,
-            'HTTP-Referer': 'http://localhost',
-            'X-Title': 'DeepLearn',
-          },
-          body: JSON.stringify({ model, max_tokens: maxTokens, temperature: temp,
-            messages: [{ role: 'system', content: system }, ...messages] }),
-        });
-        if (!res.ok) { if (res.status === 429) await sleep(1000); throw new Error(`${res.status}`); }
-        const d = await res.json();
-        const text = d?.choices?.[0]?.message?.content || '';
-        if (!text.trim()) throw new Error('Empty');
-        return cleanReply(text.trim());
-      } catch (e) { console.warn(`[OpenRouter] ${model} key${i+1}: ${e.message}`); }
-    }
+async function callFelcloud(expertId) {
+  const expert = EXPERTS[expertId];
+  const messages = [
+    { role: 'system', content: expert.system },
+    ...buildMessagesForExpert(expertId),
+  ];
+  const config = await felcloudConfig();
+
+  try {
+    const text = await requestFelcloudChat(config.midsize_model, messages);
+    if (!text.trim()) throw new Error('Felcloud returned an empty response.');
+    return cleanReply(text.trim());
+  } catch (error) {
+    if (error.status !== 503 || config.compact_model === config.midsize_model) throw error;
+    const text = await requestFelcloudChat(config.compact_model, messages);
+    if (!text.trim()) throw new Error('Felcloud compact model returned an empty response.');
+    return cleanReply(text.trim());
   }
-  throw new Error('All OpenRouter keys failed');
-}
-
-async function callGroq(expertId, modelOverride) {
-  const expert   = EXPERTS[expertId];
-  const messages = buildMessagesForExpert(expertId);
-
-  // Try OpenRouter first
-  try { return await openRouterChat(messages, expert.system); } catch (e) {
-    console.warn('[callGroq] OpenRouter failed, falling back to Groq:', e.message);
-  }
-
-  // Groq fallback — rotate models × keys
-  const models = modelOverride ? [modelOverride] : [expert.model, ...GROQ_MODELS.filter(model => model !== expert.model)];
-  for (const model of models) {
-    for (let ki = 0; ki < groqKeys().length; ki++) {
-      try {
-        const payload = {
-          model,
-          max_tokens: 200,
-          temperature: 0.8,
-          messages: [{ role: 'system', content: expert.system }, ...messages],
-        };
-        if (model.includes('gpt-oss')) {
-          payload.reasoning_effort = 'low';
-        } else if (model.includes('qwen/')) {
-          payload.reasoning_effort = 'none';
-        }
-
-        const res = await fetch(`${groqBase()}/chat/completions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKeys()[ki]}` },
-          body: JSON.stringify(payload),
-        });
-        if (res.status === 429) { await sleep(400); continue; }
-        if (!res.ok) continue;
-        const d = await res.json();
-        const text = d?.choices?.[0]?.message?.content || '';
-        if (!text.trim()) continue;
-        return cleanReply(text.trim());
-      } catch (e) { console.warn(`[Groq] ${model} key${ki+1}: ${e.message}`); }
-    }
-  }
-  throw new Error('All configured OpenRouter and Groq API keys failed.');
 }
 
 // ── Knowledge fetch (enrichment panel) ────────
@@ -1083,25 +1019,17 @@ Provide 2–3 useful English insights based on recent research and factual infor
 - Return only JSON: {"insight":"2–3 sentences in English","sources":["source type 1","source type 2"]}`;
 
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${groqKeys()[0] || ''}`,
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-oss-120b',
-        max_tokens: 300,
-        temperature: 0.5,
-        reasoning_effort: 'low',
-        response_format: { type: 'json_object' },
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) return null;
-    return JSON.parse(data.choices?.[0]?.message?.content || '{}');
+    const config = await felcloudConfig();
+    const content = await requestFelcloudChat(
+      config.midsize_model,
+      [{ role: 'user', content: prompt }],
+      300,
+      0.5,
+      { type: 'json_object' }
+    );
+    return JSON.parse(content);
   } catch (e) {
+    console.warn('[DeepLearn research insight]', e.message);
     return null;
   }
 }
@@ -1181,12 +1109,12 @@ async function runExpertTurn(expertId) {
         await sleep(2000);
       }
     }
-    reply = await callGroq(expertId);
+    reply = await callFelcloud(expertId);
     const recentExpertTurns = dialogueLog.filter(entry => entry.name !== 'You').slice(-3);
     const repeatsRecentTurn = text => recentExpertTurns.some(entry => normalizedReply(text) === normalizedReply(entry.text));
     if (repeatsRecentTurn(reply)) {
       console.warn(`[DeepLearn] ${expert.name} repeated a recent response; requesting a new contribution.`);
-      reply = await callGroq(expertId, EXPERTS[expertId].model);
+      reply = await callFelcloud(expertId);
       if (repeatsRecentTurn(reply)) {
         throw new Error(`${expert.name} returned a recent response twice. Please retry the discussion.`);
       }

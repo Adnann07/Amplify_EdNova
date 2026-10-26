@@ -1527,18 +1527,21 @@ document.addEventListener('keydown', e => {
 let _pendingFollowUp = false;
 
 async function callGroq(messages){
-  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const configRes = await fetch('/llm/config');
+  const config = await configRes.json();
+  if (!configRes.ok) throw new Error(config.detail || 'Felcloud configuration unavailable.');
+  const res = await fetch('/llm/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + (window.AMPLIFY_ENV?.GROQ_KEY || '') },
+    headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
     body: JSON.stringify({
-      model: 'openai/gpt-oss-120b',
+      model: config.midsize_model,
       max_tokens: 500,
       tools: AGENT_TOOLS.map(t => ({ type:'function', function: t })),
       tool_choice: 'auto',
       messages
     })
   });
-  if(!res.ok){ const e = await res.text(); throw new Error(`Groq ${res.status}: ${e}`); }
+  if(!res.ok){ const e = await res.json().catch(() => ({})); throw new Error(e.detail || e.error?.message || `Felcloud ${res.status}`); }
   return res.json();
 }
 

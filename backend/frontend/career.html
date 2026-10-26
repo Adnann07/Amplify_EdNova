@@ -277,7 +277,7 @@ footer{text-align:center;padding:32px;border-top:1px solid var(--border);color:v
 </section>
 
 </div>
-<footer>&copy; 2026 Amplify · Career Engine · Powered by GROQ AI &amp; Llama 4 Scout</footer>
+<footer>&copy; 2026 Amplify · Career Engine · Powered by Felcloud AI</footer>
 
 <script src="/amplify-env-bootstrap.js"></script>
 <script type="module">
@@ -286,11 +286,13 @@ window.AMPLIFY_ENV = window.AMPLIFY_ENV || {};
 </script>
 <script>
 // ── API KEY ──
-let GROQ_KEY = '';
-async function initKey() {
-  GROQ_KEY = window.AMPLIFY_ENV?.GROQ_KEY || '';
+async function getFelcloudModel() {
+  const response = await fetch('/llm/config', { headers: { Accept: 'application/json' } });
+  const config = await response.json();
+  if (!response.ok) throw new Error(config.detail || `AI configuration failed (${response.status}).`);
+  if (!config.midsize_model) throw new Error('The Felcloud mid-size model is not configured.');
+  return config.midsize_model;
 }
-document.addEventListener('DOMContentLoaded', initKey);
 
 // ── VOICE ──
 // Pick the most natural-sounding voice available.
@@ -484,14 +486,14 @@ Return ONLY a valid JSON object — no markdown, no backticks — with keys:
 4. "articles": [{title,url,source,description}] x5 — real URLs from Coursera, freeCodeCamp, HBR, Medium, LinkedIn Learning, dev.to
 5. "jobs": [{title,company,url,tags,requirements}] x5 — international role pathways linked to official global company career portals. Do not claim that a specific vacancy is currently open; never use single-country job boards or employers. Respect the learner's location and relocation preferences from their assessment.`;
   try {
-    if(!GROQ_KEY) throw new Error('API key not loaded — check /api/groq-key endpoint.');
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const model = await getFelcloudModel();
+    const res=await fetch('/llm/chat/completions',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${GROQ_KEY}`},
-      body:JSON.stringify({model:'openai/gpt-oss-120b',messages:[{role:'system',content:sys},{role:'user',content:`Assessment:\n${profile}`}],temperature:0.42,max_tokens:2400})
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({model,messages:[{role:'system',content:sys},{role:'user',content:`Assessment:\n${profile}`}],temperature:0.42,max_tokens:2400})
     });
     const data=await res.json();
-    if(!res.ok) throw new Error(data.error?.message||'Groq error');
+    if(!res.ok) throw new Error(data.detail || data.error?.message || `Felcloud request failed (${res.status}).`);
     let raw=(data.choices?.[0]?.message?.content||'').replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(raw);
     [0,1,2,3,4].forEach(i=>markL(i)); await wait(400); showResults(parsed);

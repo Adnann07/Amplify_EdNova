@@ -1,14 +1,5 @@
-import { loadEnvConfig, getViteEnv } from './env-config.js';
+import { felcloudChatCompletion } from './felcloud-client.js';
 
-let _config = {};
-loadEnvConfig().then(cfg => { _config = cfg; });
-
-const _env = getViteEnv();
-const GROQ_API_KEY = _config.GROQ_API_KEY || _env.VITE_GROQ_API_KEY || window.GROQ_API_KEY || '';
-
-if (!GROQ_API_KEY) {
-  console.warn('Note: API keys are now loaded from server (/api/config). Set them in backend .env for proper functionality.');
-}
 
 // ── DOM refs ──
 const form              = document.getElementById('routineForm');
@@ -159,74 +150,74 @@ form.addEventListener('submit', async (e) => {
   showStep('step-loading');
   const loadingInterval = animateLoading();
 
-  const messageContent = [];
+  const imageContent = [];
 
   for (const img of uploadedImages) {
     const b64 = await toBase64(img);
-    messageContent.push({
+    imageContent.push({
       type: 'image_url',
       image_url: { url: `data:${img.type};base64,${b64}` }
     });
   }
 
   const displayDays = Math.min(daysLeft, 60);
+  const todayDate = new Date().toISOString().split('T')[0];
 
-  messageContent.push({
-    type: 'text',
-    text: `You are an expert academic planner for Bangladeshi students.
+  try {
+    const days = [];
+    for (let firstDay = 1; firstDay <= displayDays; firstDay += 7) {
+      const lastDay = Math.min(firstDay + 6, displayDays);
+      const isFinalPhase = lastDay >= Math.ceil(displayDays * 0.8);
+      const prompt = `You are an expert academic planner for Bangladeshi students.
 
-Create a detailed day-by-day exam preparation routine for the following student:
+Create days ${firstDay} through ${lastDay} of a day-by-day exam preparation routine for this student:
 
 - Level: ${selectedLevel}
 - Subjects: ${subjects}
-- Days until exam: ${daysLeft} (show ${displayDays} days in the plan)
+- Days until exam: ${daysLeft}
 - Available study hours per day: ${hours} hours
-${uploadedImages.length > 0 ? '- Syllabus images are attached — use the topics visible in them to plan specific chapters per day.' : ''}
+- Today's date: ${todayDate}
+${uploadedImages.length > 0 ? '- Use the attached syllabus images to choose specific topics for this batch.' : ''}
+${isFinalPhase ? '- This is the final revision phase: emphasize review and mock questions.' : ''}
 
-Rules:
-1. Return ONLY valid JSON. No markdown, no backticks, no explanation.
-2. The JSON must be an array of day objects.
-3. Each day object has: "day" (number), "date" (YYYY-MM-DD starting from today+1), "sessions" (array).
-4. Each session has: "time" (e.g. "8:00 AM - 9:30 AM"), "subject" (string), "detail" (what to study specifically), "tag" (one of: study, revision, break, mock).
-5. Include short breaks (15-30 min) as sessions with tag "break".
-6. In the last 20% of days, increase revision and mock sessions.
-7. Spread subjects evenly — do not repeat the same subject more than twice in one day.
-8. Today's date is ${new Date().toISOString().split('T')[0]}.
-
-Return only the JSON array.`
-  });
-
-  try {
-    if (!GROQ_API_KEY) {
-      throw new Error('Missing Groq API key. Set VITE_GROQ_API_KEY in frontend/.env.');
-    }
-
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-oss-120b',
-        max_tokens: 8000,
-        temperature: 0.4,
-        messages: [{ role: 'user', content: messageContent }]
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(`Groq API error ${response.status}: ${data.error?.message || JSON.stringify(data)}`);
+Return ONLY a JSON array containing exactly ${lastDay - firstDay + 1} day objects. Each day object must have "day" (the absolute day number, ${firstDay} through ${lastDay}), "date" (YYYY-MM-DD), and "sessions" (an array).
+Each session must have "time", "subject", "detail", and "tag" (study, revision, break, or mock). Give each day two focused study sessions and one short 15-30 minute break. Spread subjects evenly and do not repeat one subject more than twice in a day. No markdown or explanation.`;
+      const content = imageContent.length
+        ? [...imageContent, { type: 'text', text: prompt }]
+        : prompt;
+      const raw = await felcloudChatCompletion(
+        [{ role: 'user', content }],
+        { tier: 'midsize', temperature: 0.4, maxTokens: 1400 }
+      );
+      const clean = raw.replace(/```json|```/g, '').trim();
+      const batch = JSON.parse(clean);
+      if (!Array.isArray(batch) || batch.length !== lastDay - firstDay + 1) {
+        throw new Error(`Felcloud returned an incomplete routine for days ${firstDay}-${lastDay}.`);
+      }
+      for (let index = 0; index < batch.length; index++) {
+        const day = batch[index];
+        if (
+          day?.day !== firstDay + index
+          || typeof day.date !== 'string'
+          || !Array.isArray(day.sessions)
+          || day.sessions.some(session => (
+            !session
+            || typeof session.time !== 'string'
+            || typeof session.subject !== 'string'
+            || typeof session.detail !== 'string'
+            || !['study', 'revision', 'break', 'mock'].includes(session.tag)
+          ))
+        ) {
+          throw new Error(`Felcloud returned an invalid routine for day ${firstDay + index}.`);
+        }
+      }
+      days.push(...batch);
+      if (lastDay < displayDays) await new Promise(resolve => setTimeout(resolve, 3100));
     }
 
     clearInterval(loadingInterval);
     loadingFill.style.width = '100%';
     await new Promise(r => setTimeout(r, 400));
-
-    const raw   = data.choices?.[0]?.message?.content || '';
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const days  = JSON.parse(clean);
 
     renderRoutine(days, { level: selectedLevel, subjects, daysLeft, hours, examDate });
     showStep('step-result');

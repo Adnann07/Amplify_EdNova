@@ -1,10 +1,4 @@
-import { loadEnvConfig, getViteEnv } from './env-config.js';
-
-let _config = {};
-loadEnvConfig().then(cfg => { _config = cfg; });
-
-const _env = getViteEnv();
-const GROQ_API_KEY = _config.GROQ_API_KEY || _env.VITE_GROQ_API_KEY || window.GROQ_API_KEY || '';
+import { felcloudChatCompletion } from './felcloud-client.js';
 
 const params = new URLSearchParams(window.location.search);
 const subject = params.get('subject') || '';
@@ -137,31 +131,11 @@ Rules:
 Return only the JSON array.`;
 
   try {
-    if (!GROQ_API_KEY) throw new Error('Missing VITE_GROQ_API_KEY in your Vite environment.');
-
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-oss-120b',
-        temperature: 0.4,
-        max_tokens: 4000,
-        response_format: { type: 'json_object' },
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(`Groq API error ${response.status}: ${data.error?.message || 'Unknown API error'}`);
-    }
-
-    const raw = data.choices?.[0]?.message?.content;
-    if (!raw) throw new Error('Empty response from Groq.');
+    const raw = await felcloudChatCompletion(
+      [{ role: 'user', content: prompt }],
+      { tier: 'midsize', temperature: 0.4, maxTokens: 4000 }
+    );
+    if (!raw) throw new Error('Felcloud returned an empty quiz response.');
 
     let parsed;
     try {

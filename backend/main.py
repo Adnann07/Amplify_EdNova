@@ -1,12 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import asyncio, subprocess, json, os, uuid, re, ast, sys
 import urllib.error, urllib.parse, urllib.request, xml.etree.ElementTree as ET
 import html
-from openai import OpenAI
+from openai import APIConnectionError, APIStatusError, AsyncOpenAI
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(BASE_DIR)
@@ -48,112 +48,123 @@ def resolve_frontend_dir() -> str | None:
 
 FRONTEND_DIR = resolve_frontend_dir()
 
+
+FELCLOUD_ENV_NAMES = {
+    "FELCLOUD_API_KEY",
+    "FELCLOUD_BASE_URL",
+    "FELCLOUD_COMPACT_MODEL",
+    "FELCLOUD_MIDSIZE_MODEL",
+    "FELCLOUD_VISION_MODEL",
+}
+
+
+def load_felcloud_env() -> None:
+    for env_file in (
+        os.path.join(BASE_DIR, ".env"),
+        os.path.join(BASE_DIR, "frontend", ".env"),
+        os.path.join(PROJECT_ROOT, ".env"),
+    ):
+        if not os.path.isfile(env_file):
+            continue
+        with open(env_file, encoding="utf-8") as file:
+            for line in file:
+                entry = line.strip()
+                if entry.startswith("export "):
+                    entry = entry[7:].lstrip()
+                if not entry or entry.startswith("#") or "=" not in entry:
+                    continue
+                name, value = entry.split("=", 1)
+                name = name.strip()
+                if name in FELCLOUD_ENV_NAMES and not os.getenv(name, "").strip():
+                    os.environ[name] = value.strip().strip("\"'")
+
+
+load_felcloud_env()
+
 # ── LangGraph (Deep Learn feature) ──
 from langgraph.graph import StateGraph, END, START
-from langchain_groq import ChatGroq
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from typing import Annotated, List, Literal, TypedDict
 import operator
 import shutil
 
 
-def parse_env_list(name: str, default=None) -> list[str]:
-    value = os.getenv(name)
-    if not value:
-        return default or []
+_felcloud_client = None
+_felcloud_client_settings = None
+_felcloud_request_semaphore = asyncio.Semaphore(2)
+
+
+async def felcloud_chat_text(messages: list[dict], *, tier: str = "midsize", max_tokens: int = 1024, temperature: float = 0.7, response_format: dict | None = None) -> str:
+    settings = get_felcloud_settings()
+    model = settings["compact_model" if tier == "compact" else "midsize_model"]
+    if not model:
+        raise HTTPException(503, f"Felcloud {tier} model is not configured.")
     try:
-        parsed = json.loads(value)
-        if isinstance(parsed, list):
-            return [str(item) for item in parsed if item is not None]
-    except Exception:
-        return [part.strip() for part in value.split(',') if part.strip()]
-    return default or []
-
-
-OPENROUTER_BASE_URL = os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1')
-API_KEYS = None
-GROQ_KEYS = None
-_clients = None
-
-
-def get_api_keys() -> list[str]:
-    global API_KEYS
-    if API_KEYS is None:
-        API_KEYS = parse_env_list('OPENROUTER_API_KEYS')
-        if not API_KEYS:
-            raise RuntimeError('OPENROUTER_API_KEYS must be configured in backend/.env or Vercel environment variables.')
-    return API_KEYS
-
-
-def get_groq_keys() -> list[str]:
-    global GROQ_KEYS
-    if GROQ_KEYS is None:
-        names = ('GROQ_KEYS', 'GROQ_API_KEY', 'GROQ_KEY', 'VITE_GROQ_KEYS', 'VITE_GROQ_API_KEY')
-
-        def parse_keys(value: str) -> list[str]:
-            value = value.strip().strip('"').strip("'")
-            if not value:
-                return []
-            try:
-                parsed = json.loads(value)
-            except json.JSONDecodeError:
-                parsed = None
-            if isinstance(parsed, list):
-                return [str(item).strip() for item in parsed if str(item).strip()]
-            if isinstance(parsed, str):
-                value = parsed
-            return [item.strip() for item in re.split(r'[\r\n,]+', value) if item.strip()]
-
-        GROQ_KEYS = []
-        for name in names:
-            GROQ_KEYS = parse_keys(os.getenv(name, ''))
-            if GROQ_KEYS:
-                break
-
-        if not GROQ_KEYS:
-            env_files = (
-                os.path.join(BASE_DIR, '.env'),
-                os.path.join(BASE_DIR, 'frontend', '.env'),
+        request_options = {
+            "model": model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+        }
+        if response_format is not None:
+            request_options["response_format"] = response_format
+        async with _felcloud_request_semaphore:
+            response = await get_felcloud_client().chat.completions.create(**request_options)
+    except APIStatusError as exc:
+        print(f"[Felcloud generation] Upstream HTTP {exc.status_code}.")
+        raise HTTPException(exc.status_code, "Felcloud rejected the generation request.") from exc
+    except APIConnectionError as exc:
+        cause = type(exc.__cause__).__name__ if exc.__cause__ else "unknown"
+        print(f"[Felcloud generation] Connection failed ({cause}).")
+        if cause == "ReadTimeout" and tier == "midsize" and settings["compact_model"] != model:
+            print("[Felcloud generation] Falling back to the compact model after a mid-size timeout.")
+            return await felcloud_chat_text(
+                messages,
+                tier="compact",
+                max_tokens=max_tokens,
+                temperature=temperature,
+                response_format=response_format,
             )
-            for env_file in env_files:
-                if not os.path.isfile(env_file):
-                    continue
-                with open(env_file, encoding='utf-8') as file:
-                    for line in file:
-                        entry = line.strip()
-                        if entry.startswith('export '):
-                            entry = entry[7:].lstrip()
-                        if not entry or entry.startswith('#') or '=' not in entry:
-                            continue
-                        name, value = entry.split('=', 1)
-                        if name.strip() not in names:
-                            continue
-                        GROQ_KEYS = parse_keys(value)
-                        if GROQ_KEYS:
-                            break
-                if GROQ_KEYS:
-                    break
-
-        if not GROQ_KEYS:
-            raise RuntimeError('Configure GROQ_KEYS in the server environment or a local backend/frontend .env file.')
-    return GROQ_KEYS
+        status = 504 if cause == "ReadTimeout" else 502
+        message = "Felcloud timed out waiting for the model response." if status == 504 else "Could not connect to the configured Felcloud API."
+        raise HTTPException(status, message) from exc
+    content = response.choices[0].message.content
+    if not isinstance(content, str) or not content.strip():
+        raise HTTPException(502, "Felcloud returned an empty response.")
+    return re.sub(r"<think[^>]*>[\s\S]*?</think>", "", content, flags=re.IGNORECASE).strip()
 
 
-def get_clients() -> list[OpenAI]:
-    global _clients
-    if _clients is None:
-        _clients = [
-            OpenAI(
-                api_key=key,
-                base_url=OPENROUTER_BASE_URL,
-                default_headers={
-                    'HTTP-Referer': 'http://localhost:5173',
-                    'X-Title': 'Amplify'
-                }
-            )
-            for key in get_api_keys()
-        ]
-    return _clients
+def get_felcloud_settings() -> dict[str, str]:
+    load_felcloud_env()
+    settings = {
+        "api_key": os.getenv("FELCLOUD_API_KEY", "").strip(),
+        "base_url": os.getenv("FELCLOUD_BASE_URL", "").strip().rstrip("/"),
+        "compact_model": os.getenv("FELCLOUD_COMPACT_MODEL", "").strip(),
+        "midsize_model": os.getenv("FELCLOUD_MIDSIZE_MODEL", "").strip(),
+        "vision_model": os.getenv("FELCLOUD_VISION_MODEL", "").strip(),
+    }
+    if not settings["api_key"]:
+        raise HTTPException(503, "FELCLOUD_API_KEY is not configured on the backend.")
+    if not settings["base_url"]:
+        raise HTTPException(503, "FELCLOUD_BASE_URL is not configured on the backend.")
+    if not settings["base_url"].startswith(("https://", "http://")):
+        raise HTTPException(500, "FELCLOUD_BASE_URL must be an absolute HTTP(S) URL.")
+    settings["vision_model"] = settings["vision_model"] or settings["compact_model"]
+    return settings
+
+
+def get_felcloud_client() -> AsyncOpenAI:
+    global _felcloud_client, _felcloud_client_settings
+    settings = get_felcloud_settings()
+    client_settings = (settings["api_key"], settings["base_url"])
+    if _felcloud_client is None or _felcloud_client_settings != client_settings:
+        _felcloud_client = AsyncOpenAI(
+            api_key=settings["api_key"],
+            base_url=settings["base_url"],
+            max_retries=0,
+            timeout=60,
+        )
+        _felcloud_client_settings = client_settings
+    return _felcloud_client
 
 
 def manim_available() -> bool:
@@ -189,6 +200,7 @@ async def no_cache_static_assets(request, call_next):
         or path.startswith("/src/")
         or path.startswith("/assets/")
         or path.startswith("/api/config")
+        or path.startswith("/llm/")
     ):
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
@@ -230,13 +242,12 @@ EXPERT_NAMES = {
   'expert3': 'Dr. Rakib',
 }
 
-EXPERT_MODELS = {
-  'expert1': 'openai/gpt-oss-120b',
-  'expert2': 'llama-3.3-70b-versatile',
-  'expert3': 'openai/gpt-oss-20b',
+EXPERT_MODEL_TIERS = {
+  'expert1': 'midsize',
+  'expert2': 'midsize',
+  'expert3': 'midsize',
 }
 
-# ── State definition ──────────────────────────
 class DiscussionState(TypedDict):
     topic:       str
     phase:       str
@@ -268,38 +279,19 @@ def build_expert_prompt(state: DiscussionState) -> str:
 
 # ── Nodes ─────────────────────────────────────
 def make_expert_node(expert_id: str):
-    def node(state: DiscussionState) -> dict:
-        primary_model = EXPERT_MODELS[expert_id]
-        fallback_models = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'llama-3.3-70b-versatile']
-        models_to_try = [primary_model] + [m for m in fallback_models if m != primary_model]
+    async def node(state: DiscussionState) -> dict:
         prompt_text = build_expert_prompt(state)
         messages = [
-            SystemMessage(content=EXPERT_SYSTEMS[expert_id]),
-            HumanMessage(content=prompt_text),
+            {"role": "system", "content": EXPERT_SYSTEMS[expert_id]},
+            {"role": "user", "content": prompt_text},
         ]
-        last_err = None
-        for model in models_to_try:
-            for key in get_groq_keys():
-                try:
-                    llm_kwargs = {"api_key": key, "model": model, "max_tokens": 400, "temperature": 0.8}
-                    if model.startswith('openai/gpt-oss') or model.startswith('qwen/'):
-                        llm_kwargs['reasoning_effort'] = 'low'
-                    llm = ChatGroq(**llm_kwargs)
-
-                    reply = strip_intro(llm.invoke(messages).content.strip(), expert_id)
-                    if reply:
-                        return {
-                            'reply': reply,
-                            'dialogue': [{'name': EXPERT_NAMES[expert_id], 'text': reply}],
-                        }
-                except Exception as e:
-                    last_err = e
-                    is_rate_limit = '429' in str(e) or 'rate_limit' in str(e).lower()
-                    print(f"[{expert_id}] {model} key failed: {e}")
-                    if is_rate_limit:
-                        break  # rate limit is per-model, skip remaining keys for this model
-                    continue
-        raise HTTPException(500, f"All Groq models/keys failed for {expert_id}: {last_err}")
+        reply = strip_intro(
+            await felcloud_chat_text(messages, tier=EXPERT_MODEL_TIERS[expert_id], max_tokens=400, temperature=0.8),
+            expert_id,
+        )
+        if not reply:
+            raise HTTPException(502, f"Felcloud returned an empty response for {expert_id}.")
+        return {'reply': reply, 'dialogue': [{'name': EXPERT_NAMES[expert_id], 'text': reply}]}
     return node
 # ── Routing ───────────────────────────────────
 def route_to_expert(state: DiscussionState) -> str:
@@ -331,22 +323,8 @@ class Prompt(BaseModel):
     context: str = ""
 
 
-def call_llm(messages: list, max_tokens: int = 2500) -> str:
-    """Try each API key in order, fall back on failure."""
-    last_error = None
-    for i, c in enumerate(get_clients()):
-        try:
-            response = c.chat.completions.create(
-                model="openrouter/auto",
-                messages=messages,
-                max_tokens=max_tokens
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            print(f"  → API key {i+1} failed: {e}")
-            last_error = e
-            continue
-    raise HTTPException(500, f"All API keys failed. Last error: {last_error}")
+async def call_llm(messages: list, max_tokens: int = 2500) -> str:
+    return await felcloud_chat_text(messages, tier="midsize", max_tokens=min(max_tokens, 4096))
 
 
 def extract_undefined_names(code: str) -> list[str]:
@@ -419,60 +397,28 @@ def check_manim_antipatterns(code: str) -> list[str]:
     return warnings
 
 
-def fix_code_with_llm(code: str, error_msg: str, original_prompt: str) -> str:
-    """Ask the LLM to fix its own broken code given the error."""
-    print("  → Asking LLM to fix its own code...")
+async def fix_code_with_llm(code: str, error_msg: str, original_prompt: str) -> str:
     messages = [
-        {
-            "role": "system",
-            "content": """You fix broken Manim Community Edition code. Rules:
-- Return ONLY raw Python, no markdown, no backticks, no explanation
-- Fix every NameError: make sure every variable is defined before it is used
-- Class name must be exactly: Scene (inheriting MovingCameraScene)
-- First line: from manim import *
-- Keep under 65 lines
-- End with self.wait(2)"""
-        },
-        {
-            "role": "user",
-            "content": (
-                f"This Manim code has an error. Fix it.\n\n"
-                f"ORIGINAL PROMPT: {original_prompt}\n\n"
-                f"BROKEN CODE:\n{code}\n\n"
-                f"ERROR:\n{error_msg}"
-            )
-        }
+        {"role": "system", "content": "Fix broken Manim Community Edition code. Return only raw Python, no markdown. Keep the Scene class inheriting MovingCameraScene and under 65 lines."},
+        {"role": "user", "content": f"Fix this code. PROMPT: {original_prompt}\nCODE:\n{code}\nERROR:\n{error_msg}"},
     ]
-    fixed = call_llm(messages, max_tokens=2500)
+    fixed = await call_llm(messages, max_tokens=2500)
     fixed = re.sub(r'```python|```', '', fixed).strip()
     fixed = fixed.replace('class Scene(Scene):', 'class Scene(MovingCameraScene):')
-    fixed = re.sub(r'(config\.background_color\s*=\s*BLACK)\s*class', r'\1\n\nclass', fixed)
-    return fixed
+    return re.sub(r'(config\.background_color\s*=\s*BLACK)\s*class', r'\1\n\nclass', fixed)
 
 
-def sanitize_code(code: str, job_id: str, original_prompt: str) -> str:
-    # Check for known Manim API misuses first
+async def sanitize_code(code: str, job_id: str, original_prompt: str) -> str:
     antipatterns = check_manim_antipatterns(code)
-    if antipatterns:
-        error_msg = "Manim API errors:\n" + "\n".join(antipatterns)
-        print(f"[{job_id}] Pre-flight caught antipatterns: {antipatterns}")
-        code = fix_code_with_llm(code, error_msg, original_prompt)
-
-    # Then check for undefined names
     undefined = extract_undefined_names(code)
-    if not undefined:
+    if not antipatterns and not undefined:
         return code
-
-    error_msg = f"NameError: the following names are used but never defined: {', '.join(undefined)}"
-    print(f"[{job_id}] Pre-flight caught undefined names: {undefined}")
-    fixed = fix_code_with_llm(code, error_msg, original_prompt)
-
+    error_msg = "\n".join(antipatterns + ([f"Undefined names: {', '.join(undefined)}"] if undefined else []))
+    print(f"[{job_id}] Pre-flight requesting code repair: {error_msg}")
+    fixed = await fix_code_with_llm(code, error_msg, original_prompt)
     still_undefined = extract_undefined_names(fixed)
     if still_undefined:
-        print(f"[{job_id}] Still undefined after fix attempt: {still_undefined} — proceeding anyway")
-    else:
-        print(f"[{job_id}] Fix successful, undefined names resolved.")
-
+        raise HTTPException(502, f"Felcloud could not repair undefined Manim names: {', '.join(still_undefined)}")
     return fixed
 
 
@@ -484,36 +430,18 @@ def is_syntax_valid(code: str) -> tuple[bool, str]:
         return False, str(e)
 
 
-def generate_manim_code(prompt: str, context: str, simple: bool = False) -> str:
+async def generate_manim_code(prompt: str, context: str, simple: bool = False) -> str:
     length_note = "Keep under 40 lines total. Very simple animation only." if simple else "Keep under 60 lines total."
     messages = [
-        {
-            "role": "system",
-            "content": f"""Generate ONLY executable Manim Community Edition code. Rules:
-- No markdown, no backticks, no explanation, just raw Python
-- Class name must be exactly: Scene inheriting MovingCameraScene
-- First line must be: from manim import *
-- Use config.background_color = BLACK
-- {length_note}
-- NEVER use MathTex or Tex — use Text() only
-- Use only: Circle, Square, Arrow, Text, VGroup, Line, Dot, Create, Write, FadeIn, FadeOut, Transform, self.play(), self.wait()
-- No external images, no SVG imports, no custom fonts
-- CRITICAL: Every variable referenced must be assigned earlier in the same scope
-- CRITICAL: Never leave any parentheses, brackets, or braces unclosed
-- End with self.wait(2)"""
-        },
-        {
-            "role": "user",
-            "content": f"Create a 3Blue1Brown style Manim animation explaining: {prompt}. Context: {context}"
-        }
+        {"role": "system", "content": f"Generate only executable Manim Community Edition Python, no markdown. Define Scene inheriting MovingCameraScene. Begin with from manim import *. Use config.background_color = BLACK. {length_note} Use Text rather than MathTex or Tex; define all variables before use and end with self.wait(2)."},
+        {"role": "user", "content": f"Create a 3Blue1Brown style Manim animation explaining: {prompt}. Context: {context}"},
     ]
-    code = call_llm(messages, max_tokens=2500)
+    code = await call_llm(messages, max_tokens=2500)
     code = re.sub(r'```python|```', '', code).strip()
     code = code.replace('class Scene(Scene):', 'class Scene(MovingCameraScene):')
-    code = re.sub(r'(config\.background_color\s*=\s*BLACK)\s*class', r'\1\n\nclass', code)
-    return code
+    return re.sub(r'(config\.background_color\s*=\s*BLACK)\s*class', r'\1\n\nclass', code)
 
-# ── Deep Learn endpoint ───────────────────────
+
 class TurnRequest(BaseModel):
     topic:       str
     phase:       str
@@ -522,6 +450,7 @@ class TurnRequest(BaseModel):
     dialogue:    List[dict] = []
 
 class BiologyVoiceoverRequest(BaseModel):
+    model_config = {"protected_namespaces": ()}
     model_name: str = Field(min_length=1, max_length=120)
 
 
@@ -531,19 +460,11 @@ class PdfTutorMessage(BaseModel):
 
 
 class PdfTutorChatRequest(BaseModel):
-    groq_model: Literal[
-        "openai/gpt-oss-120b",
-        "openai/gpt-oss-20b",
-        "qwen/qwen3.6-27b",
-    ] = Field(alias="model_id")
+    model_config = {"protected_namespaces": ()}
+    model_tier: str = Field(default="midsize", alias="model_id")
     messages: List[PdfTutorMessage]
     max_tokens: int = Field(default=700, ge=1, le=1200)
     temperature: float = Field(default=0.35, ge=0, le=1)
-
-
-class PdfTutorSpeechRequest(BaseModel):
-    language: Literal["English", "French", "Moroccan Darija", "Arabic"]
-    text: str = Field(min_length=1, max_length=5000)
 
 
 @app.post("/api/pdf-tutor/chat")
@@ -552,50 +473,17 @@ async def pdf_tutor_chat(req: PdfTutorChatRequest):
         raise HTTPException(422, "The tutor request must contain between 1 and 12 messages.")
     if sum(len(message.content) for message in req.messages) > 30000:
         raise HTTPException(413, "The tutor context is too large. Please shorten the conversation or PDF question.")
+    tier = "compact" if req.model_tier == "compact" else "midsize"
+    content = await felcloud_chat_text(
+        [{"role": message.role, "content": message.content} for message in req.messages],
+        tier=tier, max_tokens=req.max_tokens, temperature=req.temperature,
+    )
+    return {"content": content}
 
-    try:
-        groq_keys = get_groq_keys()
-    except RuntimeError as exc:
-        print(f"[PDF tutor] Groq configuration error: {exc}")
-        raise HTTPException(503, "Groq is not configured for the PDF tutor.")
 
-    message_types = {
-        "system": SystemMessage,
-        "user": HumanMessage,
-        "assistant": AIMessage,
-    }
-    messages = [
-        message_types[message.role](content=message.content)
-        for message in req.messages
-    ]
-    last_error = None
-    for key_index, key in enumerate(groq_keys, start=1):
-        try:
-            llm_kwargs = {
-                "api_key": key,
-                "model": req.groq_model,
-                "max_tokens": req.max_tokens,
-                "temperature": req.temperature,
-            }
-            if req.groq_model.startswith("openai/gpt-oss"):
-                llm_kwargs["reasoning_effort"] = "low"
-            elif req.groq_model.startswith("qwen/"):
-                llm_kwargs["reasoning_effort"] = "none"
-            llm = ChatGroq(**llm_kwargs)
-            result = await asyncio.to_thread(llm.invoke, messages)
-            content = str(result.content).strip()
-            content = re.sub(r"<think[^>]*>[\s\S]*?</think>", "", content, flags=re.IGNORECASE).strip()
-            if content:
-                return {"content": content}
-            last_error = "Groq returned an empty response."
-        except Exception as exc:
-            last_error = exc
-            print(f"[PDF tutor] {req.groq_model} key {key_index} failed: {type(exc).__name__}")
-            if "429" in str(exc) or "rate_limit" in str(exc).lower():
-                continue
-
-    print(f"[PDF tutor] All Groq keys failed: {type(last_error).__name__ if last_error else 'no keys'}")
-    raise HTTPException(502, "Groq could not generate a tutor response. Please try again.")
+class PdfTutorSpeechRequest(BaseModel):
+    language: Literal["English", "French", "Moroccan Darija", "Arabic"]
+    text: str = Field(min_length=1, max_length=5000)
 
 
 @app.post("/api/pdf-tutor/speech")
@@ -660,60 +548,44 @@ async def biology_voiceover(req: BiologyVoiceoverRequest):
     if not model_name:
         raise HTTPException(422, "A model name is required.")
 
-    system_message = SystemMessage(content=(
-        "You are a biology teacher writing a spoken explanation for a student. "
-        "Respond in clear, natural English. Return only valid JSON with a "
-        '"segments" array of exactly four objects, each containing "label" and "text". '
-        "The four sections must cover an overview, structure, key features, and function. "
-        "Each text must be one or two concise, scientifically accurate sentences. "
-        "Do not include markdown or make up uncertain numerical claims."
-    ))
-    user_message = HumanMessage(content=f"Create the four-section voiceover for: {model_name}")
-    models = ["openai/gpt-oss-20b", "llama-3.3-70b-versatile", "openai/gpt-oss-120b"]
-    last_error = None
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a biology teacher writing a spoken explanation for a student. "
+                "Return only valid JSON with a segments array of exactly four objects, each containing label and text. "
+                "Cover overview, structure, key features, and function. Each text must be one or two concise, "
+                "scientifically accurate sentences. Do not include markdown or uncertain numerical claims."
+            ),
+        },
+        {"role": "user", "content": f"Create the four-section voiceover for: {model_name}"},
+    ]
+    raw = await felcloud_chat_text(
+        messages, tier="midsize", max_tokens=700, temperature=0.6,
+        response_format={"type": "json_object"},
+    )
     try:
-        groq_keys = get_groq_keys()
-    except RuntimeError as exc:
-        print(f"[biology voiceover] Groq configuration error: {exc}")
-        raise HTTPException(503, "Groq is not configured for the biology voiceover.")
-
-    for model in models:
-        for key_index, key in enumerate(groq_keys, start=1):
-            try:
-                llm_kwargs = {"api_key": key, "model": model, "max_tokens": 700, "temperature": 0.6}
-                if model.startswith("openai/gpt-oss"):
-                    llm_kwargs["reasoning_effort"] = "low"
-                llm = ChatGroq(**llm_kwargs)
-                result = await asyncio.to_thread(llm.invoke, [system_message, user_message])
-                raw = str(result.content).strip()
-                raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.IGNORECASE)
-                data = json.loads(raw)
-                segments = data.get("segments") if isinstance(data, dict) else None
-                if not isinstance(segments, list) or len(segments) != 4:
-                    raise ValueError("Groq returned an invalid voiceover structure.")
-                if any(
-                    not isinstance(segment, dict)
-                    or not isinstance(segment.get("label"), str)
-                    or not isinstance(segment.get("text"), str)
-                    or not segment["label"].strip()
-                    or not segment["text"].strip()
-                    for segment in segments
-                ):
-                    raise ValueError("Groq returned an incomplete voiceover segment.")
-                return {
-                    "segments": [
-                        {"label": segment["label"].strip()[:40], "text": segment["text"].strip()[:700]}
-                        for segment in segments
-                    ]
-                }
-            except Exception as exc:
-                last_error = exc
-                print(f"[biology voiceover] {model} key {key_index} failed: {type(exc).__name__}")
-                if "429" in str(exc) or "rate_limit" in str(exc).lower():
-                    break
-
-    print(f"[biology voiceover] All Groq models failed: {type(last_error).__name__ if last_error else 'no keys'}")
-    raise HTTPException(502, "Groq could not generate the biology voiceover. Please try again.")
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(502, "Felcloud returned invalid biology voiceover JSON.") from exc
+    segments = data.get("segments") if isinstance(data, dict) else None
+    if not isinstance(segments, list) or len(segments) != 4:
+        raise HTTPException(502, "Felcloud returned an invalid biology voiceover structure.")
+    if any(
+        not isinstance(segment, dict)
+        or not isinstance(segment.get("label"), str)
+        or not isinstance(segment.get("text"), str)
+        or not segment["label"].strip()
+        or not segment["text"].strip()
+        for segment in segments
+    ):
+        raise HTTPException(502, "Felcloud returned an incomplete biology voiceover segment.")
+    return {
+        "segments": [
+            {"label": segment["label"].strip()[:40], "text": segment["text"].strip()[:700]}
+            for segment in segments
+        ]
+    }
 
 import re as _re
 
@@ -743,13 +615,13 @@ def strip_intro(text: str, expert_id: str) -> str:
 async def run_turn(req: TurnRequest):
     print(f"[TURN] topic={req.topic} pdf_context_len={len(req.pdf_context)} dialogue_len={len(req.dialogue)}")
     state = {**req.model_dump(), "reply": ""}
-    result = discussion_graph.invoke(state)
+    result = await discussion_graph.ainvoke(state)
     return {"reply": result["reply"], "dialogue": result["dialogue"]}
 
 @app.post("/generate")
 async def generate(data: Prompt):
     import traceback
-    print(f"Using API keys: {[k[:20] + '...' for k in get_api_keys()]}")
+    print("Using configured Felcloud model for video generation.")
     job_id = str(uuid.uuid4())[:8]
     scene_file = os.path.join(SCENES_DIR, f"scene_{job_id}.py")
     output_video = os.path.join(VIDEOS_DIR, f"{job_id}.mp4")
@@ -765,14 +637,14 @@ async def generate(data: Prompt):
 
     # Step 1: Generate code, with fallback to simpler version if syntax broken
     try:
-        code = generate_manim_code(data.prompt, data.context, simple=False)
+        code = await generate_manim_code(data.prompt, data.context, simple=False)
         print(f"[{job_id}] Generated code:\n{code}\n")
 
         valid, syntax_err = is_syntax_valid(code)
         if not valid:
             print(f"[{job_id}] Syntax error in initial generation: {syntax_err}")
             print(f"[{job_id}] Regenerating with simpler prompt...")
-            code = generate_manim_code(data.prompt, data.context, simple=True)
+            code = await generate_manim_code(data.prompt, data.context, simple=True)
             valid, syntax_err = is_syntax_valid(code)
             if not valid:
                 raise HTTPException(500, f"Generated code has syntax error after retry: {syntax_err}")
@@ -786,7 +658,7 @@ async def generate(data: Prompt):
         raise HTTPException(500, f"AI generation failed: {str(e)}")
 
     # Step 1.5: Pre-flight sanitization
-    code = sanitize_code(code, job_id, data.prompt)
+    code = await sanitize_code(code, job_id, data.prompt)
 
     # Step 2: Save scene file
     os.makedirs(SCENES_DIR, exist_ok=True)
@@ -829,13 +701,13 @@ async def generate(data: Prompt):
             if attempt < MAX_RETRIES:
                 if "SyntaxError" in last_error or "IndentationError" in last_error:
                     print(f"[{job_id}] Syntax error detected — regenerating simpler version...")
-                    code = generate_manim_code(data.prompt, data.context, simple=True)
+                    code = await generate_manim_code(data.prompt, data.context, simple=True)
                     valid, syntax_err = is_syntax_valid(code)
                     if not valid:
                         print(f"[{job_id}] Regenerated code also has syntax error: {syntax_err}")
                 else:
                     print(f"[{job_id}] Attempting LLM fix for attempt {attempt}...")
-                    code = fix_code_with_llm(code, last_error[-600:], data.prompt)
+                    code = await fix_code_with_llm(code, last_error[-600:], data.prompt)
                     print(f"[{job_id}] Code fixed, retrying...")
 
                 with open(scene_file, "w", encoding="utf-8") as f:
@@ -874,34 +746,123 @@ async def health():
     }
 
 
+class FelcloudChatRequest(BaseModel):
+    model: str = Field(min_length=1, max_length=200)
+    messages: List[dict] = Field(min_length=1, max_length=50)
+    max_tokens: int = Field(default=512, ge=1, le=4096)
+    temperature: float = Field(default=0.7, ge=0, le=2)
+    response_format: dict | None = None
+    tools: List[dict] | None = None
+    tool_choice: str | dict | None = None
+
+
+def quota_response_headers(headers) -> dict[str, str]:
+    return {
+        name: value
+        for name, value in headers.items()
+        if name.lower() == "retry-after" or name.lower().startswith("x-ratelimit-")
+    }
+
+
+@app.get("/llm/config")
+async def felcloud_config():
+    settings = get_felcloud_settings()
+    if not settings["compact_model"] or not settings["midsize_model"]:
+        raise HTTPException(
+            503,
+            "Set FELCLOUD_COMPACT_MODEL and FELCLOUD_MIDSIZE_MODEL to model IDs from /llm/models.",
+        )
+    return {
+        "compact_model": settings["compact_model"],
+        "midsize_model": settings["midsize_model"],
+        "vision_model": settings["vision_model"],
+    }
+
+
+@app.get("/llm/models")
+async def felcloud_models():
+    client = get_felcloud_client()
+    try:
+        response = await client.models.list()
+    except APIStatusError as exc:
+        print(f"[Felcloud models] Upstream HTTP {exc.status_code}.")
+        headers = quota_response_headers(exc.response.headers)
+        try:
+            content = exc.response.json()
+        except ValueError:
+            content = {"error": {"message": "Felcloud rejected the models request."}}
+        return JSONResponse(status_code=exc.status_code, content=content, headers=headers)
+    except APIConnectionError as exc:
+        cause = type(exc.__cause__).__name__ if exc.__cause__ else "unknown"
+        print(f"[Felcloud models] Connection failed ({cause}).")
+        status = 504 if cause == "ReadTimeout" else 502
+        message = "Felcloud timed out listing models." if status == 504 else "Could not connect to the configured Felcloud API."
+        raise HTTPException(status, message) from exc
+    return {"data": [model.model_dump() for model in response.data], "object": response.object}
+
+
+@app.post("/llm/chat/completions")
+async def felcloud_chat_completions(req: FelcloudChatRequest):
+    settings = get_felcloud_settings()
+    allowed_models = {
+        model for model in (
+            settings["compact_model"],
+            settings["midsize_model"],
+            settings["vision_model"],
+        ) if model
+    }
+    if not allowed_models:
+        raise HTTPException(503, "Configure Felcloud models before sending chat requests.")
+    if req.model not in allowed_models:
+        raise HTTPException(400, "The requested model is not configured for this application.")
+
+    client = get_felcloud_client()
+    request_options = {
+        "model": req.model,
+        "messages": req.messages,
+        "max_tokens": req.max_tokens,
+        "temperature": req.temperature,
+    }
+    if req.response_format is not None:
+        request_options["response_format"] = req.response_format
+    if req.tools is not None:
+        request_options["tools"] = req.tools
+    if req.tool_choice is not None:
+        request_options["tool_choice"] = req.tool_choice
+    try:
+        async with _felcloud_request_semaphore:
+            raw_response = await client.chat.completions.with_raw_response.create(
+                **request_options,
+            )
+        response = raw_response.parse()
+    except APIStatusError as exc:
+        print(f"[Felcloud chat] Upstream HTTP {exc.status_code}.")
+        headers = quota_response_headers(exc.response.headers)
+        try:
+            content = exc.response.json()
+        except ValueError:
+            content = {"error": {"message": "Felcloud rejected the chat completion request."}}
+        return JSONResponse(status_code=exc.status_code, content=content, headers=headers)
+    except APIConnectionError as exc:
+        cause = type(exc.__cause__).__name__ if exc.__cause__ else "unknown"
+        print(f"[Felcloud chat] Connection failed ({cause}).")
+        status = 504 if cause == "ReadTimeout" else 502
+        message = "Felcloud timed out waiting for the model response." if status == 504 else "Could not connect to the configured Felcloud API."
+        raise HTTPException(status, message) from exc
+
+    return JSONResponse(
+        content=response.model_dump(),
+        headers=quota_response_headers(raw_response.headers),
+    )
+
+
 @app.get("/api/config")
 async def get_config():
-    """Provide API configuration to frontend"""
-    groq_keys = parse_env_list('GROQ_KEYS')
-    if not groq_keys:
-        for env_name in ('GROQ_API_KEY', 'GROQ_KEY'):
-            single = os.getenv(env_name, '').strip()
-            if single:
-                groq_keys = [single]
-                break
-
-    openrouter_keys = parse_env_list('OPENROUTER_API_KEYS')
-    print(f"[/api/config] GROQ_KEYS count: {len(groq_keys)}, OPENROUTER_KEYS count: {len(openrouter_keys)}")
-
+    settings = get_felcloud_settings()
     return {
-        "GROQ_API_KEY": groq_keys[0] if groq_keys else '',
-        "GROQ_KEYS": groq_keys,
-        "GROQ_API_BASE_URL": os.getenv('GROQ_BASE', 'https://api.groq.com/openai/v1'),
-        "CEREBRAS_API_KEY": os.getenv('CEREBRAS_KEY', ''),
-        "CEREBRAS_API_BASE": os.getenv('CEREBRAS_BASE', 'https://api.cerebras.ai/v1'),
-        "OPENROUTER_API_KEYS": openrouter_keys,
-        "OPENROUTER_KEYS": openrouter_keys,
-        "OPENROUTER_BASE": OPENROUTER_BASE_URL,
-        "GEMINI_KEY": os.getenv('GEMINI_KEY', ''),
-        "GEMINI_MODEL": os.getenv('GEMINI_MODEL', 'gemini-2.0-flash-lite'),
-        "GEMINI_BASE": os.getenv('GEMINI_BASE', 'https://generativelanguage.googleapis.com/v1beta/models'),
-        "AZURE_SPEECH_KEY": os.getenv('AZURE_SPEECH_KEY', ''),
-        "AZURE_SPEECH_REGION": os.getenv('AZURE_SPEECH_REGION', 'southeastasia'),
+        "FELCLOUD_COMPACT_MODEL": settings["compact_model"],
+        "FELCLOUD_MIDSIZE_MODEL": settings["midsize_model"],
+        "FELCLOUD_VISION_MODEL": settings["vision_model"],
     }
 
 

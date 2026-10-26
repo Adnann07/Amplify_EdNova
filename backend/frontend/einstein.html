@@ -762,35 +762,32 @@
 // ════════════════════════════════════════
 
 // ── CONFIG ──────────────────────────────
-const GROQ_BASE       = 'https://api.groq.com/openai/v1';
-const OPENROUTER_BASE = 'https://openrouter.ai/api/v1';
+// All model requests are sent through the server-side Felcloud proxy.
+const GROQ_BASE = '/llm';
+const OPENROUTER_BASE = '/llm';
+const GROQ_KEYS = ['felcloud-proxy'];
+const OPENROUTER_KEYS = [];
+let felcloudConfigPromise;
+const originalFetch = window.fetch.bind(window);
+window.fetch = async (input, init = {}) => {
+  const requestUrl = typeof input === 'string' ? input : input.url;
+  if (!requestUrl.endsWith('/llm/chat/completions') || !init.body) {
+    return originalFetch(input, init);
+  }
+  felcloudConfigPromise ||= originalFetch('/llm/config').then(async response => {
+    const config = await response.json();
+    if (!response.ok) throw new Error(config.detail || `Felcloud configuration failed (${response.status}).`);
+    if (!config.midsize_model) throw new Error('The Felcloud mid-size model is not configured.');
+    return config;
+  });
+  const config = await felcloudConfigPromise;
+  const payload = JSON.parse(init.body);
+  payload.model = config.midsize_model;
+  const headers = new Headers(init.headers || {});
+  headers.delete('Authorization');
+  return originalFetch(input, { ...init, headers, body: JSON.stringify(payload) });
+};
 
-// Load keys from sessionStorage (passed from parent page)
-function loadKeys() {
-  try {
-    const g = sessionStorage.getItem('einstein_groq_keys');
-    const o = sessionStorage.getItem('einstein_or_keys');
-    return {
-      groq: g ? JSON.parse(g) : [],
-      or:   o ? JSON.parse(o) : [],
-    };
-  } catch(e) { return { groq: [], or: [] }; }
-}
-const KEYS = loadKeys();
-const GROQ_KEYS       = KEYS.groq;
-const OPENROUTER_KEYS = KEYS.or;
-
-// Also check URL param
-(function(){
-  const p = new URLSearchParams(location.search);
-  const k = p.get('k');
-  if (k && !GROQ_KEYS.includes(k)) GROQ_KEYS.unshift(k);
-})();
-
-const GROQ_MODELS = ['openai/gpt-oss-120b','openai/gpt-oss-20b','qwen/qwen3.6-27b'];
-const OR_MODELS   = ['openrouter/free'];
-
-// ── SCIENTIST DATABASE ───────────────────
 const SCIENTIST_DB = {
   quantum:      { name:'Richard Feynman',     emoji:'⚛️',  field:'Quantum Physics',         era:'1940s–1980s', born:'1918', discovery:'Path Integral Formulation', quote:'"If you think you understand quantum mechanics, you don\'t understand quantum mechanics."', style:'Playful, diagram-heavy, thought experiments' },
   relativity:   { name:'Albert Einstein',     emoji:'🌌',  field:'General & Special Relativity', era:'1905–1955', born:'1879', discovery:'Theory of Relativity, E=mc²', quote:'"Imagination is more important than knowledge."', style:'Thought experiments, visual analogies, philosophy' },

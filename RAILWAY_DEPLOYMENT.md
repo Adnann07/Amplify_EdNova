@@ -55,13 +55,13 @@ The deployment files will auto-detect Python:
 In Railway dashboard → **Variables** tab, add:
 
 ```
-OPENROUTER_API_KEYS=sk-xxx,sk-yyy
-GROQ_KEYS=gsk-xxx,gsk-yyy
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-GROQ_API_BASE_URL=https://api.groq.com/openai/v1
+FELCLOUD_API_KEY=your_server_side_key
+FELCLOUD_BASE_URL=https://llm.felcloud.io/v1
+FELCLOUD_COMPACT_MODEL=your_compact_model_id
+FELCLOUD_MIDSIZE_MODEL=your_midsize_model_id
 ```
 
-*(If you don't have keys yet, you can set these later)*
+Keep the API key in Railway's server-side variables; never use a `VITE_` variable.
 
 ### 4. Get Your Backend URL
 

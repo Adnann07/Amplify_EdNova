@@ -17,8 +17,10 @@
 2. **Connect to GitHub** and select your repo
 3. **Delete Laravel service** if auto-detected
 4. **Add environment variables**:
-   - OPENROUTER_API_KEYS
-   - GROQ_KEYS
+   - FELCLOUD_API_KEY
+   - FELCLOUD_BASE_URL
+   - FELCLOUD_COMPACT_MODEL
+   - FELCLOUD_MIDSIZE_MODEL
 5. **Wait for build to complete** (watch logs)
 6. **Copy Railway URL** from deployment
 
@@ -36,6 +38,6 @@
 |-------|-----|
 | "Stopping Container" immediately | Laravel service still enabled - delete it |
 | Port binding error | Should auto-work with `${PORT:-8000}` |
-| API keys error | Add to Railway Variables, redeploy |
+| Felcloud configuration error | Verify the server-side Felcloud variables and model IDs |
 | 502 Bad Gateway | Check Railway logs for startup errors |
 | CORS errors | Make sure frontend proxy routes are correct |
