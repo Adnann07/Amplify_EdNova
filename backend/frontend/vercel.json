@@ -3,6 +3,14 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/llm/:path*",
+      "destination": "https://amplify-ednova-fastapi.vercel.app/llm/:path*"
+    },
+    {
+      "source": "/llm",
+      "destination": "https://amplify-ednova-fastapi.vercel.app/llm"
+    },
+    {
       "source": "/turn",
       "destination": "https://amplify-ednova-fastapi.vercel.app/turn"
     },
@@ -21,6 +29,14 @@
     {
       "source": "/neo4j/:path*",
       "destination": "https://amplify-ednova-fastapi.vercel.app/neo4j/:path*"
+    },
+    {
+      "source": "/neo4j",
+      "destination": "https://amplify-ednova-fastapi.vercel.app/neo4j"
+    },
+    {
+      "source": "/biology/:path*",
+      "destination": "https://amplify-ednova-fastapi.vercel.app/biology/:path*"
     },
     {
       "source": "/api/:path*",
