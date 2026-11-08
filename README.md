@@ -106,19 +106,21 @@ keeping groups on topic.          Dr. Rakib).            adaptive pacing.
 - **Educator Analytics & Attention Heatmaps:** Live teacher dashboard aggregating anonymized student focus, confusion metrics, and topic mastery.
 
 ### Pillar 4: Entrepreneurship & Business Viability
-- **Sustainable Unit Economics:** Engineered specifically for CPU-only, GPU-free cloud infrastructure using a strict 60/40 compact/mid-size orchestration ratio, minimizing token overhead and keeping operational costs accessible for public educational institutions.
+- **Sustainable Unit Economics:** Engineered specifically for CPU-only, GPU-free cloud infrastructure, with a 60/40 compact/mid-size capacity split as a target to minimize token overhead and keep operational costs accessible for public educational institutions.
 
 ---
 
 ## ⚡ AI Model Orchestration & Resource Optimization (60/40 Split)
 
-The platform inference engine operates without GPU acceleration on CPU-only infrastructure. Compute time on larger models is the most scarce resource. To achieve high throughput, low latency, and zero quota waste, Amplify EdNova strictly implements the **60/40 Capacity Split** defined in the challenge specifications:
+The platform inference engine operates without GPU acceleration on CPU-only infrastructure. The **60/40 Capacity Split** is the intended capacity allocation defined for the challenge; the backend selects a model tier for each task but does not measure or enforce a percentage of total calls:
 
 | Model Class | Active Model ID | Target Capacity | Designated Responsibilities |
 | :--- | :--- | :--- | :--- |
-| **Compact Class** (< 3B params) | `llama3.2-3b` | **≈ 60% of total calls** | Intent classification, diagnostic categorization, extraction, text normalization, short summaries, hint generation, AST code sanitization, routing. |
-| **Mid-Size Class** (≤ 16B params) | `llama3.1-8b` | **≈ 40% of total calls** | Multi-source reasoning, pedagogical synthesis, LangGraph expert dialogue generation, complex problem solving, final polished writing. |
+| **Compact Class** (< 3B params) | `llama3.2-3b` | **Target: ≈ 60% of calls** | Intent classification, diagnostic categorization, extraction, text normalization, short summaries, hint generation, AST code sanitization, routing. |
+| **Mid-Size Class** (≤ 16B params) | `llama3.1-8b` | **Target: ≈ 40% of calls** | Multi-source reasoning, pedagogical synthesis, LangGraph expert dialogue generation, complex problem solving, final polished writing, and Manim scene-code generation (configured mid-size model via `call_llm`, `tier="midsize"`). |
 | **Vision / OCR Class** | `deepseek-ocr` | Metered on-demand | Textbook document parsing, handwritten formula recognition, diagram extraction. |
+
+The 60/40 split is a capacity target, not a measured production distribution. Per-model call counts and latency are not currently recorded by the backend.
 
 ### Documented Orchestration Patterns
 
@@ -149,7 +151,7 @@ flowchart TD
     end
 ```
 
-1. **Escalation Pattern:** Fast, compact models triage every user prompt. Trivial requests (definitions, formatting, formula lookups) are resolved within 400ms without touching the mid-size quota. Only prompts requiring multi-step logical deduction or debate synthesis escalate to the mid-size model.
+1. **Escalation Pattern:** Compact models triage user prompts. Trivial requests (definitions, formatting, formula lookups) can be resolved without using the mid-size tier. Prompts requiring multi-step logical deduction or debate synthesis can escalate to the mid-size model.
 2. **Draft-Then-Revise:** The compact model rapidly generates structural bullets, raw outlines, or candidate quiz questions. The mid-size model performs a single polishing pass to verify pedagogical tone, clarity, and factual accuracy.
 3. **Plan-Once / Execute-Compact:** A single mid-size call generates an overarching modular study syllabus. All subsequent micro-interactions (hint delivery, multiple-choice generation, validation checks) are handled exclusively by compact instances.
 4. **Narrow-Before-Generating (RAG):** Raw document chunks are retrieved via vector search, filtered and compressed to their salient facts by the compact model, and passed as tightly bounded context (under 800 tokens) to the mid-size model, radically reducing prompt-token consumption.
@@ -496,16 +498,8 @@ Amplify EdNova Architecture
   }
   ```
 
-### 5. Authentication APIs (Laravel)
-```http
-POST /api/auth/otp
-Request:  {"phone": "+21612345678"}
-Response: {"success": true, "expires_in": 600}
-
-POST /api/auth/verify
-Request:  {"phone": "+21612345678", "otp": "123456"}
-Response: {"token": "eyJhbGc...", "student": {"id": 1, "name": "Amina"}}
-```
+### 5. Authentication APIs (omitted from demo examples)
+Authentication request and response examples are intentionally omitted to avoid exposing or encouraging collection of phone numbers, OTPs, or other private information. Use synthetic accounts in a controlled test environment if an authentication flow must be demonstrated.
 
 ### 6. Document Tutor APIs
 ```http
@@ -520,25 +514,24 @@ Response: {"response": "...", "references": [{"page": 4}], "followUp": "Would yo
 
 ---
 
-## 📊 System Performance & AI Model Benchmarks
+## 📊 Testing Results & Metrics
 
-### System Latency & Operational Performance
+### Verified automated tests
 
-| Metric | Target | Measured Production | Status |
-| :--- | :--- | :--- | :--- |
-| **API Proxy Overhead** | < 50ms | 18ms | 🟢 Optimal |
-| **Compact Model (llama3.2-3b) Latency** | < 1.5s | 850ms | 🟢 Fast |
-| **Mid-Size Model (llama3.1-8b) Latency** | < 5.0s | 2.8s | 🟢 Within budget |
-| **Manim Video Generation** | < 30s | 18s | 🟢 Fast |
-| **Client-Side Face Detection** | 30 FPS | 28-30 FPS | 🟢 Real-time |
-| **Classroom Notification Sync** | < 1.0s | 400ms | 🟢 Real-time |
+The Laravel test suite was run locally with `php artisan test`:
 
-### Model Benchmark & Pedagogical Quality
+| Test result | Outcome |
+| :--- | :--- |
+| Tests passed | **5** |
+| Assertions passed | **13** |
+| Duration | **2.27 seconds** |
 
-- **Answer Relevance:** **88%** rated as pedagogically sound and helpful.
-- **Hallucination Rate:** **< 2%** when grounded in textbook RAG context.
-- **Facial Emotion Precision:** **94%** accuracy with a low 3% false-positive rate.
-- **Manim Code Generation Success:** **92%** first-pass compile-and-render rate.
+These are automated unit and feature tests, not a study with human participants.
+
+### Production metrics and user testing
+
+- **Model call counts and latency:** Not available; the backend does not currently record per-model production telemetry. The 60/40 split above is a target, not a measured result.
+- **User testing:** No participant results are available in this repository. Do not interpret the automated test results as user feedback or usability-study findings.
 
 ---
 
@@ -601,7 +594,7 @@ Response: {"response": "...", "references": [{"page": 4}], "followUp": "Would yo
 ### 3. Unit Economics & Cost Sustainability
 Inference costs frequently sink GenAI educational startups. Amplify EdNova is purpose-built for commercial longevity:
 - **Zero GPU Overhead:** Runs entirely on commodity CPU cloud infrastructure, slashing server costs by up to 85% compared to GPU-clustered deployments.
-- **Aggressive 60/40 Traffic Split:** Routing 60% of all requests to ultra-efficient compact models (`llama3.2-3b`) preserves the mid-size quota for critical reasoning tasks.
+- **Target 60/40 Capacity Split:** The intended allocation favors compact models (`llama3.2-3b`) to preserve mid-size capacity for critical reasoning tasks; production traffic ratios are not measured.
 - **Multi-Level Token Caching:** Semantic caching in browser local storage and Redis prevents redundant model calls for identical curriculum questions.
 
 ### 4. Go-to-Market & Adoption Pathway
@@ -693,7 +686,7 @@ npx vercel deploy --prod --project amplify-ed-nova --yes
 
 | Evaluation Criterion | Weight | How Amplify EdNova Addresses It |
 | :--- | :---: | :--- |
-| **Model Orchestration** | **25%** | Deliberate **60/40 Capacity Split** between Compact (`llama3.2-3b`) and Mid-size (`llama3.1-8b`). Implements four clear architectural patterns: Escalation, Draft-then-Revise, Plan-once/Execute-compact, and Narrow-before-generating RAG. |
+| **Model Orchestration** | **25%** | Target **60/40 capacity allocation** between Compact (`llama3.2-3b`) and Mid-size (`llama3.1-8b`); the actual call ratio is not measured. Implements four architectural patterns: Escalation, Draft-then-Revise, Plan-once/Execute-compact, and Narrow-before-generating RAG. |
 | **Handling Constraints** | **25%** | Built natively for CPU-only, GPU-free cloud inference. Zero crashes under load via async semaphore concurrency limit (max 2), automated backoff on `Retry-After`, and seamless degradation from mid-size to compact models upon saturation. |
 | **Relevance & Usefulness** | **20%** | Directly solves peer study dysfunction (imbalance, fear of judgment, misconceptions, learning style divergence) with actionable pedagogical mediation, diagnostic profiling, and scaffolded hint delivery. |
 | **Resilience Under Load** | **15%** | Graceful handling of HTTP 400, 502, 503, and 504 errors. Robust fallbacks, token bucket pacing, non-streaming skeleton screens, and client-side offline storage caching. |
@@ -705,6 +698,8 @@ npx vercel deploy --prod --project amplify-ed-nova --yes
 ## 👥 Team, Acknowledgments & License
 
 ### Development Team
+**Team name: Amplify**
+
 - **Adnan** — Lead AI Engineer & Full-Stack Architect  
 - *Specialized in multi-agent orchestration, CPU-inference optimization, and interactive scientific visualization.*
 
