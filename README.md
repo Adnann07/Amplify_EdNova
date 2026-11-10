@@ -269,6 +269,22 @@ StyleTutor recognizes that one teaching method cannot serve all learners:
 - Implements the **SuperMemo SM-2 algorithm** for optimal review intervals.
 - Generates personalized study schedules based on weak areas identified during quiz sessions and PDF tutor interactions.
 
+### 🖼️ App Screenshots
+
+<table>
+  <tr>
+    <td align="center"><strong>Biology 3D Lab</strong><br><img src="frontend/src/assets/bio.png" alt="Interactive biology 3D anatomy lab" width="480"></td>
+    <td align="center"><strong>Chemistry Virtual Lab</strong><br><img src="frontend/src/assets/chem.png" alt="Interactive chemistry experiment" width="480"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Einstein Mode</strong><br><img src="frontend/src/assets/einsteinmode.png" alt="Collaborative multi-agent scientific discussion" width="480"></td>
+    <td align="center"><strong>Manim Animated Lessons</strong><br><img src="frontend/src/assets/manim.png" alt="Short animated lessons in the learning interface" width="480"></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Teacher–Student Collaboration</strong><br><img src="frontend/src/assets/teacher_studentmode.png" alt="Teacher and students collaborating in class" width="480"></td>
+  </tr>
+</table>
+
 ---
 
 ## 🎬 Manim Mathematical & Scientific Animation Pipeline
