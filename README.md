@@ -269,6 +269,19 @@ StyleTutor recognizes that one teaching method cannot serve all learners:
 - Implements the **SuperMemo SM-2 algorithm** for optimal review intervals.
 - Generates personalized study schedules based on weak areas identified during quiz sessions and PDF tutor interactions.
 
+### 9. 🧠 Second Brain Dashboard & Neural Knowledge Map (`dashboard.html`)
+- Provides a unified learning dashboard that visualizes the student's accumulated knowledge, study activity, mastery, attention, and review workload.
+- Features an interactive Three.js **Second Brain — Neural Map** built from a 3D brain model or a procedural holographic fallback.
+- Maps learning signals to distinct neural regions:
+  - **Prefrontal Cortex:** Attention and focused/confused/distracted session data.
+  - **Temporal Lobes:** Topics and concepts extracted from study materials.
+  - **Parietal Lobe:** Overall concept mastery and strong/weak areas.
+  - **Occipital Lobe:** Study streak and active learning days.
+  - **Hippocampus:** Saved documents, due reviews, and memory-reinforcement workload.
+- Displays learning overview metrics, mastered and struggling concepts, upcoming reviews, topic frequency, cross-document concepts, skill levels, document mastery, activity heatmaps, and recent attention sessions.
+- Supports both Neo4j Knowledge Graph data and browser-local fallback storage, so the dashboard remains usable without a live graph connection.
+- Uses hover tooltips and horizontal drag rotation for direct, accessible exploration of the neural map.
+
 ### 🖼️ App Screenshots
 
 <table>
